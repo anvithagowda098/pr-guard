@@ -2,10 +2,12 @@
 //   POST /review   { code | diff | query }        rule scan + any packages named
 //   POST /package  { ecosystem, name, version }   known vulnerabilities via OSV
 //   GET  /health
+//   GET  /miner.yaml                              this miner's Telegraph YAML
 // Every answer leads with one plain sentence ("Verdict: ..."), which is what
 // Telegraph's scorers read, followed by the structured fields.
 import { scan, RULE_COUNT } from "./rules.js";
 import { lookupPackage, packagesIn, osvEcosystem, worst, compareVersions } from "./osv.js";
+import MINER_YAML from "./miner-yaml.generated.js";
 
 export const VERSION = "0.1.0";
 const MAX_BODY_BYTES = 200_000;
@@ -96,6 +98,9 @@ export function createHandler({ fetch: fetchImpl = (...a) => fetch(...a) } = {})
     const url = new URL(request.url);
     if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
       return json(200, { ok: true, name: "PR Guard Sentinel", version: VERSION, rules: RULE_COUNT, intents: ["SECURITY_REVIEW"] });
+    }
+    if (request.method === "GET" && url.pathname === "/miner.yaml") {
+      return new Response(MINER_YAML, { headers: { "content-type": "text/yaml; charset=utf-8" } });
     }
     if (request.method !== "POST") return json(405, { error: "use POST" });
     const { body, error } = await readJson(request);

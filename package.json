@@ -12,7 +12,8 @@
     "discover": "node scripts/discover.js",
     "wallet": "node scripts/wallet.js",
     "first-call": "node scripts/first-call.js",
-    "test": "node --test"
+    "test": "node --test",
+    "deploy:miner": "node scripts/embed-yaml.js && wrangler deploy -c miner/wrangler.toml"
   },
   "dependencies": {
     "@actions/core": "3.0.1",

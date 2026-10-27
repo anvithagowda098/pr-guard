@@ -177,3 +177,9 @@ test("upgrade advice: the lowest version that fixes everything", () => {
   assert.deepEqual(upgradeAdvice("4.17.15", [...vulns, { fixed_in: [] }]), { upgrade_to: "4.18.0", unfixed: 1 });
   assert.deepEqual(upgradeAdvice("1.0.0", [{ fixed_in: ["0.9.0"] }]), { upgrade_to: null, unfixed: 1 });
 });
+
+test("GET /miner.yaml serves exactly the committed YAML", async () => {
+  const res = await createHandler()(new Request("https://miner.test/miner.yaml"));
+  assert.equal(res.status, 200);
+  assert.equal(await res.text(), readFileSync(new URL("../miner/miner.yaml", import.meta.url), "utf8"), "run node scripts/embed-yaml.js");
+});

@@ -1,0 +1,8 @@
+@@ -10,7 +10,9 @@ function formatName(user) {
+-  return user.first + " " + user.last;
++  const parts = [user.first, user.middle, user.last].filter(Boolean);
++  // see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
++  return parts.join(" ");
+ }
+ 
+ module.exports = { formatName };

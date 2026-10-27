@@ -1,0 +1,42 @@
+name: PR Guard
+description: Buys independent security checks from Telegraph miners on every pull request and posts a SAFE / CAUTION / BLOCK verdict with receipts.
+branding:
+  icon: shield
+  color: green
+inputs:
+  telegraph-private-key:
+    description: Burner Base Sepolia key holding testnet USDC (store as a secret). Never a key with real funds.
+    required: false
+  max-usd-per-pr:
+    description: Hard cap on total spend for one PR run, in USD.
+    default: "0.10"
+  max-usd-per-call:
+    description: Hard cap on a single paid call, in USD. Quotes above it are refused before signing.
+    default: "0.05"
+  fail-on:
+    description: Fail the job on `block`, `caution` (CAUTION or BLOCK), or `never`.
+    default: block
+  checks:
+    description: Comma-separated paid checks to run (deps, diff, patch, urls). Secret and install-script checks always run locally.
+    default: deps,diff,patch,urls
+  node-url:
+    description: Telegraph node URL.
+    default: https://devnode.telegraphprotocol.com
+  miners-config:
+    description: Optional path to a miners allowlist JSON overriding the bundled one.
+    required: false
+  github-token:
+    description: Token used to read the PR and post the comment.
+    default: ${{ github.token }}
+outputs:
+  verdict:
+    description: SAFE, CAUTION, BLOCK or SKIPPED.
+  cost_usd:
+    description: Total spent on this run, in USD.
+  signal_hashes:
+    description: Comma-separated Telegraph signal hashes for every paid call.
+  ledger_path:
+    description: Path of the JSONL purchase ledger written by this run.
+runs:
+  using: node24
+  main: dist/index.js

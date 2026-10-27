@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { generatePrivateKey } from "viem/accounts";
-import { Telegraph, decodeHeader, capPolicy, usdToAtomic } from "../src/telegraph.js";
+import { Telegraph, Budget, decodeHeader, callPolicy, usdToAtomic } from "../src/telegraph.js";
 
 const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString("base64");
 
@@ -43,15 +43,22 @@ test("decodeHeader handles base64 JSON, missing and garbage values", () => {
   assert.deepEqual(decodeHeader("not-base64-json"), { undecodable: "not-base64-json" });
 });
 
-test("capPolicy keeps quotes at or under the cap across v1/v2 field names", () => {
-  const keep = capPolicy(50_000n)(2, [
-    { amount: "10000" },
-    { amount: "50000" },
-    { amount: "50001" },
-    { maxAmountRequired: "20000" },
-    { value: "90000" },
-  ]);
-  assert.deepEqual(keep.map((r) => r.amount ?? r.maxAmountRequired), ["10000", "50000", "20000"]);
+test("callPolicy keeps quotes under the cap across v1/v2 field names and reserves one", () => {
+  const budget = new Budget(1);
+  const hold = { atomic: null, refusal: null };
+  const keep = callPolicy(50_000n, budget, hold)(2, [{ value: "90000" }, { maxAmountRequired: "20000" }, { amount: "10000" }]);
+  assert.deepEqual(keep, [{ maxAmountRequired: "20000" }]);
+  assert.equal(hold.atomic, 20_000n);
+  assert.equal(budget.reserved, 20_000n);
+});
+
+test("callPolicy does not reserve twice when the library re-runs it", () => {
+  const budget = new Budget(1);
+  const hold = { atomic: null, refusal: null };
+  const policy = callPolicy(50_000n, budget, hold);
+  policy(2, [{ amount: "10000" }]);
+  policy(2, [{ amount: "10000" }]);
+  assert.equal(budget.reserved, 10_000n);
 });
 
 test("usdToAtomic uses 6 decimals", () => {
@@ -78,6 +85,7 @@ test("under-cap quote is signed, retried, and the receipt decoded", async () => 
   assert.equal(r.quote.accepts[0].amount, "10000");
   assert.deepEqual(r.receipt, receipt);
   assert.equal(r.body.signal_hash, "0xsig");
+  assert.equal(r.costUsd, 0.01);
 });
 
 test("over-cap quote is refused before anything is signed", async () => {
@@ -112,4 +120,35 @@ test("network failure becomes a record, not a throw", async () => {
   const r = await tg.ask({ intent: "CVE_LOOKUP" });
   assert.equal(r.ok, false);
   assert.equal(r.reason, "network_error");
+});
+
+test("parallel calls cannot overspend the shared budget", async () => {
+  const node = stubNode({ amount: 30_000 });
+  const budget = new Budget(0.05);
+  const tg = new Telegraph({ nodeUrl: "https://node.test", privateKey: generatePrivateKey(), maxUsdPerCall: 0.05, budget, fetch: node.fetch });
+  const [a, b] = await Promise.all([tg.ask({ n: 1 }), tg.ask({ n: 2 })]);
+
+  assert.deepEqual([a.ok, b.ok].sort(), [false, true]);
+  assert.equal([a, b].find((r) => !r.ok).reason, "over_budget");
+  assert.equal(budget.spent, 30_000n);
+  assert.equal(budget.reserved, 0n);
+});
+
+test("a failed miner call after signing releases the reservation", async () => {
+  const budget = new Budget(0.1);
+  const fetch = async (input, init) => {
+    const req = new Request(input, init);
+    if (!req.headers.get("payment-signature")) {
+      return new Response("{}", { status: 402, headers: { "PAYMENT-REQUIRED": b64(challenge(10_000)) } });
+    }
+    return new Response("miner exploded", { status: 502 });
+  };
+  const tg = new Telegraph({ nodeUrl: "https://node.test", privateKey: generatePrivateKey(), budget, fetch });
+  const r = await tg.ask({});
+
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, "http_502");
+  assert.equal(r.costUsd, 0);
+  assert.equal(budget.spent, 0n);
+  assert.equal(budget.reserved, 0n);
 });

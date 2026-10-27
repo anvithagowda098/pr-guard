@@ -1,0 +1,7 @@
+{
+  "_comment": "Vetted miners per intent, in order of preference. Filled from scripts/discover.js output and probing; see README. Entries: {\"minerId\", \"name\", \"method\", \"endpoint\", \"payload\", \"normalizer\"} for direct asks, or {\"auto\": true, \"body\", \"normalizer\"} for auto-routed. Strings in payload/body may use {{var}} placeholders.",
+  "CVE_LOOKUP": [],
+  "SECURITY_REVIEW": [],
+  "CODE_PATCH_VERIFY": [],
+  "URL_SAFE": []
+}

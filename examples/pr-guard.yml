@@ -1,0 +1,26 @@
+# Copy to .github/workflows/pr-guard.yml in the repo you want guarded.
+name: PR Guard
+on:
+  pull_request: # opened, synchronize, reopened: each run is a paid scan
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - id: guard
+        uses: anvithagowda098/intelligent-doc-query/pr-guard@claude/pr-guard-telegraph-c6l9dk
+        with:
+          telegraph-private-key: ${{ secrets.TELEGRAPH_PRIVATE_KEY }}
+          max-usd-per-pr: "0.10"
+          fail-on: block
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-guard-ledger
+          path: pr-guard-ledger.jsonl
+          if-no-files-found: ignore

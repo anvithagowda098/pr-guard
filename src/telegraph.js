@@ -25,20 +25,47 @@ export function decodeHeader(value) {
 // v2 requirements use `amount`; v1 used `maxAmountRequired` (some servers send `value`).
 export const quotedAtomic = (req) => BigInt(req.amount ?? req.maxAmountRequired ?? req.value ?? 0);
 
-// Drop any payment option priced above the cap. If nothing is left, the x402
-// client refuses to sign, so an over-cap quote never turns into a payment.
-export const capPolicy = (maxAtomicPerCall) => (_version, reqs) =>
-  reqs.filter((r) => quotedAtomic(r) <= maxAtomicPerCall);
+// Per-PR spend budget in atomic USDC. A quote is reserved before it is signed,
+// and reserving is synchronous, so parallel calls can't overshoot together.
+export class Budget {
+  constructor(maxUsd) {
+    this.limit = usdToAtomic(maxUsd);
+    this.reserved = 0n;
+    this.spent = 0n;
+  }
+  get remaining() { return this.limit - this.reserved - this.spent; }
+  tryReserve(atomic) {
+    if (atomic > this.remaining) return false;
+    this.reserved += atomic;
+    return true;
+  }
+  release(atomic) { this.reserved -= atomic; }
+  commit(atomic) {
+    this.reserved -= atomic;
+    this.spent += atomic;
+  }
+}
 
-export function createPaymentClient(privateKey, maxAtomicPerCall) {
-  const account = privateKeyToAccount(privateKey);
-  const client = x402Client.fromConfig({
-    schemes: [{ network: NETWORK, client: new ExactEvmScheme(toClientEvmSigner(account)) }],
-    // The library's own USD cap applies first; ours is the binding one.
-    spendControls: { maxAmountPerPayment: atomicToUsd(maxAtomicPerCall) },
-  });
-  client.registerPolicy(capPolicy(maxAtomicPerCall));
-  return { client, address: account.address };
+// One policy per call: keep options under the per-call cap, then reserve the
+// first one the budget covers. An empty result makes the x402 client refuse
+// to sign, so a refused quote never turns into a payment.
+export function callPolicy(maxAtomicPerCall, budget, hold) {
+  return (_version, reqs) => {
+    // The library re-runs policies if it has to rebuild the payment; don't reserve twice.
+    if (hold.atomic !== null) return reqs.filter((r) => quotedAtomic(r) === hold.atomic);
+    const underCap = reqs.filter((r) => quotedAtomic(r) <= maxAtomicPerCall);
+    if (!underCap.length) {
+      hold.refusal = "over_cap";
+      return [];
+    }
+    const pick = underCap.find((r) => !budget || budget.tryReserve(quotedAtomic(r)));
+    if (!pick) {
+      hold.refusal = "over_budget";
+      return [];
+    }
+    hold.atomic = quotedAtomic(pick);
+    return [pick];
+  };
 }
 
 function responseHeaders(res) {
@@ -62,19 +89,31 @@ export class Telegraph {
    * @param {string} [opts.nodeUrl]
    * @param {string} [opts.privateKey] burner testnet key; omit for discovery-only use
    * @param {number} [opts.maxUsdPerCall] hard per-call cap, default $0.05
+   * @param {Budget} [opts.budget] shared per-PR budget; every paid call reserves against it
    * @param {number} [opts.timeoutMs] per-request timeout, default 45s
    * @param {typeof fetch} [opts.fetch] injectable for tests
    */
-  constructor({ nodeUrl = DEFAULT_NODE_URL, privateKey, maxUsdPerCall = 0.05, timeoutMs = 45_000, fetch: fetchImpl = globalThis.fetch } = {}) {
+  constructor({ nodeUrl = DEFAULT_NODE_URL, privateKey, maxUsdPerCall = 0.05, budget, timeoutMs = 45_000, fetch: fetchImpl = globalThis.fetch } = {}) {
     this.nodeUrl = nodeUrl.replace(/\/+$/, "");
     this.fetch = fetchImpl;
     this.timeoutMs = timeoutMs;
     this.maxAtomicPerCall = usdToAtomic(maxUsdPerCall);
+    this.budget = budget;
     if (privateKey) {
-      const { client, address } = createPaymentClient(privateKey, this.maxAtomicPerCall);
-      this.payClient = client;
-      this.address = address;
+      const account = privateKeyToAccount(privateKey);
+      this.signer = toClientEvmSigner(account);
+      this.address = account.address;
     }
+  }
+
+  // A fresh client per call, so each call's policy tracks its own reservation.
+  paymentClient(hold) {
+    const client = x402Client.fromConfig({
+      schemes: [{ network: NETWORK, client: new ExactEvmScheme(this.signer) }],
+      // The library's own USD cap applies first; ours is the binding one.
+      spendControls: { maxAmountPerPayment: atomicToUsd(this.maxAtomicPerCall) },
+    });
+    return client.registerPolicy(callPolicy(this.maxAtomicPerCall, this.budget, hold));
   }
 
   async getJson(path) {
@@ -114,7 +153,8 @@ export class Telegraph {
   async post(path, body, { pay = true } = {}) {
     const url = this.nodeUrl + path;
     const started = Date.now();
-    const record = { url, request: body, paid: false, ok: false };
+    const record = { url, request: body, paid: false, ok: false, costUsd: 0, costAtomic: "0" };
+    const hold = { atomic: null, refusal: null };
 
     // Keep the 402 challenge so the quoted price and payTo land in the record.
     const recordingFetch = async (input, init) => {
@@ -133,15 +173,18 @@ export class Telegraph {
     let res;
     try {
       if (pay) {
-        if (!this.payClient) throw new Error("no private key configured");
-        res = await wrapFetchWithPayment(recordingFetch, this.payClient)(url, init);
+        if (!this.signer) throw new Error("no private key configured");
+        res = await wrapFetchWithPayment(recordingFetch, this.paymentClient(hold))(url, init);
       } else {
         res = await recordingFetch(url, init);
       }
     } catch (err) {
       record.durationMs = Date.now() - started;
       record.error = [err?.message ?? String(err), err?.cause?.message].filter(Boolean).join(": ");
-      record.reason = classifyError(err, record.quote, this.maxAtomicPerCall);
+      record.reason = hold.refusal ?? classifyError(err, record.quote, this.maxAtomicPerCall);
+      // Signed but no answer (e.g. timed out on the paid retry): we can't tell
+      // whether it settled, so count it as spent rather than risk overspending.
+      if (hold.atomic !== null) this.settle(record, hold.atomic, true);
       return record;
     }
 
@@ -158,14 +201,27 @@ export class Telegraph {
     record.paid = Boolean(record.payment);
     record.ok = res.status === 200;
     if (!record.ok) record.reason = res.status === 402 ? "payment_required" : res.status === 422 ? "rejected_by_prevalidation" : `http_${res.status}`;
+    // Telegraph doesn't charge failed miner calls, so only a 200 is counted.
+    if (hold.atomic !== null) this.settle(record, hold.atomic, record.ok);
     return record;
+  }
+
+  settle(record, atomic, charged) {
+    if (charged) {
+      this.budget?.commit(atomic);
+      record.costAtomic = String(atomic);
+      record.costUsd = atomicToUsd(atomic);
+    } else {
+      this.budget?.release(atomic);
+    }
   }
 }
 
-function classifyError(err, quote, cap) {
+function classifyError(err, quote, maxAtomicPerCall) {
   if (err?.name === "TimeoutError" || err?.name === "AbortError") return "timeout";
   const msg = err?.message ?? "";
-  if (msg.startsWith("Failed to create payment payload") && quote?.accepts?.length && quote.accepts.every((r) => quotedAtomic(r) > cap)) {
+  // The library's own spend control can reject a quote before our policy sees it.
+  if (msg.startsWith("Failed to create payment payload") && quote?.accepts?.length && quote.accepts.every((r) => quotedAtomic(r) > maxAtomicPerCall)) {
     return "over_cap";
   }
   if (msg.startsWith("Failed to create payment payload")) return "payment_failed";

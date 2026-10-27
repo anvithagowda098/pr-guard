@@ -73,5 +73,28 @@ test("PyPI with only unrated ids cautions with a clear reason", () => {
   const n = normalize("depsdev-advisory-keys", result("190048-pypi-django-3.2.0-200-paid.json"), { name: "django", version: "3.2.0" });
   const { verdict, reasons } = decide([{ check: "deps", target: "django@3.2.0", status: "ok", confirmed: false, disagreement: false, calls: [], ...n }]);
   assert.equal(verdict, "CAUTION");
-  assert.match(reasons[0], /66 advisories, severity not rated/);
+  assert.match(reasons[0], /66 findings, severity not rated/);
+});
+
+const chainsight = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/${name}`, import.meta.url), "utf8")).body.result;
+
+test("ChainSight: verdicts and worst severity from real answers", () => {
+  const read = (name) => normalize("chainsight-verdict", chainsight(name));
+  assert.deepEqual(read("SECURITY_REVIEW/302-secreview-clean-200-paid.json"), { severity: "none", findings: [] });
+  const evalCase = read("SECURITY_REVIEW/302-secreview-eval-200-paid.json");
+  assert.equal(evalCase.severity, "critical");
+  assert.match(evalCase.findings[0].title, /^eval\(req\.body\.expr\) runs arbitrary JavaScript/);
+  assert.equal(read("AUTO/auto-security-question-sqli-200-paid.json").severity, "critical");
+  // Cut off before any severity word: vulnerable, but unrated.
+  const cmd = read("SECURITY_REVIEW/302-secreview-cmdinj-200-paid.json");
+  assert.equal(cmd.severity, "unknown");
+  assert.match(cmd.findings[0].title, /exec\('ping -c 1 ' \+ req\.query\.host/);
+});
+
+test("ChainSight: no verdict means unknown; one miner alone can't BLOCK", () => {
+  assert.equal(normalize("chainsight-verdict", { answer: "I could not process this." }).severity, "unknown");
+  const evalCase = normalize("chainsight-verdict", chainsight("SECURITY_REVIEW/302-secreview-eval-200-paid.json"));
+  const { verdict, reasons } = decide([{ check: "diff", target: "src/calc.js", status: "ok", confirmed: false, disagreement: false, calls: [], ...evalCase }]);
+  assert.equal(verdict, "CAUTION");
+  assert.match(reasons[0], /critical, unconfirmed/);
 });

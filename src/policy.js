@@ -27,7 +27,7 @@ export function decide(outcomes) {
     else if (o.status === "skipped") {
       if (REQUIRED_CHECKS.has(o.check)) caution.push(`${label} — not checked (${o.reason ?? "skipped"})`);
     } else if (o.severity === "unknown") {
-      caution.push(o.findings.length ? `${label} — ${o.findings.length} advisories, severity not rated` : `${label} — miner answer could not be interpreted`);
+      caution.push(o.findings.length ? `${label} — ${o.findings.length} finding${o.findings.length === 1 ? "" : "s"}, severity not rated` : `${label} — miner answer could not be interpreted`);
     }
     else if (isHigh(o.severity) && o.confirmed) block.push(`${label} — ${o.severity}`);
     else if (isHigh(o.severity)) caution.push(`${label} — ${o.severity}, unconfirmed${o.disagreement ? " (miners disagree)" : ""}`);

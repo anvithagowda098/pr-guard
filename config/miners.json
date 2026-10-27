@@ -7,9 +7,14 @@
       "intent": "SECURITY_REVIEW",
       "method": "GET",
       "endpoint": "/query",
-      "payload": { "pkg": "{{name}}", "ver": "{{version}}" },
+      "payload": {
+        "pkg": "{{name}}",
+        "ver": "{{version}}"
+      },
       "normalizer": "depsdev-version",
-      "ecosystems": ["npm"]
+      "ecosystems": [
+        "npm"
+      ]
     },
     {
       "minerId": "190048",
@@ -17,11 +22,27 @@
       "intent": "SECURITY_REVIEW",
       "method": "GET",
       "endpoint": "/query",
-      "payload": { "system": "{{depsdev_system}}", "pkg": "{{name}}", "ver": "{{version}}" },
+      "payload": {
+        "system": "{{depsdev_system}}",
+        "pkg": "{{name}}",
+        "ver": "{{version}}"
+      },
       "normalizer": "depsdev-advisory-keys"
     }
   ],
-  "diff": [],
+  "diff": [
+    {
+      "minerId": "302",
+      "name": "ChainSight",
+      "intent": "SECURITY_REVIEW",
+      "method": "POST",
+      "endpoint": "/secreview",
+      "payload": {
+        "query": "Security review of this pull request diff. List each vulnerability with a severity (critical/high/medium/low), or say none found:\n{{diff}}"
+      },
+      "normalizer": "chainsight-verdict"
+    }
+  ],
   "patch": [],
   "urls": []
 }

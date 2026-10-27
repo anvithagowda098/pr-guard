@@ -12,7 +12,8 @@ Payments use **testnet USDC on Base Sepolia**. That money is free from a faucet 
 | Local checks: committed secrets and keys, new install scripts | live (free, no miner) |
 | Telegraph client: discovery, paid asks, receipts, per-call cap, per-PR budget | done |
 | Verdict policy, PR comment, purchase ledger, the Action itself | done; end-to-end test replays real miner answers |
-| Code-diff review, patch verification, URL safety | **off by default:** no working miner on Telegraph yet (see below) |
+| **Code-diff security review:** redacted diff chunks reviewed by ChainSight | **live on testnet**, CAUTION at most until a second reviewer exists |
+| Patch verification, URL safety | **off by default:** no working miner on Telegraph yet (see below) |
 
 ### Which miners, and why
 
@@ -22,7 +23,11 @@ Checked against the live network on 2026-10-27. Discovery data is in `data/miner
   - **deps.dev Package Review** (#77010) is asked first, for npm. It returns each advisory with GitHub's severity rating and a CVSS score.
   - **Secrev Depsdev** (#190048) covers every ecosystem, but returns advisory ids only. It serves as the second opinion: listing the same ids confirms a high finding. For non-npm packages it's the only source, so advisories it finds stay unrated and give CAUTION.
   - Both are proxies over Google's deps.dev, so they share one upstream. Their agreement shows the miner layer is honest, not that the data was checked twice independently.
-- **Code-diff review:** only TxLens (#9002) accepts code. Its call failed because its upstream AI account ("perplexity key") had no credit, and it was still charged.
+- **Code-diff review:** **ChainSight** (#302, `POST /secreview`, takes a plain-language `query`). It's also what auto-routing picks for security questions.
+  - It got 4 of 4 test cases right: SQL injection, `eval` on user input and shell injection flagged; a parameterized query called secure.
+  - Its answers are free text and sometimes cut off mid-sentence. PR Guard reads only the verdict and the worst severity word.
+  - With one reviewer, a finding can give CAUTION but never BLOCK.
+  - TxLens (#9002) also takes code, but its call failed because its upstream AI account ("perplexity key") had no credit, and it was still charged.
 - **URL safety:** URL Sentinel (#5001) and ProofGate (#7402) both rated Google's standard phishing test page safe. ProofGate reported that it hadn't queried any threat feed.
 - **Unknown packages:** both deps.dev miners answer HTTP 500 with "upstream error 404" and charge for it. PR Guard stops at the first such miss instead of paying the next miner for the same answer.
 
@@ -55,7 +60,11 @@ Checked against the live network on 2026-10-27. Discovery data is in `data/miner
 
 Copy `examples/pr-guard.yml` into `.github/workflows/`. Then add a `TELEGRAPH_PRIVATE_KEY` repository secret holding a funded burner key (see step 2 below).
 
-A dependency check usually costs $0.02 per changed package: $0.01 for the lookup, plus $0.01 to confirm when something high or critical turns up. Pull requests that don't touch a manifest cost nothing.
+Typical cost per PR:
+- $0.01 per diff chunk of up to 12,000 characters for the code review;
+- $0.01 per changed package, plus $0.01 to confirm when something high or critical turns up.
+
+Every run is capped by `max-usd-per-pr`.
 
 - **Fork PRs** don't receive secrets, so they get a "skipped" note instead of a check.
 - **Ledger:** every purchase is written to `pr-guard-ledger.jsonl`, which is uploaded as a workflow artifact.
@@ -67,7 +76,7 @@ You need Node 20 or later. Behind an HTTPS proxy (Node 22.21+), prefix network c
 ```sh
 cd pr-guard
 npm ci
-npm test         # 60 tests, no network (the end-to-end test uses loopback only)
+npm test         # 62 tests, no network (the end-to-end test uses loopback only)
 npm run build    # bundles dist/index.js; commit it, since the Action runs from it
 ```
 

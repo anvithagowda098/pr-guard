@@ -7,6 +7,7 @@
 import { maxSeverity } from "./policy.js";
 
 const GITHUB_SEVERITY = { CRITICAL: "critical", HIGH: "high", MODERATE: "medium", LOW: "low" };
+const SEVERITY_WORD = /\b(critical|high|medium|moderate|low)\b/gi;
 
 // CVSS v3 qualitative ratings, for advisories GitHub hasn't rated.
 function cvssSeverity(score) {
@@ -57,6 +58,20 @@ const NORMALIZERS = {
     expect(same(result.versionKey?.name, vars.name) && same(result.versionKey?.version, vars.version), "answer is for a different package or version");
     const findings = result.advisoryKeys.map((k) => ({ id: k.id, title: k.id, severity: "unknown", ref: `https://osv.dev/vulnerability/${k.id}` }));
     return { severity: overall(findings), findings };
+  },
+
+  // ChainSight (#302) POST /secreview {query}: an LLM review as free text,
+  // "Verdict: secure|vulnerable ... Key finding: ...", often cut off mid-sentence.
+  // Only the verdict and the worst severity word are read from it.
+  "chainsight-verdict": (result) => {
+    const text = String(result?.answer ?? "");
+    const verdict = text.match(/verdict:\s*(secure|vulnerable|insecure)/i)?.[1]?.toLowerCase();
+    expect(verdict, "no verdict");
+    if (verdict === "secure") return { severity: "none", findings: [] };
+    const words = [...text.matchAll(SEVERITY_WORD)].map((m) => (m[1].toLowerCase() === "moderate" ? "medium" : m[1].toLowerCase()));
+    const severity = words.length ? maxSeverity(words.map((w) => ({ severity: w }))) : "unknown";
+    const key = text.match(/key finding:\s*(.+?)(?:\.\s|$)/i)?.[1] ?? text.replace(/^verdict:\s*\w+\s*[-–:]?\s*/i, "");
+    return { severity, findings: [{ title: key.slice(0, 200), severity, detail: text }] };
   },
 };
 

@@ -16,6 +16,7 @@ const captured = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-res
 const ANSWERS = {
   77010: captured("77010-npm-lodash-4.17.15-200-paid.json"),
   190048: captured("190048-npm-lodash-4.17.15-200-paid.json"),
+  302: captured("302-secreview-clean-200-paid.json"),
 };
 
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64");
@@ -119,15 +120,17 @@ test("action: buys a dependency check, confirms it with a second miner, blocks, 
     assert.match(comment, /\[Prototype Pollution in lodash\]\(https:\/\/osv\.dev\/vulnerability\/GHSA-p6mc-m468-83gw\)/);
     assert.match(comment, /confirmed/);
     assert.match(comment, /\/engine\/v1\/signal\/0x106d54f4/);
-    assert.deepEqual(state.asks.slice(0, 2), [
-      { miner: "77010", method: "GET", endpoint: "/query", payload: { pkg: "lodash", ver: "4.17.15" } },
-      { miner: "190048", method: "GET", endpoint: "/query", payload: { system: "npm", pkg: "lodash", ver: "4.17.15" } },
-    ]);
+    const askedOf = (id) => state.asks.find((a) => a.miner === id);
+    assert.deepEqual(askedOf("77010"), { miner: "77010", method: "GET", endpoint: "/query", payload: { pkg: "lodash", ver: "4.17.15" } });
+    assert.deepEqual(askedOf("190048"), { miner: "190048", method: "GET", endpoint: "/query", payload: { system: "npm", pkg: "lodash", ver: "4.17.15" } });
+    assert.equal(askedOf("302").endpoint, "/secreview");
+    assert.match(askedOf("302").payload.query, /^Security review of this pull request diff[\s\S]*diff --git a\/src\/app\.js/);
+    assert.match(comment, /\| diff \| package\.json, src\/app\.js \| ✅ none \|/);
 
     const ledger = (await readFile(join(dir, "pr-guard-ledger.jsonl"), "utf8")).trim().split("\n").map(JSON.parse);
-    assert.equal(ledger.length, 4, "two paid calls per run");
-    assert.deepEqual(ledger.slice(0, 2).map((e) => [e.miner_id, e.cost_usd, e.receipt.receipt_hash]), [["77010", 0.01, "0xrec77010"], ["190048", 0.01, "0xrec190048"]]);
-    assert.match(await readFile(join(dir, "out"), "utf8"), /cost_usd[\s\S]*0\.020000/);
+    assert.equal(ledger.length, 6, "three paid calls per run: deps, its confirmation, the diff review");
+    assert.ok(ledger.every((e) => e.cost_usd === 0.01 && e.receipt.receipt_hash.startsWith("0xrec")));
+    assert.match(await readFile(join(dir, "out"), "utf8"), /cost_usd[\s\S]*0\.030000/);
   } finally {
     server.close();
   }

@@ -50434,7 +50434,7 @@ function decide(outcomes) {
     else if (o.status === "skipped") {
       if (REQUIRED_CHECKS.has(o.check)) caution.push(`${label} \u2014 not checked (${o.reason ?? "skipped"})`);
     } else if (o.severity === "unknown") {
-      caution.push(o.findings.length ? `${label} \u2014 ${o.findings.length} advisories, severity not rated` : `${label} \u2014 miner answer could not be interpreted`);
+      caution.push(o.findings.length ? `${label} \u2014 ${o.findings.length} finding${o.findings.length === 1 ? "" : "s"}, severity not rated` : `${label} \u2014 miner answer could not be interpreted`);
     } else if (isHigh(o.severity) && o.confirmed) block.push(`${label} \u2014 ${o.severity}`);
     else if (isHigh(o.severity)) caution.push(`${label} \u2014 ${o.severity}, unconfirmed${o.disagreement ? " (miners disagree)" : ""}`);
     else if (o.disagreement) caution.push(`${label} \u2014 miners disagree`);
@@ -50478,7 +50478,7 @@ function combineOpinions(first, second) {
 }
 
 // src/checks.js
-var DEFAULT_CHECKS = ["deps"];
+var DEFAULT_CHECKS = ["deps", "diff"];
 var DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
 function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3 } = {}) {
   const depJob = (d) => ({
@@ -50556,6 +50556,7 @@ function localOutcomes(rawFiles, installScripts) {
 
 // src/normalize.js
 var GITHUB_SEVERITY = { CRITICAL: "critical", HIGH: "high", MODERATE: "medium", LOW: "low" };
+var SEVERITY_WORD = /\b(critical|high|medium|moderate|low)\b/gi;
 function cvssSeverity(score) {
   if (typeof score !== "number" || score <= 0) return "unknown";
   if (score >= 9) return "critical";
@@ -50597,6 +50598,19 @@ var NORMALIZERS = {
     expect(same(result.versionKey?.name, vars.name) && same(result.versionKey?.version, vars.version), "answer is for a different package or version");
     const findings = result.advisoryKeys.map((k) => ({ id: k.id, title: k.id, severity: "unknown", ref: `https://osv.dev/vulnerability/${k.id}` }));
     return { severity: overall(findings), findings };
+  },
+  // ChainSight (#302) POST /secreview {query}: an LLM review as free text,
+  // "Verdict: secure|vulnerable ... Key finding: ...", often cut off mid-sentence.
+  // Only the verdict and the worst severity word are read from it.
+  "chainsight-verdict": (result) => {
+    const text = String(result?.answer ?? "");
+    const verdict = text.match(/verdict:\s*(secure|vulnerable|insecure)/i)?.[1]?.toLowerCase();
+    expect(verdict, "no verdict");
+    if (verdict === "secure") return { severity: "none", findings: [] };
+    const words = [...text.matchAll(SEVERITY_WORD)].map((m) => m[1].toLowerCase() === "moderate" ? "medium" : m[1].toLowerCase());
+    const severity = words.length ? maxSeverity(words.map((w) => ({ severity: w }))) : "unknown";
+    const key = text.match(/key finding:\s*(.+?)(?:\.\s|$)/i)?.[1] ?? text.replace(/^verdict:\s*\w+\s*[-–:]?\s*/i, "");
+    return { severity, findings: [{ title: key.slice(0, 200), severity, detail: text }] };
   }
 };
 var UNKNOWN = Object.freeze({ severity: "unknown", findings: [] });
@@ -50827,9 +50841,14 @@ var miners_default = {
       intent: "SECURITY_REVIEW",
       method: "GET",
       endpoint: "/query",
-      payload: { pkg: "{{name}}", ver: "{{version}}" },
+      payload: {
+        pkg: "{{name}}",
+        ver: "{{version}}"
+      },
       normalizer: "depsdev-version",
-      ecosystems: ["npm"]
+      ecosystems: [
+        "npm"
+      ]
     },
     {
       minerId: "190048",
@@ -50837,11 +50856,27 @@ var miners_default = {
       intent: "SECURITY_REVIEW",
       method: "GET",
       endpoint: "/query",
-      payload: { system: "{{depsdev_system}}", pkg: "{{name}}", ver: "{{version}}" },
+      payload: {
+        system: "{{depsdev_system}}",
+        pkg: "{{name}}",
+        ver: "{{version}}"
+      },
       normalizer: "depsdev-advisory-keys"
     }
   ],
-  diff: [],
+  diff: [
+    {
+      minerId: "302",
+      name: "ChainSight",
+      intent: "SECURITY_REVIEW",
+      method: "POST",
+      endpoint: "/secreview",
+      payload: {
+        query: "Security review of this pull request diff. List each vulnerability with a severity (critical/high/medium/low), or say none found:\n{{diff}}"
+      },
+      normalizer: "chainsight-verdict"
+    }
+  ],
   patch: [],
   urls: []
 };

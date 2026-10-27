@@ -7,7 +7,7 @@ import { maxSeverity } from "./policy.js";
 export const ALL_CHECKS = ["deps", "diff", "patch", "urls"];
 
 // Paid checks with a vetted miner today; the others stay opt-in until one exists.
-export const DEFAULT_CHECKS = ["deps"];
+export const DEFAULT_CHECKS = ["deps", "diff"];
 
 // deps.dev's names for our ecosystems.
 const DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };

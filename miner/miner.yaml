@@ -93,17 +93,8 @@ endpoints:
           - name: ecosystem
             type: string
             intents: ["*"]
-            description: Package registry. Defaults to npm.
+            description: "Package registry, one of: npm, PyPI, Go, crates.io, Maven, RubyGems, NuGet, Packagist. Defaults to npm."
             default: npm
-            accepted_fields:
-              - { value: npm, intents: ["*"], description: npm (JavaScript) }
-              - { value: PyPI, intents: ["*"], description: PyPI (Python) }
-              - { value: Go, intents: ["*"], description: Go modules }
-              - { value: crates.io, intents: ["*"], description: crates.io (Rust) }
-              - { value: Maven, intents: ["*"], description: Maven (Java) }
-              - { value: RubyGems, intents: ["*"], description: RubyGems }
-              - { value: NuGet, intents: ["*"], description: NuGet (.NET) }
-              - { value: Packagist, intents: ["*"], description: Packagist (PHP) }
 
   - path: /health
     external_path: /health

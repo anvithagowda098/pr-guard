@@ -2,3 +2,5 @@ node_modules/
 .env
 .env.*
 !.env.example
+# raw discovery dump (~16 MB); data/miners-summary.json is the committed view
+data/miners.json

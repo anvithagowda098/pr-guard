@@ -18,7 +18,7 @@ description: >
   RubyGems, NuGet, Packagist) with severity, CVSS and fixed versions. No model
   in the loop: the same input always gets the same answer.
 
-base_url: https://pr-guard-sentinel.prguard.workers.dev
+base_url: https://pr-guard-sentinel.pr-guard.workers.dev
 
 auth:
   type: none

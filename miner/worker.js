@@ -5,7 +5,7 @@
 // Every answer leads with one plain sentence ("Verdict: ..."), which is what
 // Telegraph's scorers read, followed by the structured fields.
 import { scan, RULE_COUNT } from "./rules.js";
-import { lookupPackage, packagesIn, osvEcosystem, worst } from "./osv.js";
+import { lookupPackage, packagesIn, osvEcosystem, worst, compareVersions } from "./osv.js";
 
 export const VERSION = "0.1.0";
 const MAX_BODY_BYTES = 200_000;
@@ -14,15 +14,33 @@ const RANK = ["none", "unrated", "low", "medium", "high", "critical"];
 const json = (status, body) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json; charset=utf-8" } });
 
+/**
+ * The lowest version that fixes every known vulnerability: for each one, its
+ * earliest fix above the current version; then the highest of those.
+ * `unfixed` counts vulnerabilities with no fix above the current version.
+ */
+export function upgradeAdvice(version, vulns) {
+  let target = null;
+  let unfixed = 0;
+  for (const v of vulns) {
+    const fix = v.fixed_in.filter((f) => compareVersions(f, version) > 0).sort(compareVersions)[0];
+    if (!fix) unfixed++;
+    else if (!target || compareVersions(fix, target) > 0) target = fix;
+  }
+  return { upgrade_to: target, unfixed };
+}
+
 function packageSentence(p) {
   const label = `${p.name} ${p.version} (${p.ecosystem})`;
   if (!p.vulnerabilities.length) return `${label} has no known vulnerabilities in OSV.`;
   const counts = {};
   for (const v of p.vulnerabilities) counts[v.severity] = (counts[v.severity] ?? 0) + 1;
   const bySev = Object.entries(counts).sort((a, b) => RANK.indexOf(b[0]) - RANK.indexOf(a[0])).map(([s, n]) => `${n} ${s}`).join(", ");
-  const fixes = [...new Set(p.vulnerabilities.flatMap((v) => v.fixed_in))];
   const top = p.vulnerabilities.slice().sort((a, b) => RANK.indexOf(b.severity) - RANK.indexOf(a.severity))[0];
-  return `${label} has ${p.vulnerabilities.length} known vulnerabilit${p.vulnerabilities.length === 1 ? "y" : "ies"} (${bySev}), worst: ${top.summary} [${top.id}${top.aliases[0] ? `, ${top.aliases[0]}` : ""}]${fixes.length ? `; fixed in ${fixes.slice(0, 4).join(", ")}` : ""}.`;
+  const advice = p.upgrade_to
+    ? `; upgrade to ${p.upgrade_to} or later${p.unfixed ? ` (fixes all but ${p.unfixed} with no fix yet)` : " to fix all of them"}`
+    : "; no fixed version is published yet";
+  return `${label} has ${p.vulnerabilities.length} known vulnerabilit${p.vulnerabilities.length === 1 ? "y" : "ies"} (${bySev}), worst: ${top.summary} [${top.id}${top.aliases[0] ? `, ${top.aliases[0]}` : ""}]${advice}.`;
 }
 
 function findingSentence(f) {
@@ -68,7 +86,7 @@ async function readJson(request) {
 async function lookupAll(pkgs, fetchImpl) {
   const settled = await Promise.allSettled(pkgs.map((p) => lookupPackage(p, fetchImpl)));
   return {
-    packages: settled.filter((s) => s.status === "fulfilled").map((s) => s.value),
+    packages: settled.filter((s) => s.status === "fulfilled").map((s) => ({ ...s.value, ...upgradeAdvice(s.value.version, s.value.vulnerabilities) })),
     failed: pkgs.filter((_, i) => settled[i].status === "rejected"),
   };
 }

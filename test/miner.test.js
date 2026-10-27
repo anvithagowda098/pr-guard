@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { scan } from "../miner/rules.js";
 import { cvss3Score, packagesIn, lookupPackage, dedupe, compareVersions } from "../miner/osv.js";
-import { createHandler } from "../miner/worker.js";
+import { createHandler, upgradeAdvice } from "../miner/worker.js";
 
 const AWS_ID = "AKIA" + "Z7QW3XK2LMNOPQRS";
 const osvRecord = JSON.parse(readFileSync(new URL("./fixtures/miner-responses/CVE_LOOKUP/36009-GHSA-p6mc-m468-83gw-200-paid.json", import.meta.url), "utf8")).body.result;
@@ -116,7 +116,8 @@ test("HTTP: /review answers in prose first, with structured findings", async () 
   assert.equal(res.status, 200);
   const b = await res.json();
   assert.match(b.answer, /^Verdict: vulnerable\. 1 code issue: critical: OS command built from strings \(CWE-78\) at line 2/);
-  assert.match(b.answer, /lodash 4\.17\.15 \(npm\) has 1 known vulnerability \(1 high\), worst: Prototype Pollution in lodash \[GHSA-p6mc-m468-83gw, CVE-2020-8203\]; fixed in 4\.17\.19\./);
+  assert.match(b.answer, /lodash 4\.17\.15 \(npm\) has 1 known vulnerability \(1 high\), worst: Prototype Pollution in lodash \[GHSA-p6mc-m468-83gw, CVE-2020-8203\]; upgrade to 4\.17\.19 or later to fix all of them\./);
+  assert.equal(b.packages[0].upgrade_to, "4.17.19");
   assert.equal(b.severity, "critical");
   assert.equal(b.confidence, 0.95);
   assert.equal(b.findings[0].line, 2);
@@ -168,4 +169,11 @@ test("OSV duplicates (PYSEC + GHSA) merge, keeping the rated record", () => {
 
 test("versions sort numerically", () => {
   assert.deepEqual(["4.17.21", "4.18.0", "4.17.19", "4.17.9", "v1.10.0", "v1.9.2"].sort(compareVersions), ["v1.9.2", "v1.10.0", "4.17.9", "4.17.19", "4.17.21", "4.18.0"]);
+});
+
+test("upgrade advice: the lowest version that fixes everything", () => {
+  const vulns = [{ fixed_in: ["4.17.19"] }, { fixed_in: ["3.9.0", "4.17.21"] }, { fixed_in: ["4.18.0"] }];
+  assert.deepEqual(upgradeAdvice("4.17.15", vulns), { upgrade_to: "4.18.0", unfixed: 0 });
+  assert.deepEqual(upgradeAdvice("4.17.15", [...vulns, { fixed_in: [] }]), { upgrade_to: "4.18.0", unfixed: 1 });
+  assert.deepEqual(upgradeAdvice("1.0.0", [{ fixed_in: ["0.9.0"] }]), { upgrade_to: null, unfixed: 1 });
 });

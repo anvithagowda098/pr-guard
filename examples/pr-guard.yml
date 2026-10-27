@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - id: guard
-        uses: anvithagowda098/intelligent-doc-query/pr-guard@claude/pr-guard-telegraph-c6l9dk
+        uses: anvithagowda098/pr-guard@main
         with:
           telegraph-private-key: ${{ secrets.TELEGRAPH_PRIVATE_KEY }}
           max-usd-per-pr: "0.10"

@@ -74,7 +74,6 @@ Every run is capped by `max-usd-per-pr`.
 You need Node 20 or later. Behind an HTTPS proxy (Node 22.21+), prefix network commands with `NODE_USE_ENV_PROXY=1`.
 
 ```sh
-cd pr-guard
 npm ci
 npm test         # 62 tests, no network (the end-to-end test uses loopback only)
 npm run build    # bundles dist/index.js; commit it, since the Action runs from it

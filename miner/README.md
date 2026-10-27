@@ -16,7 +16,7 @@ How it works:
 ## Test
 
 ```sh
-npm test    # from pr-guard/; test/miner.test.js covers rules, CVSS, OSV parsing and the HTTP contract
+npm test    # test/miner.test.js covers rules, CVSS, OSV parsing and the HTTP contract
 ```
 
 ## Deploy (Cloudflare Workers, free plan)
@@ -24,7 +24,6 @@ npm test    # from pr-guard/; test/miner.test.js covers rules, CVSS, OSV parsing
 The environment needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
 
 ```sh
-cd pr-guard
 npx wrangler@<pinned> deploy -c miner/wrangler.toml
 curl https://pr-guard-sentinel.<subdomain>.workers.dev/health
 ```

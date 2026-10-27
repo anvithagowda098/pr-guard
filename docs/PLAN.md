@@ -13,7 +13,7 @@ Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) p
 - **Disqualifying:** fake receipts, manufactured adoption, collusive requests. PR Guard buying from our own miner must be disclosed. The miner's case rests on independent tests, not self-purchases.
 - **Reviewers check each mission in five steps:** run with new input, check the result, inspect the Telegraph request, break it, reproduce it.
 
-## What works today (branch claude/pr-guard-telegraph-c6l9dk)
+## What works today
 
 - **The Action** (`src/`), 75 tests:
   - Dependency check: deps.dev Package Review #77010, confirmed by Secrev Depsdev #190048 matching advisory ids.
@@ -27,7 +27,7 @@ Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) p
 
 ## Next steps, in order
 
-1. **Repos:** move to a private `pr-guard` repo now. Go public around Nov 14–20, because adoption needs a public Action. Delete the branch from the public `intelligent-doc-query` repo once moved.
+1. **Repo:** this private `pr-guard` repo (moved here from a branch of `intelligent-doc-query` on Oct 27, history kept). Go public around Nov 14–20, because adoption needs a public Action.
 2. **Deploy the miner** to Cloudflare Workers (needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`). Set `base_url`, validate at integrate.telegraphprotocol.com, then register. Gas comes from the Base Sepolia ETH faucet.
 3. **Add the Sentinel miner to `config/miners.json`** as the second opinion for `diff`, so the rules and the AI agreeing can produce BLOCK. Also add it for `deps` on non-npm ecosystems, since it rates PyPI, Go and Cargo.
 4. **Demo repo** with 3 ready PRs: clean, a vulnerable dependency (lodash 4.17.15), and an injection plus a leaked key. Re-run it in November for evidence.
@@ -41,4 +41,4 @@ Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) p
 - **Network allowlist:**
   - Already added: `devnode.telegraphprotocol.com`, `docs.telegraphprotocol.com`, `facilitator.payai.network`, `sepolia.base.org`, `hackathon.telegraphprotocol.com`.
   - Still needed: `api.cloudflare.com`, `*.workers.dev`, `api.osv.dev`, `integrate.telegraphprotocol.com`.
-- **Burner wallet:** created in this container's `pr-guard/.env` (gitignored). It's lost when the container goes, which is fine: generate a new one with `node scripts/wallet.js` and refund it from the faucet.
+- **Burner wallet:** created in the container's `.env` (gitignored). It's lost when the container goes, which is fine: generate a new one with `node scripts/wallet.js` and refund it from the faucet.

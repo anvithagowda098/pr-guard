@@ -1,0 +1,112 @@
+{
+  "captured_at": "2026-10-27T15:43:56.496Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/302",
+  "request": {
+    "method": "POST",
+    "endpoint": "/secreview",
+    "payload": {
+      "query": "Security review of this pull request diff. List each vulnerability with a severity (critical/high/medium/low), or say none found:\napp.post('/calc', (req, res) => {\n  res.send(String(eval(req.body.expr)));\n});"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8\nAmount: 10000 uUSDC\nResource: /v1/ask/302\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/302",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/302"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 4803,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a512d1a568399c3a-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 15:43:56 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBjZDQ4N2NjYzJkODcwNzA5YmMwNWRmZDZkN2UyN2YwZDVjZmI0NCIsInRyYW5zYWN0aW9uIjoiMHg3MDY0YjUxYzc3ZjVhZjg1MTY0NzIxM2ZjM2E4YzYyNmZkNDIwMzlhNGFhZTI0ODk5Zjc5M2E3NTE2NDJjMjc5IiwibmV0d29yayI6ImVpcDE1NTo4NDUzMiJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=nnpi2mC%2FGsm4ZbS5ygFIDVvpyCAyVebTIatwE1Qltg4CzuIsY447e3B%2B4oFJuNxIcsljVvJ1CQsGaiUWDOkqvjuA2hwINfshGVvwdBTxSpFOCd2jLuFMA8UjSUsQBj2zqjKLdwCg3OVetwQA36GKHQ%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDg2ZWQ4M2YwZDBiM2RlYmE1NTczZjE3MWIzZWY0NWI2YTJiZTkyNzhmODkyYWJhMWY3ZDg1YzVmZGNjZTAxNDUiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMGNkNDg3Y2NjMmQ4NzA3MDliYzA1ZGZkNmQ3ZTI3ZjBkNWNmYjQ0IiwibWluZXIiOiI0ODMzIiwiaW50ZW50IjoiU0VDVVJJVFlfUkVWSUVXIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6NDQ0LCJzZXR0bGVtZW50Ijoib25jaGFpbiIsImNoYWluIjoiZWlwMTU1Ojg0NTMyIiwidHhfaGFzaCI6IjB4NzA2NGI1MWM3N2Y1YWY4NTE2NDcyMTNmYzNhOGM2MjZmZDQyMDM5YTRhYWUyNDg5OWY3OTNhNzUxNjQyYzI3OSIsInRpbWVzdGFtcCI6MTc5MzExNTgzNn0="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":1408,\"miner_id\":\"302\",\"miner_name\":\"ChainSight — On-Chain Intelligence Hub\",\"result\":{\"answer\":\"Verdict: vulnerable - the endpoint executes untrusted user input with eval. Key finding: eval(req.body.expr) runs arbitrary JavaScript supplied by the client, enabling remote code execution and full server compromise. Vulnerabilities: Remote Code Execution (RCE) - Critical - Unvalidated eval on client‑provided data allows an attacker to run any JavaScript on the server, leading to full system takeover. Input Validation / Injection - High - No sanitization or\",\"signal\":\"Verdict: vulnerable - the endpoint executes untrusted user input with eval. Key finding: eval(req.body.expr) runs arbitrary JavaScript supplied by the client, enabling remote code execution and full server compromise. Vulnerabilities: Remote Code Execution (RCE) - Critical - Unvalidated eval on client‑provided data allows an attacker to run any JavaScript on the server, leading to full system takeover. Input Validation / Injection - High - No sanitization or\"},\"signal_hash\":\"0x5ffddc57c979ad62343fb8a7f53290720a45f8d1a7c73c453d90a436c5611038\",\"timestamp\":\"2026-10-27T15:43:56.121711609Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 1408,
+    "miner_id": "302",
+    "miner_name": "ChainSight — On-Chain Intelligence Hub",
+    "result": {
+      "answer": "Verdict: vulnerable - the endpoint executes untrusted user input with eval. Key finding: eval(req.body.expr) runs arbitrary JavaScript supplied by the client, enabling remote code execution and full server compromise. Vulnerabilities: Remote Code Execution (RCE) - Critical - Unvalidated eval on client‑provided data allows an attacker to run any JavaScript on the server, leading to full system takeover. Input Validation / Injection - High - No sanitization or",
+      "signal": "Verdict: vulnerable - the endpoint executes untrusted user input with eval. Key finding: eval(req.body.expr) runs arbitrary JavaScript supplied by the client, enabling remote code execution and full server compromise. Vulnerabilities: Remote Code Execution (RCE) - Critical - Unvalidated eval on client‑provided data allows an attacker to run any JavaScript on the server, leading to full system takeover. Input Validation / Injection - High - No sanitization or"
+    },
+    "signal_hash": "0x5ffddc57c979ad62343fb8a7f53290720a45f8d1a7c73c453d90a436c5611038",
+    "timestamp": "2026-10-27T15:43:56.121711609Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "transaction": "0x7064b51c77f5af851647213fc3a8c626fd42039a4aae24899f793a751642c279",
+    "network": "eip155:84532"
+  },
+  "receipt": {
+    "receipt_hash": "0x86ed83f0d0b3deba5573f171b3ef45b6a2be9278f892aba1f7d85c5fdcce0145",
+    "rail": "x402",
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "miner": "4833",
+    "intent": "SECURITY_REVIEW",
+    "amount_uusdc": "10000",
+    "epoch_id": 444,
+    "settlement": "onchain",
+    "chain": "eip155:84532",
+    "tx_hash": "0x7064b51c77f5af851647213fc3a8c626fd42039a4aae24899f793a751642c279",
+    "timestamp": 1793115836
+  },
+  "charged": true
+}

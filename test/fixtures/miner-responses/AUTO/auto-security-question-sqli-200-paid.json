@@ -1,0 +1,111 @@
+{
+  "captured_at": "2026-10-27T15:42:59.615Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask",
+  "request": {
+    "query": "Review this Express handler for security vulnerabilities and give severities:\napp.get('/user', async (req, res) => { const rows = await db.query(\"SELECT * FROM users WHERE id = '\" + req.query.id + \"'\"); res.json(rows); });"
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8\nAmount: 10000 uUSDC\nResource: /v1/ask\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for LLM-routed inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 8527,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a512d024ea72c40c-EWR",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 15:42:58 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBjZDQ4N2NjYzJkODcwNzA5YmMwNWRmZDZkN2UyN2YwZDVjZmI0NCIsInRyYW5zYWN0aW9uIjoiMHg3NzZhYTk5NTMwOWIzMDQ0ZGZmMTdmYTljZTI2MDA2Mzk3Yjk3MjE4ODBjNjk3ODUzNTQ3MzkyODNhY2Q2NzQ0IiwibmV0d29yayI6ImVpcDE1NTo4NDUzMiJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=qAB9o0ZNIOvlFs7xWHqTGVvSJKJb%2BqKjkHUcSkm4lGLM0jbIiKz2nvxHVsFNQdrCsW7gsfkhebe6WF5W%2BYgmo74E3n2e9iLsz0QWDM%2Bk2JQ8UZOmDYFefy6Fhk4hEr%2B0CroV3K4UP3Wf8zwqXEZjFg%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGE1M2RlZmNiMjk5ZmQ2MjViMGY1OWJlZjViYWEwMGRhYmE3NDc2ZmI4ZWY2MTllNmRhZTk3YWI4YzEzZmIzMWQiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMGNkNDg3Y2NjMmQ4NzA3MDliYzA1ZGZkNmQ3ZTI3ZjBkNWNmYjQ0IiwibWluZXIiOiI0ODMzIiwiaW50ZW50IjoiU0VDVVJJVFlfUkVWSUVXIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6NDQ0LCJzZXR0bGVtZW50Ijoib25jaGFpbiIsImNoYWluIjoiZWlwMTU1Ojg0NTMyIiwidHhfaGFzaCI6IjB4Nzc2YWE5OTUzMDliMzA0NGRmZjE3ZmE5Y2UyNjAwNjM5N2I5NzIxODgwYzY5Nzg1MzU0NzM5MjgzYWNkNjc0NCIsInRpbWVzdGFtcCI6MTc5MzExNTc3OH0="
+  },
+  "bodyText": "{\"miner_id\":\"302\",\"miner_name\":\"ChainSight — On-Chain Intelligence Hub\",\"endpoint\":\"/secreview\",\"result\":{\"answer\":\"Verdict: Vulnerable Key finding: The handler builds a SQL query by concatenating req.query.id directly into the statement, enabling a classic SQL‑injection attack that can expose or modify any data in the users table. Identified issues \\u0026 severity Issue Description Severity 1 SQL Injection User‑controlled req.query.id is interpolated into the query string without any sanitization, parameterization, or escaping. An attacker can inject arbitrary SQL (e.g., ?id=1' OR '1'='1). Critical 2 Information Disclosure The endpoint returns all columns (SELECT ) for the matched user, potentially leaking sensitive fields such as passwords, salts, email\",\"signal\":\"Verdict: Vulnerable Key finding: The handler builds a SQL query by concatenating req.query.id directly into the statement, enabling a classic SQL‑injection attack that can expose or modify any data in the users table. Identified issues \\u0026 severity Issue Description Severity 1 SQL Injection User‑controlled req.query.id is interpolated into the query string without any sanitization, parameterization, or escaping. An attacker can inject arbitrary SQL (e.g., ?id=1' OR '1'='1). Critical 2 Information Disclosure The endpoint returns all columns (SELECT ) for the matched user, potentially leaking sensitive fields such as passwords, salts, email\"},\"cost_usd\":0.01,\"duration_ms\":1356,\"timestamp\":\"2026-10-27T15:42:58.376233059Z\",\"reasoning\":\"Intent: The user is asking for a review of code specifically for security vulnerabilities and wants severities assigned, which directly maps to the SECURITY_REVIEW intent. As a secondary, CODE_REVIEW is relevant because the query also asks for a general review of the code, but the primary focus is security.\\nMiner: The intent is SECURITY_REVIEW, and the ChainSight miner has an endpoint /secreview that explicitly serves this intent. The query parameter is required for this endpoint, and the user's question is directly used as the input for this parameter.\",\"intent\":\"SECURITY_REVIEW\",\"signal_hash\":\"0x1f9cb2489a9adc6adb2d04d3362d7ebbe23c13a82c22b214994ab541e9fc4740\"}",
+  "body": {
+    "miner_id": "302",
+    "miner_name": "ChainSight — On-Chain Intelligence Hub",
+    "endpoint": "/secreview",
+    "result": {
+      "answer": "Verdict: Vulnerable Key finding: The handler builds a SQL query by concatenating req.query.id directly into the statement, enabling a classic SQL‑injection attack that can expose or modify any data in the users table. Identified issues & severity Issue Description Severity 1 SQL Injection User‑controlled req.query.id is interpolated into the query string without any sanitization, parameterization, or escaping. An attacker can inject arbitrary SQL (e.g., ?id=1' OR '1'='1). Critical 2 Information Disclosure The endpoint returns all columns (SELECT ) for the matched user, potentially leaking sensitive fields such as passwords, salts, email",
+      "signal": "Verdict: Vulnerable Key finding: The handler builds a SQL query by concatenating req.query.id directly into the statement, enabling a classic SQL‑injection attack that can expose or modify any data in the users table. Identified issues & severity Issue Description Severity 1 SQL Injection User‑controlled req.query.id is interpolated into the query string without any sanitization, parameterization, or escaping. An attacker can inject arbitrary SQL (e.g., ?id=1' OR '1'='1). Critical 2 Information Disclosure The endpoint returns all columns (SELECT ) for the matched user, potentially leaking sensitive fields such as passwords, salts, email"
+    },
+    "cost_usd": 0.01,
+    "duration_ms": 1356,
+    "timestamp": "2026-10-27T15:42:58.376233059Z",
+    "reasoning": "Intent: The user is asking for a review of code specifically for security vulnerabilities and wants severities assigned, which directly maps to the SECURITY_REVIEW intent. As a secondary, CODE_REVIEW is relevant because the query also asks for a general review of the code, but the primary focus is security.\nMiner: The intent is SECURITY_REVIEW, and the ChainSight miner has an endpoint /secreview that explicitly serves this intent. The query parameter is required for this endpoint, and the user's question is directly used as the input for this parameter.",
+    "intent": "SECURITY_REVIEW",
+    "signal_hash": "0x1f9cb2489a9adc6adb2d04d3362d7ebbe23c13a82c22b214994ab541e9fc4740"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "transaction": "0x776aa995309b3044dff17fa9ce26006397b9721880c69785354739283acd6744",
+    "network": "eip155:84532"
+  },
+  "receipt": {
+    "receipt_hash": "0xa53defcb299fd625b0f59bef5baa00daba7476fb8ef619e6dae97ab8c13fb31d",
+    "rail": "x402",
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "miner": "4833",
+    "intent": "SECURITY_REVIEW",
+    "amount_uusdc": "10000",
+    "epoch_id": 444,
+    "settlement": "onchain",
+    "chain": "eip155:84532",
+    "tx_hash": "0x776aa995309b3044dff17fa9ce26006397b9721880c69785354739283acd6744",
+    "timestamp": 1793115778
+  },
+  "charged": true
+}

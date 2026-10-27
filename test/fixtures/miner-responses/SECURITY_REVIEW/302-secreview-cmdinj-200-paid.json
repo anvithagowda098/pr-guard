@@ -1,0 +1,112 @@
+{
+  "captured_at": "2026-10-27T15:44:01.162Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/302",
+  "request": {
+    "method": "POST",
+    "endpoint": "/secreview",
+    "payload": {
+      "query": "Security review of this pull request diff. List each vulnerability with a severity (critical/high/medium/low), or say none found:\nconst { exec } = require('child_process');\napp.get('/ping', (req, res) => {\n  exec('ping -c 1 ' + req.query.host, (err, out) => res.send(out));\n});"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8\nAmount: 10000 uUSDC\nResource: /v1/ask/302\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/302",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/302"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 3966,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a512d1c3ba8b93b7-EWR",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 15:44:00 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBjZDQ4N2NjYzJkODcwNzA5YmMwNWRmZDZkN2UyN2YwZDVjZmI0NCIsInRyYW5zYWN0aW9uIjoiMHg4OTkwODFhYjNkMjM0NDY4NWUxOGZhODYxNjNlMzFhYTZmODYwYjVlODQyY2I3OTJjZjBjMDdlMWQzMWU5MGRmIiwibmV0d29yayI6ImVpcDE1NTo4NDUzMiJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=AidTwxlMP8eUpo%2FktYskEHblxsV789%2BdTK%2F1wjN6nCn%2FZ%2BpjuB2xLnJ3ji9wPdM%2F%2FwL%2FPN2xkO2iIrGJJzfzjS5VSgWhu0vBy6jCTnhTUbEWQZ4h8P5wtRsj40m4qyQSIMA5UZSP4NDA3%2FTaMHa2lA%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGI3YjI5ZTc3ZjAwNjU3ZjM1ZGViMGE0M2JhOTJmN2VhZTRhNzk1ZWJlNzBlZGIxMGU5ZThiY2U1YjE3YjE4OGIiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMGNkNDg3Y2NjMmQ4NzA3MDliYzA1ZGZkNmQ3ZTI3ZjBkNWNmYjQ0IiwibWluZXIiOiI0ODMzIiwiaW50ZW50IjoiU0VDVVJJVFlfUkVWSUVXIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6NDQ0LCJzZXR0bGVtZW50Ijoib25jaGFpbiIsImNoYWluIjoiZWlwMTU1Ojg0NTMyIiwidHhfaGFzaCI6IjB4ODk5MDgxYWIzZDIzNDQ2ODVlMThmYTg2MTYzZTMxYWE2Zjg2MGI1ZTg0MmNiNzkyY2YwYzA3ZTFkMzFlOTBkZiIsInRpbWVzdGFtcCI6MTc5MzExNTg0MH0="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":1210,\"miner_id\":\"302\",\"miner_name\":\"ChainSight — On-Chain Intelligence Hub\",\"result\":{\"answer\":\"Verdict: vulnerable - The endpoint directly injects user‑controlled data into a shell command, enabling OS command injection. Key Finding: exec('ping -c 1 ' + req.query.host, ...) concatenates the host query parameter without any validation or sanitization, allowing an attacker to execute arbitrary commands on the server. Vulnerabilities Vulnerability\",\"signal\":\"Verdict: vulnerable - The endpoint directly injects user‑controlled data into a shell command, enabling OS command injection. Key Finding: exec('ping -c 1 ' + req.query.host, ...) concatenates the host query parameter without any validation or sanitization, allowing an attacker to execute arbitrary commands on the server. Vulnerabilities Vulnerability\"},\"signal_hash\":\"0x34f9f3f555481dd1d5dcb8a8ede9b1737840c5ab8ad80d972b9f31773cc25947\",\"timestamp\":\"2026-10-27T15:44:00.794360348Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 1210,
+    "miner_id": "302",
+    "miner_name": "ChainSight — On-Chain Intelligence Hub",
+    "result": {
+      "answer": "Verdict: vulnerable - The endpoint directly injects user‑controlled data into a shell command, enabling OS command injection. Key Finding: exec('ping -c 1 ' + req.query.host, ...) concatenates the host query parameter without any validation or sanitization, allowing an attacker to execute arbitrary commands on the server. Vulnerabilities Vulnerability",
+      "signal": "Verdict: vulnerable - The endpoint directly injects user‑controlled data into a shell command, enabling OS command injection. Key Finding: exec('ping -c 1 ' + req.query.host, ...) concatenates the host query parameter without any validation or sanitization, allowing an attacker to execute arbitrary commands on the server. Vulnerabilities Vulnerability"
+    },
+    "signal_hash": "0x34f9f3f555481dd1d5dcb8a8ede9b1737840c5ab8ad80d972b9f31773cc25947",
+    "timestamp": "2026-10-27T15:44:00.794360348Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "transaction": "0x899081ab3d2344685e18fa86163e31aa6f860b5e842cb792cf0c07e1d31e90df",
+    "network": "eip155:84532"
+  },
+  "receipt": {
+    "receipt_hash": "0xb7b29e77f00657f35deb0a43ba92f7eae4a795ebe70edb10e9e8bce5b17b188b",
+    "rail": "x402",
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "miner": "4833",
+    "intent": "SECURITY_REVIEW",
+    "amount_uusdc": "10000",
+    "epoch_id": 444,
+    "settlement": "onchain",
+    "chain": "eip155:84532",
+    "tx_hash": "0x899081ab3d2344685e18fa86163e31aa6f860b5e842cb792cf0c07e1d31e90df",
+    "timestamp": 1793115840
+  },
+  "charged": true
+}

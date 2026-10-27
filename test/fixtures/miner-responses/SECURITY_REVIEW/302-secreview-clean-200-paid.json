@@ -1,0 +1,112 @@
+{
+  "captured_at": "2026-10-27T15:43:50.959Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/302",
+  "request": {
+    "method": "POST",
+    "endpoint": "/secreview",
+    "payload": {
+      "query": "Security review of this pull request diff. List each vulnerability with a severity (critical/high/medium/low), or say none found:\ndef add_user(conn, name):\n    with conn.cursor() as cur:\n        cur.execute(\"INSERT INTO users (name) VALUES (%s)\", (name,))\n    conn.commit()"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8\nAmount: 10000 uUSDC\nResource: /v1/ask/302\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/302",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/302"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 4109,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a512d1862b450f4f-EWR",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 15:43:50 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBjZDQ4N2NjYzJkODcwNzA5YmMwNWRmZDZkN2UyN2YwZDVjZmI0NCIsInRyYW5zYWN0aW9uIjoiMHg0NzYwZTI5MmNmNjc0ZWVmYjM0ZTE0NzlhMDMwZGMyZjFhOWZjNTU2OTdiNzc3ODc5MzIzNmYxNDYzMzE0Y2I4IiwibmV0d29yayI6ImVpcDE1NTo4NDUzMiJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=2NKFT80%2FSA5Ca6oXq8j3Dlrd1bbFDtu38fzRkwS5Qf%2FpMCHQ%2FddsvJmE95VvZXezKXEfcXPsyvq3LrPwRAEVlLw9tvNEB%2ByfYK2D%2BytwbmX9w0KK%2B4W%2FVwYJLGc7Jdt9pdJY9ZmBhPhDvQUckqVjiQ%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDZmYTAwY2MxMmU4Y2UyOTUwZjExZWM2MDNmYzY3OWY1NGFlMWUwYTIwYjg3NjQ5Zjg4NjFiOTMyMjk2MjRlYTkiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMGNkNDg3Y2NjMmQ4NzA3MDliYzA1ZGZkNmQ3ZTI3ZjBkNWNmYjQ0IiwibWluZXIiOiI0ODMzIiwiaW50ZW50IjoiU0VDVVJJVFlfUkVWSUVXIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6NDQ0LCJzZXR0bGVtZW50Ijoib25jaGFpbiIsImNoYWluIjoiZWlwMTU1Ojg0NTMyIiwidHhfaGFzaCI6IjB4NDc2MGUyOTJjZjY3NGVlZmIzNGUxNDc5YTAzMGRjMmYxYTlmYzU1Njk3Yjc3Nzg3OTMyMzZmMTQ2MzMxNGNiOCIsInRpbWVzdGFtcCI6MTc5MzExNTgzMH0="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":1196,\"miner_id\":\"302\",\"miner_name\":\"ChainSight — On-Chain Intelligence Hub\",\"result\":{\"answer\":\"Verdict: secure - the code properly uses a parameterized query, eliminating SQL injection risk. Findings: No security vulnerabilities detected in the provided function. Vulnerabilities: None found.\",\"signal\":\"Verdict: secure - the code properly uses a parameterized query, eliminating SQL injection risk. Findings: No security vulnerabilities detected in the provided function. Vulnerabilities: None found.\"},\"signal_hash\":\"0x4a3c922050354df2f3975efe58a19e0307fc5649253bb9542dbb19dd5f5834ee\",\"timestamp\":\"2026-10-27T15:43:50.552523747Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 1196,
+    "miner_id": "302",
+    "miner_name": "ChainSight — On-Chain Intelligence Hub",
+    "result": {
+      "answer": "Verdict: secure - the code properly uses a parameterized query, eliminating SQL injection risk. Findings: No security vulnerabilities detected in the provided function. Vulnerabilities: None found.",
+      "signal": "Verdict: secure - the code properly uses a parameterized query, eliminating SQL injection risk. Findings: No security vulnerabilities detected in the provided function. Vulnerabilities: None found."
+    },
+    "signal_hash": "0x4a3c922050354df2f3975efe58a19e0307fc5649253bb9542dbb19dd5f5834ee",
+    "timestamp": "2026-10-27T15:43:50.552523747Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "transaction": "0x4760e292cf674eefb34e1479a030dc2f1a9fc55697b7778793236f1463314cb8",
+    "network": "eip155:84532"
+  },
+  "receipt": {
+    "receipt_hash": "0x6fa00cc12e8ce2950f11ec603fc679f54ae1e0a20b87649f8861b93229624ea9",
+    "rail": "x402",
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "miner": "4833",
+    "intent": "SECURITY_REVIEW",
+    "amount_uusdc": "10000",
+    "epoch_id": 444,
+    "settlement": "onchain",
+    "chain": "eip155:84532",
+    "tx_hash": "0x4760e292cf674eefb34e1479a030dc2f1a9fc55697b7778793236f1463314cb8",
+    "timestamp": 1793115830
+  },
+  "charged": true
+}

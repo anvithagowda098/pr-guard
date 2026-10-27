@@ -36,6 +36,11 @@ function* matches(text) {
   }
 }
 
+/** Secret-looking spans in text: [{ type, severity, start, end }]. Values are not returned. */
+export function secretSpans(text) {
+  return [...matches(text ?? "")].map(({ rule, start, end }) => ({ type: rule.type, severity: rule.severity, start, end }));
+}
+
 /** Replace secret-looking spans with `[REDACTED:<type>]`. */
 export function redact(text) {
   if (!text) return { text: text ?? "", hits: [] };

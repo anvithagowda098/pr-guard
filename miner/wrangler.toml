@@ -1,0 +1,5 @@
+# Cloudflare Worker for the PR Guard Sentinel miner. Deploy: npx wrangler deploy -c miner/wrangler.toml
+name = "pr-guard-sentinel"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true

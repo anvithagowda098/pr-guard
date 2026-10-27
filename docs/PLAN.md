@@ -31,16 +31,61 @@ Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) p
   - **First paid call through Telegraph:** `/engine/v1/ask/731001`, /package lodash 4.17.15, 200, $0.01. Signal `0x2d457569…b48d`. This was a self-test from the PR Guard burner, to be disclosed; it predates the event, so it isn't evidence.
 - **Network facts learned:** see the README section "Which miners, and why". Failed miner calls are charged. Unknown packages answer 500 with "upstream error 404".
 
-## Next steps, in order
+## Timeline (dates in UTC; the deadline is Dec 1 23:59 UTC, which is Dec 2 05:29 IST)
 
-1. **Repo:** this private `pr-guard` repo (moved here from a branch of `intelligent-doc-query` on Oct 27, history kept). Go public around Nov 14–20, because adoption needs a public Action.
-2. ~~Deploy and register the miner~~: done Oct 27. Watch its rank and score at `/api/miners?intent=SECURITY_REVIEW`.
-3. **Add the Sentinel miner to `config/miners.json`** as the second opinion for `diff`, so the rules and the AI agreeing can produce BLOCK. Also add it for `deps` on non-npm ecosystems, since it rates PyPI, Go and Cargo.
-4. **Demo repo** with 3 ready PRs: clean, a vulnerable dependency (lodash 4.17.15), and an injection plus a leaked key. Re-run it in November for evidence.
-5. **Public "paste a PR link" page** with a sponsored free tier, permalinks and a recent-scans feed.
-6. **Evaluation set:** labelled vulnerable and clean packages and code snippets, scored against the competing miners. Report cost per correct answer, and consider an Evaluators-track entry.
-7. **Real adoption:** real maintainers on real repos. Never staged.
-8. **Submission:** 2–5 minute video, README run steps, evidence (receipts, signal hashes, ledger), and the 5 commercial answers.
+**Phase 0, before the event (Wed Oct 28 – Sat Oct 31)**
+
+| When | Task | Who |
+|---|---|---|
+| Oct 28–29 | Create private repo `pr-guard-demo` and give Claude access | User |
+| Oct 28–29 | Register on the H2 site: Apps & Agents (Mission 10) and Miners (`SECURITY_REVIEW`); join the Discord | User |
+| Oct 29–30 | Sentinel as second opinion: `diff` BLOCKs when the AI and the rules agree; non-npm deps get ratings | Claude |
+| Oct 29–30 | Demo repo: the workflow plus 3 PRs (clean, lodash 4.17.15, leaked key plus SQL injection) | Claude |
+| Oct 30–31 | New burner for the Action, funded from the Circle faucet, stored as a GitHub secret | User, guided |
+| Oct 31 | Dry run on the demo PRs and fixes | Claude |
+
+**Phase 1, the event opens (Sun Nov 1 – Sat Nov 7)**
+
+| When | Task | Who |
+|---|---|---|
+| Nov 1 | Re-run the demo PRs: the first in-event evidence (receipts, signal hashes, ledger) | Both |
+| Nov 1–2 | "Introducing PR Guard" post tagging @Telegraphprotoc | Claude drafts, user posts |
+| Nov 2–6 | Public "paste a PR link" page: sponsored free scans, permalinks, recent-scans feed | Claude |
+| Nov 3–7 | Outreach list: 15–20 real people or projects | User |
+
+**Phase 2, prove it works (Sun Nov 8 – Sat Nov 14, milestone)**
+
+| When | Task | Who |
+|---|---|---|
+| Nov 8–11 | Test set of about 50 labelled cases; score every miner; accuracy and cost-per-correct leaderboard | Claude |
+| Nov 10–12 | Hardening against the failure cases judges will try; beginner run guide | Claude |
+| Nov 12–13 | Make `pr-guard` public and tag v0.1 | User clicks, Claude prepares |
+| Sat Nov 14 | Milestone post: a working purchase with receipts | Claude drafts, user posts |
+
+**Phase 3, real users (Sun Nov 15 – Sat Nov 21, showcase)**
+
+| When | Task | Who |
+|---|---|---|
+| Nov 15–21 | Help 5–10 real people install it on real repos. Never staged. | User |
+| Nov 15–21 | Fix what real users hit; watch the miner's rank | Claude |
+| Fri Nov 20 | Community showcase demo | User |
+
+**Phase 4, package and submit (Sun Nov 22 – Sun Nov 29)**
+
+| When | Task | Who |
+|---|---|---|
+| Nov 22–23 | Decide whether to enter the Evaluators track from the test set | Both |
+| Tue Nov 24 | Feature freeze: fixes only from here | Both |
+| Nov 24–26 | Evidence pack: receipts, signals, ledgers, dated user list, miner stats, test results | Claude |
+| Nov 25–27 | Demo video, 2–5 minutes | Claude scripts, user records |
+| Nov 26–28 | Submission text for both entries: 5 commercial answers, run steps, limits, disclosures | Claude drafts, user reviews |
+| Sun Nov 29 | **Submit both entries** | User |
+| Nov 30 – Dec 1 | Buffer only | – |
+
+**After submitting:**
+- Dec 2–8: judging. Keep the miner, the page and a funded wallet running.
+- About Dec 9: provisional results, with 72 hours to appeal.
+- December: separate adoption challenges (2 × $500), so keep users active.
 
 ## Environment needs
 

@@ -22,13 +22,19 @@ Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) p
   - Budget reserved at quote time, a PR comment, a ledger.
 - **The miner** (`miner/`): PR Guard Sentinel, `SECURITY_REVIEW`.
   - Rule-based `/review` and OSV-backed `/package`.
-  - Tested, but not yet deployed or registered. The id 731001 and slug `pr-guard-sentinel` were free on Oct 27.
+  - **Deployed:** https://pr-guard-sentinel.pr-guard.workers.dev (Cloudflare Workers, `npm run deploy:miner`).
+  - **Registered and active** on Telegraph, Oct 27 19:12 UTC:
+    - registrationId 4869, routing id 731001;
+    - owner and fee address `0xFb49DF5c009e60749776bF3CBed3D1C25Dde0297` (the user's MetaMask);
+    - tx `0x88e4ca7650af50613b85b018a91882b75339f395845eb44236a968727e09de67`, relayed by the console.
+  - The registered YAML URL is `/miner.yaml` on the Worker, committed by hash. **Any YAML change needs `updateMiner` from the owner wallet.**
+  - **First paid call through Telegraph:** `/engine/v1/ask/731001`, /package lodash 4.17.15, 200, $0.01. Signal `0x2d457569…b48d`. This was a self-test from the PR Guard burner, to be disclosed; it predates the event, so it isn't evidence.
 - **Network facts learned:** see the README section "Which miners, and why". Failed miner calls are charged. Unknown packages answer 500 with "upstream error 404".
 
 ## Next steps, in order
 
 1. **Repo:** this private `pr-guard` repo (moved here from a branch of `intelligent-doc-query` on Oct 27, history kept). Go public around Nov 14–20, because adoption needs a public Action.
-2. **Deploy the miner** to Cloudflare Workers (needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`). Set `base_url`, validate at integrate.telegraphprotocol.com, then register. Gas comes from the Base Sepolia ETH faucet.
+2. ~~Deploy and register the miner~~: done Oct 27. Watch its rank and score at `/api/miners?intent=SECURITY_REVIEW`.
 3. **Add the Sentinel miner to `config/miners.json`** as the second opinion for `diff`, so the rules and the AI agreeing can produce BLOCK. Also add it for `deps` on non-npm ecosystems, since it rates PyPI, Go and Cargo.
 4. **Demo repo** with 3 ready PRs: clean, a vulnerable dependency (lodash 4.17.15), and an injection plus a leaked key. Re-run it in November for evidence.
 5. **Public "paste a PR link" page** with a sponsored free tier, permalinks and a recent-scans feed.

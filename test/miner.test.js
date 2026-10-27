@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { scan } from "../miner/rules.js";
-import { cvss3Score, packagesIn, lookupPackage } from "../miner/osv.js";
+import { cvss3Score, packagesIn, lookupPackage, dedupe, compareVersions } from "../miner/osv.js";
 import { createHandler } from "../miner/worker.js";
 
 const AWS_ID = "AKIA" + "Z7QW3XK2LMNOPQRS";
@@ -152,4 +152,20 @@ test("HTTP: an OSV outage degrades to 'could not be looked up', not a false secu
   assert.match(b.answer, /lodash 4\.17\.15 \(npm\) could not be looked up\./);
   assert.equal(b.confidence, 0.4);
   assert.equal((await post(handler, "/package", { name: "lodash", version: "4.17.15" })).status, 502);
+});
+
+test("OSV duplicates (PYSEC + GHSA) merge, keeping the rated record", () => {
+  const merged = dedupe([
+    { id: "PYSEC-2021-1", aliases: ["CVE-2021-1"], severity: "unrated", cvss: null, fixed_in: ["3.2.1"] },
+    { id: "GHSA-aaaa", aliases: ["CVE-2021-1"], severity: "high", cvss: 7.5, fixed_in: ["3.1.9", "3.2.1"] },
+    { id: "GHSA-bbbb", aliases: [], severity: "low", cvss: 3.1, fixed_in: [] },
+  ]);
+  assert.deepEqual(merged.map((v) => [v.id, v.severity, v.aliases, v.fixed_in]), [
+    ["GHSA-aaaa", "high", ["CVE-2021-1", "PYSEC-2021-1"], ["3.1.9", "3.2.1"]],
+    ["GHSA-bbbb", "low", [], []],
+  ]);
+});
+
+test("versions sort numerically", () => {
+  assert.deepEqual(["4.17.21", "4.18.0", "4.17.19", "4.17.9", "v1.10.0", "v1.9.2"].sort(compareVersions), ["v1.9.2", "v1.10.0", "4.17.9", "4.17.19", "4.17.21", "4.18.0"]);
 });

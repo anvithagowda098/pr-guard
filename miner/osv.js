@@ -72,13 +72,55 @@ export function summarizeVuln(v, name) {
     summary: v.summary ?? (v.details ?? "").split("\n")[0].slice(0, 200),
     severity,
     cvss,
-    fixed_in: [...fixed],
+    fixed_in: [...fixed].sort(compareVersions),
     url: `https://osv.dev/vulnerability/${v.id}`,
   };
 }
 
 const RANK = ["none", "unrated", "low", "medium", "high", "critical"];
 export const worst = (sevs) => sevs.reduce((a, s) => (RANK.indexOf(s) > RANK.indexOf(a) ? s : a), "none");
+
+// Numeric-aware version order ("4.17.9" < "4.17.19" < "4.18.0"); good enough
+// to list fixes in order, not a full semver/PEP 440 implementation.
+export function compareVersions(a, b) {
+  const pa = String(a).replace(/^v/, "").split(/[^0-9A-Za-z]+/);
+  const pb = String(b).replace(/^v/, "").split(/[^0-9A-Za-z]+/);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] ?? "0";
+    const y = pb[i] ?? "0";
+    const d = /^\d+$/.test(x) && /^\d+$/.test(y) ? Number(x) - Number(y) : x.localeCompare(y);
+    if (d) return Math.sign(d);
+  }
+  return 0;
+}
+
+/**
+ * OSV often lists one vulnerability several times (a PYSEC or GO record and
+ * the GHSA record, linked by id or alias). Merge records that share any id,
+ * keeping the best-rated one's details and the union of aliases and fixes.
+ */
+export function dedupe(vulns) {
+  const groups = [];
+  for (const v of vulns) {
+    const ids = new Set([v.id, ...v.aliases]);
+    const hits = groups.filter((g) => [...ids].some((id) => g.ids.has(id)));
+    const merged = { ids, members: [v] };
+    for (const g of hits) {
+      for (const id of g.ids) merged.ids.add(id);
+      merged.members.push(...g.members);
+      groups.splice(groups.indexOf(g), 1);
+    }
+    groups.push(merged);
+  }
+  return groups.map(({ ids, members }) => {
+    const best = members.slice().sort((a, b) => RANK.indexOf(b.severity) - RANK.indexOf(a.severity) || (b.cvss ?? 0) - (a.cvss ?? 0))[0];
+    return {
+      ...best,
+      aliases: [...ids].filter((id) => id !== best.id).sort(),
+      fixed_in: [...new Set(members.flatMap((m) => m.fixed_in))].sort(compareVersions),
+    };
+  });
+}
 
 /**
  * @param {{ ecosystem: string, name: string, version: string }} pkg
@@ -94,7 +136,7 @@ export async function lookupPackage({ ecosystem, name, version }, fetchImpl = fe
   });
   if (!res.ok) throw new Error(`OSV answered ${res.status}`);
   const body = await res.json();
-  const vulns = (body.vulns ?? []).map((v) => summarizeVuln(v, name));
+  const vulns = dedupe((body.vulns ?? []).map((v) => summarizeVuln(v, name)));
   return { ecosystem: eco, name, version, severity: worst(vulns.map((v) => v.severity)), vulnerabilities: vulns };
 }
 

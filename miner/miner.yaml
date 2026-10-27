@@ -1,6 +1,6 @@
 # PR Guard Sentinel: Telegraph miner YAML (public; pinned and hashed at registration).
-# Before registering, replace base_url with the deployed Worker URL, then
-# validate: POST https://integrate.telegraphprotocol.com/api/validate
+# base_url is the deployed Cloudflare Worker. Validate before registering, in the
+# console at https://integrate.telegraphprotocol.com (it checks the endpoints live).
 version: "1"
 kind: miner
 id: 731001
@@ -18,7 +18,7 @@ description: >
   RubyGems, NuGet, Packagist) with severity, CVSS and fixed versions. No model
   in the loop: the same input always gets the same answer.
 
-base_url: https://pr-guard-sentinel.REPLACE-WITH-SUBDOMAIN.workers.dev
+base_url: https://pr-guard-sentinel.prguard.workers.dev
 
 auth:
   type: none

@@ -1,0 +1,21 @@
+{
+  "name": "pr-guard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub Action that buys security checks from Telegraph miners on every pull request",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "discover": "node scripts/discover.js",
+    "wallet": "node scripts/wallet.js",
+    "first-call": "node scripts/first-call.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@x402/evm": "2.28.0",
+    "@x402/fetch": "2.28.0",
+    "viem": "2.57.5"
+  }
+}

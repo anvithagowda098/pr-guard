@@ -1,0 +1,396 @@
+{
+  "captured_at": "2026-10-27T15:26:21.550Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/36009",
+  "request": {
+    "method": "GET",
+    "endpoint": "/query",
+    "payload": {
+      "id": "GHSA-p6mc-m468-83gw"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8\nAmount: 10000 uUSDC\nResource: /v1/ask/36009\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/36009",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/36009"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 4114,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a512b7e7be888186-EWR",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 15:26:21 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBjZDQ4N2NjYzJkODcwNzA5YmMwNWRmZDZkN2UyN2YwZDVjZmI0NCIsInRyYW5zYWN0aW9uIjoiMHhjMTM2MDM0NTY3MWY3NTc2Yzk5YjA3MmI2MTVjYWNiYmYwM2IzNzVkZjVhNmFkNGQ4Y2UyMGExOWQ2MjE0Y2Y4IiwibmV0d29yayI6ImVpcDE1NTo4NDUzMiJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=mwl%2FivQf946YY3NWaaMQbxnSsirFvPOOm%2BSPGxfjEDLxg4CZICyx4%2BjmKO2M9RRZtg31YeRey4IOgUMPzwa3Sd2l%2B4XW9AZzC6BuyT5OzNsNnr9Wd6YrxDMxcFcd6TUuz80WGG624jI1VWVSWFfGqg%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDYyMmVlYWZmZmRiZGZhMTc2NjYyYTVjNGQ1YWYxYzBiM2E3ZjUzYTMxNzg2OWMwODczZmU1NzRhMjdjZTEyOTAiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMGNkNDg3Y2NjMmQ4NzA3MDliYzA1ZGZkNmQ3ZTI3ZjBkNWNmYjQ0IiwibWluZXIiOiIzMTkyIiwiaW50ZW50IjoiQ1ZFX0xPT0tVUCIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjQ0NCwic2V0dGxlbWVudCI6Im9uY2hhaW4iLCJjaGFpbiI6ImVpcDE1NTo4NDUzMiIsInR4X2hhc2giOiIweGMxMzYwMzQ1NjcxZjc1NzZjOTliMDcyYjYxNWNhY2JiZjAzYjM3NWRmNWE2YWQ0ZDhjZTIwYTE5ZDYyMTRjZjgiLCJ0aW1lc3RhbXAiOjE3OTMxMTQ3ODF9"
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":572,\"miner_id\":\"36009\",\"miner_name\":\"OSV GHSA Lookup\",\"result\":{\"affected\":[{\"database_specific\":{\"source\":\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json\"},\"package\":{\"ecosystem\":\"npm\",\"name\":\"lodash\",\"purl\":\"pkg:npm/lodash\"},\"ranges\":[{\"events\":[{\"introduced\":\"3.7.0\"},{\"fixed\":\"4.17.19\"}],\"type\":\"SEMVER\"}]},{\"database_specific\":{\"source\":\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json\"},\"package\":{\"ecosystem\":\"npm\",\"name\":\"lodash-es\",\"purl\":\"pkg:npm/lodash-es\"},\"ranges\":[{\"events\":[{\"introduced\":\"3.7.0\"},{\"fixed\":\"4.17.20\"}],\"type\":\"SEMVER\"}]},{\"database_specific\":{\"source\":\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json\"},\"package\":{\"ecosystem\":\"npm\",\"name\":\"lodash.pick\",\"purl\":\"pkg:npm/lodash.pick\"},\"ranges\":[{\"events\":[{\"introduced\":\"4.0.0\"},{\"last_affected\":\"4.4.0\"}],\"type\":\"SEMVER\"}]},{\"database_specific\":{\"source\":\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json\"},\"package\":{\"ecosystem\":\"npm\",\"name\":\"lodash.set\",\"purl\":\"pkg:npm/lodash.set\"},\"ranges\":[{\"events\":[{\"introduced\":\"3.7.0\"},{\"last_affected\":\"4.3.2\"}],\"type\":\"SEMVER\"}]},{\"database_specific\":{\"source\":\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json\"},\"package\":{\"ecosystem\":\"npm\",\"name\":\"lodash.setwith\",\"purl\":\"pkg:npm/lodash.setwith\"},\"ranges\":[{\"events\":[{\"introduced\":\"0\"},{\"last_affected\":\"4.3.2\"}],\"type\":\"SEMVER\"}]},{\"database_specific\":{\"source\":\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json\"},\"package\":{\"ecosystem\":\"npm\",\"name\":\"lodash.update\",\"purl\":\"pkg:npm/lodash.update\"},\"ranges\":[{\"events\":[{\"introduced\":\"0\"},{\"last_affected\":\"4.10.2\"}],\"type\":\"SEMVER\"}]},{\"database_specific\":{\"source\":\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json\"},\"package\":{\"ecosystem\":\"npm\",\"name\":\"lodash.updatewith\",\"purl\":\"pkg:npm/lodash.updatewith\"},\"ranges\":[{\"events\":[{\"introduced\":\"0\"},{\"last_affected\":\"4.10.2\"}],\"type\":\"SEMVER\"}]},{\"database_specific\":{\"source\":\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json\"},\"package\":{\"ecosystem\":\"RubyGems\",\"name\":\"lodash-rails\",\"purl\":\"pkg:gem/lodash-rails\"},\"ranges\":[{\"events\":[{\"introduced\":\"3.7.0\"},{\"fixed\":\"4.17.19\"}],\"type\":\"ECOSYSTEM\"}],\"versions\":[\"3.10.0\",\"3.10.1\",\"3.7.0\",\"3.9.3\",\"4.0.0\",\"4.11.2\",\"4.12.0\",\"4.13.1\",\"4.14.1\",\"4.15.0\",\"4.16.1\",\"4.16.3\",\"4.16.4\",\"4.16.6\",\"4.17.10\",\"4.17.11\",\"4.17.14\",\"4.17.15\",\"4.17.2\",\"4.17.4\",\"4.17.5\",\"4.3.0\",\"4.5.1\",\"4.6.1\"]}],\"aliases\":[\"CVE-2020-8203\"],\"database_specific\":{\"cwe_ids\":[\"CWE-1321\",\"CWE-770\"],\"github_reviewed\":true,\"github_reviewed_at\":\"2020-07-15T19:14:58Z\",\"nvd_published_at\":\"2020-07-15T17:15:00Z\",\"severity\":\"HIGH\"},\"details\":\"Versions of lodash prior to 4.17.19 are vulnerable to Prototype Pollution. The functions `pick`, `set`, `setWith`, `update`, `updateWith`, and `zipObjectDeep` allow a malicious user to modify the prototype of Object if the property identifiers are user-supplied. Being affected by this issue requires manipulating objects based on user-provided property values or arrays.\\n\\nThis vulnerability causes the addition or modification of an existing property that will exist on all objects and may lead to Denial of Service or Code Execution under specific circumstances.\",\"id\":\"GHSA-p6mc-m468-83gw\",\"modified\":\"2025-08-12T21:56:17.174859Z\",\"published\":\"2020-07-15T19:15:48Z\",\"references\":[{\"type\":\"ADVISORY\",\"url\":\"https://nvd.nist.gov/vuln/detail/CVE-2020-8203\"},{\"type\":\"WEB\",\"url\":\"https://github.com/lodash/lodash/issues/4744\"},{\"type\":\"WEB\",\"url\":\"https://github.com/lodash/lodash/issues/4874\"},{\"type\":\"WEB\",\"url\":\"https://github.com/github/advisory-database/pull/2884\"},{\"type\":\"WEB\",\"url\":\"https://github.com/lodash/lodash/commit/c84fe82760fb2d3e03a63379b297a1cc1a2fce12\"},{\"type\":\"WEB\",\"url\":\"https://hackerone.com/reports/712065\"},{\"type\":\"WEB\",\"url\":\"https://hackerone.com/reports/864701\"},{\"type\":\"PACKAGE\",\"url\":\"https://github.com/lodash/lodash\"},{\"type\":\"WEB\",\"url\":\"https://github.com/lodash/lodash/wiki/Changelog#v41719\"},{\"type\":\"WEB\",\"url\":\"https://github.com/rubysec/ruby-advisory-db/blob/master/gems/lodash-rails/CVE-2020-8203.yml\"},{\"type\":\"WEB\",\"url\":\"https://security.netapp.com/advisory/ntap-20200724-0006\"},{\"type\":\"WEB\",\"url\":\"https://web.archive.org/web/20210914001339/https://github.com/lodash/lodash/issues/4744\"}],\"schema_version\":\"1.9.0\",\"severity\":[{\"score\":\"CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:H\",\"type\":\"CVSS_V3\"}],\"summary\":\"Prototype Pollution in lodash\"},\"signal_hash\":\"0x2c958ce32e65f00ba3a38e7d8e4c981eab27297c1cbc4a681ad6f7113fb5c876\",\"timestamp\":\"2026-10-27T15:26:21.14635279Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 572,
+    "miner_id": "36009",
+    "miner_name": "OSV GHSA Lookup",
+    "result": {
+      "affected": [
+        {
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json"
+          },
+          "package": {
+            "ecosystem": "npm",
+            "name": "lodash",
+            "purl": "pkg:npm/lodash"
+          },
+          "ranges": [
+            {
+              "events": [
+                {
+                  "introduced": "3.7.0"
+                },
+                {
+                  "fixed": "4.17.19"
+                }
+              ],
+              "type": "SEMVER"
+            }
+          ]
+        },
+        {
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json"
+          },
+          "package": {
+            "ecosystem": "npm",
+            "name": "lodash-es",
+            "purl": "pkg:npm/lodash-es"
+          },
+          "ranges": [
+            {
+              "events": [
+                {
+                  "introduced": "3.7.0"
+                },
+                {
+                  "fixed": "4.17.20"
+                }
+              ],
+              "type": "SEMVER"
+            }
+          ]
+        },
+        {
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json"
+          },
+          "package": {
+            "ecosystem": "npm",
+            "name": "lodash.pick",
+            "purl": "pkg:npm/lodash.pick"
+          },
+          "ranges": [
+            {
+              "events": [
+                {
+                  "introduced": "4.0.0"
+                },
+                {
+                  "last_affected": "4.4.0"
+                }
+              ],
+              "type": "SEMVER"
+            }
+          ]
+        },
+        {
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json"
+          },
+          "package": {
+            "ecosystem": "npm",
+            "name": "lodash.set",
+            "purl": "pkg:npm/lodash.set"
+          },
+          "ranges": [
+            {
+              "events": [
+                {
+                  "introduced": "3.7.0"
+                },
+                {
+                  "last_affected": "4.3.2"
+                }
+              ],
+              "type": "SEMVER"
+            }
+          ]
+        },
+        {
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json"
+          },
+          "package": {
+            "ecosystem": "npm",
+            "name": "lodash.setwith",
+            "purl": "pkg:npm/lodash.setwith"
+          },
+          "ranges": [
+            {
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "last_affected": "4.3.2"
+                }
+              ],
+              "type": "SEMVER"
+            }
+          ]
+        },
+        {
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json"
+          },
+          "package": {
+            "ecosystem": "npm",
+            "name": "lodash.update",
+            "purl": "pkg:npm/lodash.update"
+          },
+          "ranges": [
+            {
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "last_affected": "4.10.2"
+                }
+              ],
+              "type": "SEMVER"
+            }
+          ]
+        },
+        {
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json"
+          },
+          "package": {
+            "ecosystem": "npm",
+            "name": "lodash.updatewith",
+            "purl": "pkg:npm/lodash.updatewith"
+          },
+          "ranges": [
+            {
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "last_affected": "4.10.2"
+                }
+              ],
+              "type": "SEMVER"
+            }
+          ]
+        },
+        {
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json"
+          },
+          "package": {
+            "ecosystem": "RubyGems",
+            "name": "lodash-rails",
+            "purl": "pkg:gem/lodash-rails"
+          },
+          "ranges": [
+            {
+              "events": [
+                {
+                  "introduced": "3.7.0"
+                },
+                {
+                  "fixed": "4.17.19"
+                }
+              ],
+              "type": "ECOSYSTEM"
+            }
+          ],
+          "versions": [
+            "3.10.0",
+            "3.10.1",
+            "3.7.0",
+            "3.9.3",
+            "4.0.0",
+            "4.11.2",
+            "4.12.0",
+            "4.13.1",
+            "4.14.1",
+            "4.15.0",
+            "4.16.1",
+            "4.16.3",
+            "4.16.4",
+            "4.16.6",
+            "4.17.10",
+            "4.17.11",
+            "4.17.14",
+            "4.17.15",
+            "4.17.2",
+            "4.17.4",
+            "4.17.5",
+            "4.3.0",
+            "4.5.1",
+            "4.6.1"
+          ]
+        }
+      ],
+      "aliases": [
+        "CVE-2020-8203"
+      ],
+      "database_specific": {
+        "cwe_ids": [
+          "CWE-1321",
+          "CWE-770"
+        ],
+        "github_reviewed": true,
+        "github_reviewed_at": "2020-07-15T19:14:58Z",
+        "nvd_published_at": "2020-07-15T17:15:00Z",
+        "severity": "HIGH"
+      },
+      "details": "Versions of lodash prior to 4.17.19 are vulnerable to Prototype Pollution. The functions `pick`, `set`, `setWith`, `update`, `updateWith`, and `zipObjectDeep` allow a malicious user to modify the prototype of Object if the property identifiers are user-supplied. Being affected by this issue requires manipulating objects based on user-provided property values or arrays.\n\nThis vulnerability causes the addition or modification of an existing property that will exist on all objects and may lead to Denial of Service or Code Execution under specific circumstances.",
+      "id": "GHSA-p6mc-m468-83gw",
+      "modified": "2025-08-12T21:56:17.174859Z",
+      "published": "2020-07-15T19:15:48Z",
+      "references": [
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2020-8203"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/lodash/lodash/issues/4744"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/lodash/lodash/issues/4874"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/github/advisory-database/pull/2884"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/lodash/lodash/commit/c84fe82760fb2d3e03a63379b297a1cc1a2fce12"
+        },
+        {
+          "type": "WEB",
+          "url": "https://hackerone.com/reports/712065"
+        },
+        {
+          "type": "WEB",
+          "url": "https://hackerone.com/reports/864701"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/lodash/lodash"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/lodash/lodash/wiki/Changelog#v41719"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/rubysec/ruby-advisory-db/blob/master/gems/lodash-rails/CVE-2020-8203.yml"
+        },
+        {
+          "type": "WEB",
+          "url": "https://security.netapp.com/advisory/ntap-20200724-0006"
+        },
+        {
+          "type": "WEB",
+          "url": "https://web.archive.org/web/20210914001339/https://github.com/lodash/lodash/issues/4744"
+        }
+      ],
+      "schema_version": "1.9.0",
+      "severity": [
+        {
+          "score": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:H",
+          "type": "CVSS_V3"
+        }
+      ],
+      "summary": "Prototype Pollution in lodash"
+    },
+    "signal_hash": "0x2c958ce32e65f00ba3a38e7d8e4c981eab27297c1cbc4a681ad6f7113fb5c876",
+    "timestamp": "2026-10-27T15:26:21.14635279Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "transaction": "0xc1360345671f7576c99b072b615cacbbf03b375df5a6ad4d8ce20a19d6214cf8",
+    "network": "eip155:84532"
+  },
+  "receipt": {
+    "receipt_hash": "0x622eeafffdbdfa176662a5c4d5af1c0b3a7f53a317869c0873fe574a27ce1290",
+    "rail": "x402",
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "miner": "3192",
+    "intent": "CVE_LOOKUP",
+    "amount_uusdc": "10000",
+    "epoch_id": 444,
+    "settlement": "onchain",
+    "chain": "eip155:84532",
+    "tx_hash": "0xc1360345671f7576c99b072b615cacbbf03b375df5a6ad4d8ce20a19d6214cf8",
+    "timestamp": 1793114781
+  }
+}

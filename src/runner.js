@@ -3,7 +3,7 @@ import { combineOpinions } from "./policy.js";
 import { normalize } from "./normalize.js";
 import { ledgerEntry } from "./ledger.js";
 
-const MAX_ATTEMPTS = 3; // per opinion; failed miner calls aren't charged, but they cost time
+const MAX_ATTEMPTS = 3; // per opinion; a failed call can still be charged, so retries cost money too
 
 /** Fill {{var}} placeholders. A string that is exactly "{{var}}" takes the raw value. */
 export function fillTemplate(template, vars) {

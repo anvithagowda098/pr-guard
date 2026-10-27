@@ -1,0 +1,532 @@
+{
+  "captured_at": "2026-10-27T15:26:16.537Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/77010",
+  "request": {
+    "method": "GET",
+    "endpoint": "/query",
+    "payload": {
+      "pkg": "lodash",
+      "ver": "4.17.15"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8\nAmount: 10000 uUSDC\nResource: /v1/ask/77010\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/77010",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/77010"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 3984,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a512b7c7fa6d42e6-EWR",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 15:26:16 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBjZDQ4N2NjYzJkODcwNzA5YmMwNWRmZDZkN2UyN2YwZDVjZmI0NCIsInRyYW5zYWN0aW9uIjoiMHg3MDU5ZTZkZjkxZTJmYzEwMjU3YjNjNDAzOWFhZmI2M2NjYzg5ZDI3YjQ5ZjNkMWYwM2NhMjFjMzg0NjU4YTkzIiwibmV0d29yayI6ImVpcDE1NTo4NDUzMiJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=5GwC8Nrest0NanSXIfGLyJyApTsh6kFNwhMcZKEH75%2FxdyHVr2TKR%2FENAjeHsDnNktG9uCB88UKowNITGTKOxVsOFT6mpYq%2B%2FsJzA0qgq4PTh3wEkr2D97EQchOeN1F%2BM290TYdVal25pwGlgSD88Q%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDkzNDJhYjg3M2YwNzliMmM2YTU2MmI4NWFkODkxZmQzZTM0YTAwMTNlMmM3YWE0NWRhYTI2ZDFkNWU1YTA3NTIiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMGNkNDg3Y2NjMmQ4NzA3MDliYzA1ZGZkNmQ3ZTI3ZjBkNWNmYjQ0IiwibWluZXIiOiIzODUzIiwiaW50ZW50IjoiU0VDVVJJVFlfUkVWSUVXIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6NDQ0LCJzZXR0bGVtZW50Ijoib25jaGFpbiIsImNoYWluIjoiZWlwMTU1Ojg0NTMyIiwidHhfaGFzaCI6IjB4NzA1OWU2ZGY5MWUyZmMxMDI1N2IzYzQwMzlhYWZiNjNjY2M4OWQyN2I0OWYzZDFmMDNjYTIxYzM4NDY1OGE5MyIsInRpbWVzdGFtcCI6MTc5MzExNDc3NX0="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":380,\"miner_id\":\"77010\",\"miner_name\":\"deps.dev Package Review\",\"result\":{\"defaultVersion\":\"4.18.1\",\"owners\":[],\"package\":{\"name\":\"lodash\",\"system\":\"NPM\"},\"version\":{\"advisories\":[{\"aliases\":[\"CVE-2020-28500\"],\"description\":\"All versions of package lodash prior to 4.17.21 are vulnerable to Regular Expression Denial of Service (ReDoS) via the `toNumber`, `trim` and `trimEnd` functions. \\n\\nSteps to reproduce (provided by reporter Liyuan Chen):\\n```js\\nvar lo = require('lodash');\\n\\nfunction build_blank(n) {\\n    var ret = \\\"1\\\"\\n    for (var i = 0; i \\u003c n; i++) {\\n        ret += \\\" \\\"\\n    }\\n    return ret + \\\"1\\\";\\n}\\nvar s = build_blank(50000) var time0 = Date.now();\\nlo.trim(s) \\nvar time_cost0 = Date.now() - time0;\\nconsole.log(\\\"time_cost0: \\\" + time_cost0);\\nvar time1 = Date.now();\\nlo.toNumber(s) var time_cost1 = Date.now() - time1;\\nconsole.log(\\\"time_cost1: \\\" + time_cost1);\\nvar time2 = Date.now();\\nlo.trimEnd(s);\\nvar time_cost2 = Date.now() - time2;\\nconsole.log(\\\"time_cost2: \\\" + time_cost2);\\n```\",\"disclosedAt\":1641501046,\"gitHubSeverity\":\"MODERATE\",\"observedAt\":1793104250,\"referenceURLs\":[\"https://cert-portal.siemens.com/productcert/pdf/ssa-637483.pdf\",\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2022/01/GHSA-29mw-wpgm-hmr9/GHSA-29mw-wpgm-hmr9.json\",\"https://github.com/github/advisory-database/pull/6139\",\"https://github.com/lodash/lodash\",\"https://github.com/lodash/lodash/blob/npm/trimEnd.js%23L8\",\"https://github.com/lodash/lodash/commit/c4847ebe7d14540bb28a8b932a9ce1b9ecbfee1a\",\"https://github.com/lodash/lodash/pull/5065\",\"https://github.com/lodash/lodash/pull/5065/commits/02906b8191d3c100c193fe6f7b27d1c40f200bb7\",\"https://github.com/rubysec/ruby-advisory-db/blob/master/gems/lodash-rails/CVE-2020-28500.yml\",\"https://nvd.nist.gov/vuln/detail/CVE-2020-28500\",\"https://security.netapp.com/advisory/ntap-20210312-0006\",\"https://snyk.io/vuln/SNYK-JAVA-ORGFUJIONWEBJARS-1074896\",\"https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARS-1074894\",\"https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSBOWER-1074892\",\"https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSBOWERGITHUBLODASH-1074895\",\"https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSNPM-1074893\",\"https://snyk.io/vuln/SNYK-JS-LODASH-1018905\",\"https://www.oracle.com//security-alerts/cpujul2021.html\",\"https://www.oracle.com/security-alerts/cpujan2022.html\",\"https://www.oracle.com/security-alerts/cpujul2022.html\",\"https://www.oracle.com/security-alerts/cpuoct2021.html\"],\"scoreV3\":5.3,\"severity\":\"UNKNOWN\",\"source\":\"OSV\",\"sourceID\":\"GHSA-29mw-wpgm-hmr9\",\"sourceURL\":\"https://osv.dev/vulnerability/GHSA-29mw-wpgm-hmr9\",\"title\":\"Regular Expression Denial of Service (ReDoS) in lodash\"},{\"aliases\":[\"CVE-2021-23337\"],\"description\":\"`lodash` versions prior to 4.17.21 are vulnerable to Command Injection via the template function.\",\"disclosedAt\":1620317151,\"gitHubSeverity\":\"HIGH\",\"observedAt\":1793104250,\"referenceURLs\":[\"https://cert-portal.siemens.com/productcert/pdf/ssa-637483.pdf\",\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2021/05/GHSA-35jh-r3h4-6jhm/GHSA-35jh-r3h4-6jhm.json\",\"https://github.com/lodash/lodash\",\"https://github.com/lodash/lodash/blob/ddfd9b11a0126db2302cb70ec9973b66baec0975/lodash.js#L14851\",\"https://github.com/lodash/lodash/commit/3469357cff396a26c363f8c1b5a91dde28ba4b1c\",\"https://github.com/rubysec/ruby-advisory-db/blob/master/gems/lodash-rails/CVE-2021-23337.yml\",\"https://nvd.nist.gov/vuln/detail/CVE-2021-23337\",\"https://security.netapp.com/advisory/ntap-20210312-0006\",\"https://snyk.io/vuln/SNYK-JAVA-ORGFUJIONWEBJARS-1074932\",\"https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARS-1074930\",\"https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSBOWER-1074928\",\"https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSBOWERGITHUBLODASH-1074931\",\"https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSNPM-1074929\",\"https://snyk.io/vuln/SNYK-JS-LODASH-1040724\",\"https://www.oracle.com//security-alerts/cpujul2021.html\",\"https://www.oracle.com/security-alerts/cpujan2022.html\",\"https://www.oracle.com/security-alerts/cpujul2022.html\",\"https://www.oracle.com/security-alerts/cpuoct2021.html\"],\"scoreV3\":7.2,\"severity\":\"UNKNOWN\",\"source\":\"OSV\",\"sourceID\":\"GHSA-35jh-r3h4-6jhm\",\"sourceURL\":\"https://osv.dev/vulnerability/GHSA-35jh-r3h4-6jhm\",\"title\":\"Command Injection in lodash\"},{\"aliases\":[\"CVE-2026-2950\"],\"description\":\"### Impact\\n\\nLodash versions 4.17.23 and earlier are vulnerable to prototype pollution in the `_.unset` and `_.omit` functions. The fix for [CVE-2025-13465](https://github.com/lodash/lodash/security/advisories/GHSA-xxjr-mmjv-4gpg) only guards against string key members, so an attacker can bypass the check by passing array-wrapped path segments. This allows deletion of properties from built-in prototypes such as `Object.prototype`, `Number.prototype`, and `String.prototype`.\\n\\nThe issue permits deletion of prototype properties but does not allow overwriting their original behavior.\\n\\n### Patches\\n\\nThis issue is patched in 4.18.0.\\n\\n### Workarounds\\n\\nNone. Upgrade to the patched version.\",\"disclosedAt\":1775087427,\"gitHubSeverity\":\"MODERATE\",\"observedAt\":1793104250,\"referenceURLs\":[\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/04/GHSA-f23m-r3pf-42rh/GHSA-f23m-r3pf-42rh.json\",\"https://github.com/lodash/lodash\",\"https://github.com/lodash/lodash/security/advisories/GHSA-f23m-r3pf-42rh\",\"https://github.com/lodash/lodash/security/advisories/GHSA-xxjr-mmjv-4gpg\",\"https://nvd.nist.gov/vuln/detail/CVE-2026-2950\"],\"scoreV3\":6.5,\"severity\":\"UNKNOWN\",\"source\":\"OSV\",\"sourceID\":\"GHSA-f23m-r3pf-42rh\",\"sourceURL\":\"https://osv.dev/vulnerability/GHSA-f23m-r3pf-42rh\",\"title\":\"lodash vulnerable to Prototype Pollution via array path bypass in `_.unset` and `_.omit`\"},{\"aliases\":[\"CVE-2020-8203\"],\"description\":\"Versions of lodash prior to 4.17.19 are vulnerable to Prototype Pollution. The functions `pick`, `set`, `setWith`, `update`, `updateWith`, and `zipObjectDeep` allow a malicious user to modify the prototype of Object if the property identifiers are user-supplied. Being affected by this issue requires manipulating objects based on user-provided property values or arrays.\\n\\nThis vulnerability causes the addition or modification of an existing property that will exist on all objects and may lead to Denial of Service or Code Execution under specific circumstances.\",\"disclosedAt\":1594840548,\"gitHubSeverity\":\"HIGH\",\"observedAt\":1793104250,\"referenceURLs\":[\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json\",\"https://github.com/github/advisory-database/pull/2884\",\"https://github.com/lodash/lodash\",\"https://github.com/lodash/lodash/commit/c84fe82760fb2d3e03a63379b297a1cc1a2fce12\",\"https://github.com/lodash/lodash/issues/4744\",\"https://github.com/lodash/lodash/issues/4874\",\"https://github.com/lodash/lodash/wiki/Changelog#v41719\",\"https://github.com/rubysec/ruby-advisory-db/blob/master/gems/lodash-rails/CVE-2020-8203.yml\",\"https://hackerone.com/reports/712065\",\"https://hackerone.com/reports/864701\",\"https://nvd.nist.gov/vuln/detail/CVE-2020-8203\",\"https://security.netapp.com/advisory/ntap-20200724-0006\",\"https://web.archive.org/web/20210914001339/https://github.com/lodash/lodash/issues/4744\"],\"scoreV3\":7.4,\"severity\":\"UNKNOWN\",\"source\":\"OSV\",\"sourceID\":\"GHSA-p6mc-m468-83gw\",\"sourceURL\":\"https://osv.dev/vulnerability/GHSA-p6mc-m468-83gw\",\"title\":\"Prototype Pollution in lodash\"},{\"aliases\":[\"CVE-2026-4800\"],\"description\":\"### Impact\\n\\nThe fix for [CVE-2021-23337](https://github.com/advisories/GHSA-35jh-r3h4-6jhm) added validation for the `variable` option in `_.template` but did not apply the same validation to `options.imports` key names. Both paths flow into the same `Function()` constructor sink.\\n\\nWhen an application passes untrusted input as `options.imports` key names, an attacker can inject default-parameter expressions that execute arbitrary code at template compilation time.\\n\\nAdditionally, `_.template` uses `assignInWith` to merge imports, which enumerates inherited properties via `for..in`. If `Object.prototype` has been polluted by any other vector, the polluted keys are copied into the imports object and passed to `Function()`.\\n\\n### Patches\\n\\nUsers should upgrade to version 4.18.0.\\n\\nThe fix applies two changes:\\n1. Validate `importsKeys` against the existing `reForbiddenIdentifierChars` regex (same check already used for the `variable` option)\\n2. Replace `assignInWith` with `assignWith` when merging imports, so only own properties are enumerated\\n\\n### Workarounds\\n\\nDo not pass untrusted input as key names in `options.imports`. Only use developer-controlled, static key names.\",\"disclosedAt\":1775087472,\"gitHubSeverity\":\"HIGH\",\"observedAt\":1793104250,\"referenceURLs\":[\"https://cna.openjsf.org/security-advisories.html\",\"https://github.com/advisories/GHSA-35jh-r3h4-6jhm\",\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/04/GHSA-r5fr-rjxr-66jc/GHSA-r5fr-rjxr-66jc.json\",\"https://github.com/lodash/lodash\",\"https://github.com/lodash/lodash/commit/3469357cff396a26c363f8c1b5a91dde28ba4b1c\",\"https://github.com/lodash/lodash/security/advisories/GHSA-r5fr-rjxr-66jc\",\"https://nvd.nist.gov/vuln/detail/CVE-2026-4800\"],\"scoreV3\":8.1,\"severity\":\"UNKNOWN\",\"source\":\"OSV\",\"sourceID\":\"GHSA-r5fr-rjxr-66jc\",\"sourceURL\":\"https://osv.dev/vulnerability/GHSA-r5fr-rjxr-66jc\",\"title\":\"lodash vulnerable to Code Injection via `_.template` imports key names\"},{\"aliases\":[\"CVE-2025-13465\"],\"description\":\"### Impact\\n\\nLodash versions 4.0.0 through 4.17.22 are vulnerable to prototype pollution in the `_.unset` and `_.omit` functions. An attacker can pass crafted paths which cause Lodash to delete methods from global prototypes. \\n\\nThe issue permits deletion of properties but does not allow overwriting their original behavior.  \\n\\n### Patches\\n\\nThis issue is patched on 4.17.23.\",\"disclosedAt\":1769036482,\"gitHubSeverity\":\"MODERATE\",\"observedAt\":1793104250,\"referenceURLs\":[\"https://cert-portal.siemens.com/productcert/html/ssa-253495.html\",\"https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/01/GHSA-xxjr-mmjv-4gpg/GHSA-xxjr-mmjv-4gpg.json\",\"https://github.com/lodash/lodash\",\"https://github.com/lodash/lodash/commit/edadd452146f7e4bad4ea684e955708931d84d81\",\"https://github.com/lodash/lodash/security/advisories/GHSA-xxjr-mmjv-4gpg\",\"https://nvd.nist.gov/vuln/detail/CVE-2025-13465\"],\"scoreV3\":6.5,\"severity\":\"UNKNOWN\",\"source\":\"OSV\",\"sourceID\":\"GHSA-xxjr-mmjv-4gpg\",\"sourceURL\":\"https://osv.dev/vulnerability/GHSA-xxjr-mmjv-4gpg\",\"title\":\"Lodash has Prototype Pollution Vulnerability in `_.unset` and `_.omit` functions\"}],\"createdAt\":1563503326,\"dependentCount\":5884,\"dependentCountDirect\":2108,\"dependentCountIndirect\":3928,\"description\":\"Lodash modular utilities.\",\"licenseDetails\":[{\"license\":\"MIT\",\"spdx\":\"MIT\"}],\"licenses\":[\"MIT\"],\"links\":{\"homepage\":\"https://lodash.com/\",\"issues\":\"https://github.com/lodash/lodash/issues\",\"origins\":[\"https://registry.npmjs.org/lodash/4.17.15\",\"https://www.npmjs.com/package/lodash/v/4.17.15\"],\"repo\":\"https://github.com/lodash/lodash\"},\"projects\":[{\"description\":\"A modern JavaScript utility library delivering modularity, performance, \\u0026 extras.\",\"displayName\":\"lodash/lodash\",\"forks\":7199,\"issues\":123,\"license\":\"non-standard\",\"link\":\"https://github.com/lodash/lodash\",\"name\":\"lodash/lodash\",\"observedAt\":1792712991,\"scorecardV2\":{\"check\":[{\"details\":[],\"documentation\":{\"short\":\"Determines if the project is \\\"actively maintained\\\".\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#maintained\"},\"name\":\"Maintained\",\"reason\":\"7 commit(s) and 6 issue activity found in the last 90 days -- score normalized to 10\",\"score\":10},{\"details\":[],\"documentation\":{\"short\":\"Determines if the project requires human code review before pull requests (aka merge requests) are merged.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#code-review\"},\"name\":\"Code-Review\",\"reason\":\"Found 22/30 approved changesets -- score normalized to 7\",\"score\":7},{\"details\":[\"Info: security policy file detected: SECURITY.md:1\",\"Info: Found linked content: SECURITY.md:1\",\"Info: Found disclosure, vulnerability, and/or timelines in security policy: SECURITY.md:1\",\"Info: Found text in security policy: SECURITY.md:1\"],\"documentation\":{\"short\":\"Determines if the project has published a security policy.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#security-policy\"},\"name\":\"Security-Policy\",\"reason\":\"security policy file detected\",\"score\":10},{\"details\":[],\"documentation\":{\"short\":\"Determines if the project's GitHub Action workflows avoid dangerous patterns.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#dangerous-workflow\"},\"name\":\"Dangerous-Workflow\",\"reason\":\"no dangerous workflow patterns detected\",\"score\":10},{\"details\":[],\"documentation\":{\"short\":\"Determines if the project has generated executable (binary) artifacts in the source repository.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#binary-artifacts\"},\"name\":\"Binary-Artifacts\",\"reason\":\"no binaries found in the repo\",\"score\":10},{\"details\":[\"Warn: no GitHub/GitLab publishing workflow detected.\"],\"documentation\":{\"short\":\"Determines if the project is published as a package that others can easily download, install, easily update, and uninstall.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#packaging\"},\"name\":\"Packaging\",\"reason\":\"packaging workflow not detected\",\"score\":-1},{\"details\":[],\"documentation\":{\"short\":\"Determines if the project has an OpenSSF (formerly CII) Best Practices Badge.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#cii-best-practices\"},\"name\":\"CII-Best-Practices\",\"reason\":\"no effort to earn an OpenSSF best practices badge detected\",\"score\":0},{\"details\":[\"Info: jobLevel 'actions' permission set to 'read': .github/workflows/codeql.yml:31\",\"Info: jobLevel 'contents' permission set to 'read': .github/workflows/codeql.yml:32\",\"Info: jobLevel 'contents' permission set to 'read': .github/workflows/scorecards.yml:25\",\"Info: jobLevel 'actions' permission set to 'read': .github/workflows/scorecards.yml:26\",\"Info: jobLevel 'issues' permission set to 'read': .github/workflows/scorecards.yml:28\",\"Info: jobLevel 'pull-requests' permission set to 'read': .github/workflows/scorecards.yml:29\",\"Info: jobLevel 'checks' permission set to 'read': .github/workflows/scorecards.yml:31\",\"Warn: no topLevel permission defined: .github/workflows/browser-testing.yml:1\",\"Warn: no topLevel permission defined: .github/workflows/ci-bun.yml:1\",\"Warn: no topLevel permission defined: .github/workflows/ci-dist-sync.yml:1\",\"Warn: no topLevel permission defined: .github/workflows/ci-docs.yml:1\",\"Warn: no topLevel permission defined: .github/workflows/ci-node.yml:1\",\"Info: topLevel 'contents' permission set to 'read': .github/workflows/codeql.yml:24\",\"Warn: no topLevel permission defined: .github/workflows/renovate.yml:1\",\"Info: topLevel permissions set to 'read-all': .github/workflows/scorecards.yml:14\",\"Info: no jobLevel write permissions found\"],\"documentation\":{\"short\":\"Determines if the project's workflows follow the principle of least privilege.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#token-permissions\"},\"name\":\"Token-Permissions\",\"reason\":\"detected GitHub workflow tokens with excessive permissions\",\"score\":0},{\"details\":[\"Warn: npmCommand not pinned by hash: .github/workflows/browser-testing.yml:26\",\"Warn: npmCommand not pinned by hash: .github/workflows/browser-testing.yml:28\",\"Warn: npmCommand not pinned by hash: .github/workflows/ci-bun.yml:29\",\"Warn: npmCommand not pinned by hash: .github/workflows/ci-dist-sync.yml:26\",\"Warn: npmCommand not pinned by hash: .github/workflows/ci-docs.yml:27\",\"Warn: npmCommand not pinned by hash: .github/workflows/ci-node.yml:56\",\"Warn: npmCommand not pinned by hash: .github/workflows/ci-node.yml:59\",\"Info:  17 out of  17 GitHub-owned GitHubAction dependencies pinned\",\"Info:   3 out of   3 third-party GitHubAction dependencies pinned\",\"Info:   0 out of   7 npmCommand dependencies pinned\"],\"documentation\":{\"short\":\"Determines if the project has declared and pinned the dependencies of its build process.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#pinned-dependencies\"},\"name\":\"Pinned-Dependencies\",\"reason\":\"dependency not pinned by hash detected -- score normalized to 4\",\"score\":4},{\"details\":[\"Info: project has a license file: LICENSE:0\",\"Warn: project license file does not contain an FSF or OSI license.\"],\"documentation\":{\"short\":\"Determines if the project has defined a license.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#license\"},\"name\":\"License\",\"reason\":\"license file detected\",\"score\":9},{\"details\":[],\"documentation\":{\"short\":\"Determines if the project cryptographically signs release artifacts.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#signed-releases\"},\"name\":\"Signed-Releases\",\"reason\":\"no releases found\",\"score\":-1},{\"details\":[\"Info: OSSFuzz integration found\"],\"documentation\":{\"short\":\"Determines if the project uses fuzzing.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#fuzzing\"},\"name\":\"Fuzzing\",\"reason\":\"project is fuzzed\",\"score\":10},{\"details\":[],\"documentation\":{\"short\":\"Determines if the default and release branches are protected with GitHub's branch protection settings.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#branch-protection\"},\"name\":\"Branch-Protection\",\"reason\":\"internal error: error during branchesHandler.setup: internal error: some github tokens can't read classic branch protection rules: https://github.com/ossf/scorecard-action/blob/main/docs/authentication/fine-grained-auth-token.md\",\"score\":-1},{\"details\":[\"Info: SAST configuration detected: CodeQL\",\"Warn: 22 commits out of 25 are checked with a SAST tool\"],\"documentation\":{\"short\":\"Determines if the project uses static code analysis.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#sast\"},\"name\":\"SAST\",\"reason\":\"SAST tool detected but not run on all commits\",\"score\":9}],\"date\":\"2026-08-24\",\"metadata\":[],\"repo\":{\"commit\":\"a666ba591064c8011988275790ad7d625279f09c\",\"name\":\"github.com/lodash/lodash\"},\"score\":7.5,\"scorecard\":{\"commit\":\"d1fab88f54636ff366076edfc5c239f97b3c8e66\",\"version\":\"v5.5.1-0.20260815060127-d1fab88f5463\"}},\"stars\":61284,\"type\":\"GITHUB\"}],\"refreshedAt\":1772791708,\"relatedPackages\":{},\"suggestedVersion\":\"4.18.1\",\"symbolicVersions\":[],\"version\":\"4.17.15\"}},\"signal_hash\":\"0x6bada555a92c5d1abee8cffd7d3e793392a9510a05666c87740cbdf87fbd21c6\",\"timestamp\":\"2026-10-27T15:26:15.730481223Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 380,
+    "miner_id": "77010",
+    "miner_name": "deps.dev Package Review",
+    "result": {
+      "defaultVersion": "4.18.1",
+      "owners": [],
+      "package": {
+        "name": "lodash",
+        "system": "NPM"
+      },
+      "version": {
+        "advisories": [
+          {
+            "aliases": [
+              "CVE-2020-28500"
+            ],
+            "description": "All versions of package lodash prior to 4.17.21 are vulnerable to Regular Expression Denial of Service (ReDoS) via the `toNumber`, `trim` and `trimEnd` functions. \n\nSteps to reproduce (provided by reporter Liyuan Chen):\n```js\nvar lo = require('lodash');\n\nfunction build_blank(n) {\n    var ret = \"1\"\n    for (var i = 0; i < n; i++) {\n        ret += \" \"\n    }\n    return ret + \"1\";\n}\nvar s = build_blank(50000) var time0 = Date.now();\nlo.trim(s) \nvar time_cost0 = Date.now() - time0;\nconsole.log(\"time_cost0: \" + time_cost0);\nvar time1 = Date.now();\nlo.toNumber(s) var time_cost1 = Date.now() - time1;\nconsole.log(\"time_cost1: \" + time_cost1);\nvar time2 = Date.now();\nlo.trimEnd(s);\nvar time_cost2 = Date.now() - time2;\nconsole.log(\"time_cost2: \" + time_cost2);\n```",
+            "disclosedAt": 1641501046,
+            "gitHubSeverity": "MODERATE",
+            "observedAt": 1793104250,
+            "referenceURLs": [
+              "https://cert-portal.siemens.com/productcert/pdf/ssa-637483.pdf",
+              "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2022/01/GHSA-29mw-wpgm-hmr9/GHSA-29mw-wpgm-hmr9.json",
+              "https://github.com/github/advisory-database/pull/6139",
+              "https://github.com/lodash/lodash",
+              "https://github.com/lodash/lodash/blob/npm/trimEnd.js%23L8",
+              "https://github.com/lodash/lodash/commit/c4847ebe7d14540bb28a8b932a9ce1b9ecbfee1a",
+              "https://github.com/lodash/lodash/pull/5065",
+              "https://github.com/lodash/lodash/pull/5065/commits/02906b8191d3c100c193fe6f7b27d1c40f200bb7",
+              "https://github.com/rubysec/ruby-advisory-db/blob/master/gems/lodash-rails/CVE-2020-28500.yml",
+              "https://nvd.nist.gov/vuln/detail/CVE-2020-28500",
+              "https://security.netapp.com/advisory/ntap-20210312-0006",
+              "https://snyk.io/vuln/SNYK-JAVA-ORGFUJIONWEBJARS-1074896",
+              "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARS-1074894",
+              "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSBOWER-1074892",
+              "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSBOWERGITHUBLODASH-1074895",
+              "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSNPM-1074893",
+              "https://snyk.io/vuln/SNYK-JS-LODASH-1018905",
+              "https://www.oracle.com//security-alerts/cpujul2021.html",
+              "https://www.oracle.com/security-alerts/cpujan2022.html",
+              "https://www.oracle.com/security-alerts/cpujul2022.html",
+              "https://www.oracle.com/security-alerts/cpuoct2021.html"
+            ],
+            "scoreV3": 5.3,
+            "severity": "UNKNOWN",
+            "source": "OSV",
+            "sourceID": "GHSA-29mw-wpgm-hmr9",
+            "sourceURL": "https://osv.dev/vulnerability/GHSA-29mw-wpgm-hmr9",
+            "title": "Regular Expression Denial of Service (ReDoS) in lodash"
+          },
+          {
+            "aliases": [
+              "CVE-2021-23337"
+            ],
+            "description": "`lodash` versions prior to 4.17.21 are vulnerable to Command Injection via the template function.",
+            "disclosedAt": 1620317151,
+            "gitHubSeverity": "HIGH",
+            "observedAt": 1793104250,
+            "referenceURLs": [
+              "https://cert-portal.siemens.com/productcert/pdf/ssa-637483.pdf",
+              "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2021/05/GHSA-35jh-r3h4-6jhm/GHSA-35jh-r3h4-6jhm.json",
+              "https://github.com/lodash/lodash",
+              "https://github.com/lodash/lodash/blob/ddfd9b11a0126db2302cb70ec9973b66baec0975/lodash.js#L14851",
+              "https://github.com/lodash/lodash/commit/3469357cff396a26c363f8c1b5a91dde28ba4b1c",
+              "https://github.com/rubysec/ruby-advisory-db/blob/master/gems/lodash-rails/CVE-2021-23337.yml",
+              "https://nvd.nist.gov/vuln/detail/CVE-2021-23337",
+              "https://security.netapp.com/advisory/ntap-20210312-0006",
+              "https://snyk.io/vuln/SNYK-JAVA-ORGFUJIONWEBJARS-1074932",
+              "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARS-1074930",
+              "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSBOWER-1074928",
+              "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSBOWERGITHUBLODASH-1074931",
+              "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSNPM-1074929",
+              "https://snyk.io/vuln/SNYK-JS-LODASH-1040724",
+              "https://www.oracle.com//security-alerts/cpujul2021.html",
+              "https://www.oracle.com/security-alerts/cpujan2022.html",
+              "https://www.oracle.com/security-alerts/cpujul2022.html",
+              "https://www.oracle.com/security-alerts/cpuoct2021.html"
+            ],
+            "scoreV3": 7.2,
+            "severity": "UNKNOWN",
+            "source": "OSV",
+            "sourceID": "GHSA-35jh-r3h4-6jhm",
+            "sourceURL": "https://osv.dev/vulnerability/GHSA-35jh-r3h4-6jhm",
+            "title": "Command Injection in lodash"
+          },
+          {
+            "aliases": [
+              "CVE-2026-2950"
+            ],
+            "description": "### Impact\n\nLodash versions 4.17.23 and earlier are vulnerable to prototype pollution in the `_.unset` and `_.omit` functions. The fix for [CVE-2025-13465](https://github.com/lodash/lodash/security/advisories/GHSA-xxjr-mmjv-4gpg) only guards against string key members, so an attacker can bypass the check by passing array-wrapped path segments. This allows deletion of properties from built-in prototypes such as `Object.prototype`, `Number.prototype`, and `String.prototype`.\n\nThe issue permits deletion of prototype properties but does not allow overwriting their original behavior.\n\n### Patches\n\nThis issue is patched in 4.18.0.\n\n### Workarounds\n\nNone. Upgrade to the patched version.",
+            "disclosedAt": 1775087427,
+            "gitHubSeverity": "MODERATE",
+            "observedAt": 1793104250,
+            "referenceURLs": [
+              "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/04/GHSA-f23m-r3pf-42rh/GHSA-f23m-r3pf-42rh.json",
+              "https://github.com/lodash/lodash",
+              "https://github.com/lodash/lodash/security/advisories/GHSA-f23m-r3pf-42rh",
+              "https://github.com/lodash/lodash/security/advisories/GHSA-xxjr-mmjv-4gpg",
+              "https://nvd.nist.gov/vuln/detail/CVE-2026-2950"
+            ],
+            "scoreV3": 6.5,
+            "severity": "UNKNOWN",
+            "source": "OSV",
+            "sourceID": "GHSA-f23m-r3pf-42rh",
+            "sourceURL": "https://osv.dev/vulnerability/GHSA-f23m-r3pf-42rh",
+            "title": "lodash vulnerable to Prototype Pollution via array path bypass in `_.unset` and `_.omit`"
+          },
+          {
+            "aliases": [
+              "CVE-2020-8203"
+            ],
+            "description": "Versions of lodash prior to 4.17.19 are vulnerable to Prototype Pollution. The functions `pick`, `set`, `setWith`, `update`, `updateWith`, and `zipObjectDeep` allow a malicious user to modify the prototype of Object if the property identifiers are user-supplied. Being affected by this issue requires manipulating objects based on user-provided property values or arrays.\n\nThis vulnerability causes the addition or modification of an existing property that will exist on all objects and may lead to Denial of Service or Code Execution under specific circumstances.",
+            "disclosedAt": 1594840548,
+            "gitHubSeverity": "HIGH",
+            "observedAt": 1793104250,
+            "referenceURLs": [
+              "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2020/07/GHSA-p6mc-m468-83gw/GHSA-p6mc-m468-83gw.json",
+              "https://github.com/github/advisory-database/pull/2884",
+              "https://github.com/lodash/lodash",
+              "https://github.com/lodash/lodash/commit/c84fe82760fb2d3e03a63379b297a1cc1a2fce12",
+              "https://github.com/lodash/lodash/issues/4744",
+              "https://github.com/lodash/lodash/issues/4874",
+              "https://github.com/lodash/lodash/wiki/Changelog#v41719",
+              "https://github.com/rubysec/ruby-advisory-db/blob/master/gems/lodash-rails/CVE-2020-8203.yml",
+              "https://hackerone.com/reports/712065",
+              "https://hackerone.com/reports/864701",
+              "https://nvd.nist.gov/vuln/detail/CVE-2020-8203",
+              "https://security.netapp.com/advisory/ntap-20200724-0006",
+              "https://web.archive.org/web/20210914001339/https://github.com/lodash/lodash/issues/4744"
+            ],
+            "scoreV3": 7.4,
+            "severity": "UNKNOWN",
+            "source": "OSV",
+            "sourceID": "GHSA-p6mc-m468-83gw",
+            "sourceURL": "https://osv.dev/vulnerability/GHSA-p6mc-m468-83gw",
+            "title": "Prototype Pollution in lodash"
+          },
+          {
+            "aliases": [
+              "CVE-2026-4800"
+            ],
+            "description": "### Impact\n\nThe fix for [CVE-2021-23337](https://github.com/advisories/GHSA-35jh-r3h4-6jhm) added validation for the `variable` option in `_.template` but did not apply the same validation to `options.imports` key names. Both paths flow into the same `Function()` constructor sink.\n\nWhen an application passes untrusted input as `options.imports` key names, an attacker can inject default-parameter expressions that execute arbitrary code at template compilation time.\n\nAdditionally, `_.template` uses `assignInWith` to merge imports, which enumerates inherited properties via `for..in`. If `Object.prototype` has been polluted by any other vector, the polluted keys are copied into the imports object and passed to `Function()`.\n\n### Patches\n\nUsers should upgrade to version 4.18.0.\n\nThe fix applies two changes:\n1. Validate `importsKeys` against the existing `reForbiddenIdentifierChars` regex (same check already used for the `variable` option)\n2. Replace `assignInWith` with `assignWith` when merging imports, so only own properties are enumerated\n\n### Workarounds\n\nDo not pass untrusted input as key names in `options.imports`. Only use developer-controlled, static key names.",
+            "disclosedAt": 1775087472,
+            "gitHubSeverity": "HIGH",
+            "observedAt": 1793104250,
+            "referenceURLs": [
+              "https://cna.openjsf.org/security-advisories.html",
+              "https://github.com/advisories/GHSA-35jh-r3h4-6jhm",
+              "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/04/GHSA-r5fr-rjxr-66jc/GHSA-r5fr-rjxr-66jc.json",
+              "https://github.com/lodash/lodash",
+              "https://github.com/lodash/lodash/commit/3469357cff396a26c363f8c1b5a91dde28ba4b1c",
+              "https://github.com/lodash/lodash/security/advisories/GHSA-r5fr-rjxr-66jc",
+              "https://nvd.nist.gov/vuln/detail/CVE-2026-4800"
+            ],
+            "scoreV3": 8.1,
+            "severity": "UNKNOWN",
+            "source": "OSV",
+            "sourceID": "GHSA-r5fr-rjxr-66jc",
+            "sourceURL": "https://osv.dev/vulnerability/GHSA-r5fr-rjxr-66jc",
+            "title": "lodash vulnerable to Code Injection via `_.template` imports key names"
+          },
+          {
+            "aliases": [
+              "CVE-2025-13465"
+            ],
+            "description": "### Impact\n\nLodash versions 4.0.0 through 4.17.22 are vulnerable to prototype pollution in the `_.unset` and `_.omit` functions. An attacker can pass crafted paths which cause Lodash to delete methods from global prototypes. \n\nThe issue permits deletion of properties but does not allow overwriting their original behavior.  \n\n### Patches\n\nThis issue is patched on 4.17.23.",
+            "disclosedAt": 1769036482,
+            "gitHubSeverity": "MODERATE",
+            "observedAt": 1793104250,
+            "referenceURLs": [
+              "https://cert-portal.siemens.com/productcert/html/ssa-253495.html",
+              "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/01/GHSA-xxjr-mmjv-4gpg/GHSA-xxjr-mmjv-4gpg.json",
+              "https://github.com/lodash/lodash",
+              "https://github.com/lodash/lodash/commit/edadd452146f7e4bad4ea684e955708931d84d81",
+              "https://github.com/lodash/lodash/security/advisories/GHSA-xxjr-mmjv-4gpg",
+              "https://nvd.nist.gov/vuln/detail/CVE-2025-13465"
+            ],
+            "scoreV3": 6.5,
+            "severity": "UNKNOWN",
+            "source": "OSV",
+            "sourceID": "GHSA-xxjr-mmjv-4gpg",
+            "sourceURL": "https://osv.dev/vulnerability/GHSA-xxjr-mmjv-4gpg",
+            "title": "Lodash has Prototype Pollution Vulnerability in `_.unset` and `_.omit` functions"
+          }
+        ],
+        "createdAt": 1563503326,
+        "dependentCount": 5884,
+        "dependentCountDirect": 2108,
+        "dependentCountIndirect": 3928,
+        "description": "Lodash modular utilities.",
+        "licenseDetails": [
+          {
+            "license": "MIT",
+            "spdx": "MIT"
+          }
+        ],
+        "licenses": [
+          "MIT"
+        ],
+        "links": {
+          "homepage": "https://lodash.com/",
+          "issues": "https://github.com/lodash/lodash/issues",
+          "origins": [
+            "https://registry.npmjs.org/lodash/4.17.15",
+            "https://www.npmjs.com/package/lodash/v/4.17.15"
+          ],
+          "repo": "https://github.com/lodash/lodash"
+        },
+        "projects": [
+          {
+            "description": "A modern JavaScript utility library delivering modularity, performance, & extras.",
+            "displayName": "lodash/lodash",
+            "forks": 7199,
+            "issues": 123,
+            "license": "non-standard",
+            "link": "https://github.com/lodash/lodash",
+            "name": "lodash/lodash",
+            "observedAt": 1792712991,
+            "scorecardV2": {
+              "check": [
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project is \"actively maintained\".",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#maintained"
+                  },
+                  "name": "Maintained",
+                  "reason": "7 commit(s) and 6 issue activity found in the last 90 days -- score normalized to 10",
+                  "score": 10
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project requires human code review before pull requests (aka merge requests) are merged.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#code-review"
+                  },
+                  "name": "Code-Review",
+                  "reason": "Found 22/30 approved changesets -- score normalized to 7",
+                  "score": 7
+                },
+                {
+                  "details": [
+                    "Info: security policy file detected: SECURITY.md:1",
+                    "Info: Found linked content: SECURITY.md:1",
+                    "Info: Found disclosure, vulnerability, and/or timelines in security policy: SECURITY.md:1",
+                    "Info: Found text in security policy: SECURITY.md:1"
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project has published a security policy.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#security-policy"
+                  },
+                  "name": "Security-Policy",
+                  "reason": "security policy file detected",
+                  "score": 10
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project's GitHub Action workflows avoid dangerous patterns.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#dangerous-workflow"
+                  },
+                  "name": "Dangerous-Workflow",
+                  "reason": "no dangerous workflow patterns detected",
+                  "score": 10
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project has generated executable (binary) artifacts in the source repository.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#binary-artifacts"
+                  },
+                  "name": "Binary-Artifacts",
+                  "reason": "no binaries found in the repo",
+                  "score": 10
+                },
+                {
+                  "details": [
+                    "Warn: no GitHub/GitLab publishing workflow detected."
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project is published as a package that others can easily download, install, easily update, and uninstall.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#packaging"
+                  },
+                  "name": "Packaging",
+                  "reason": "packaging workflow not detected",
+                  "score": -1
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project has an OpenSSF (formerly CII) Best Practices Badge.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#cii-best-practices"
+                  },
+                  "name": "CII-Best-Practices",
+                  "reason": "no effort to earn an OpenSSF best practices badge detected",
+                  "score": 0
+                },
+                {
+                  "details": [
+                    "Info: jobLevel 'actions' permission set to 'read': .github/workflows/codeql.yml:31",
+                    "Info: jobLevel 'contents' permission set to 'read': .github/workflows/codeql.yml:32",
+                    "Info: jobLevel 'contents' permission set to 'read': .github/workflows/scorecards.yml:25",
+                    "Info: jobLevel 'actions' permission set to 'read': .github/workflows/scorecards.yml:26",
+                    "Info: jobLevel 'issues' permission set to 'read': .github/workflows/scorecards.yml:28",
+                    "Info: jobLevel 'pull-requests' permission set to 'read': .github/workflows/scorecards.yml:29",
+                    "Info: jobLevel 'checks' permission set to 'read': .github/workflows/scorecards.yml:31",
+                    "Warn: no topLevel permission defined: .github/workflows/browser-testing.yml:1",
+                    "Warn: no topLevel permission defined: .github/workflows/ci-bun.yml:1",
+                    "Warn: no topLevel permission defined: .github/workflows/ci-dist-sync.yml:1",
+                    "Warn: no topLevel permission defined: .github/workflows/ci-docs.yml:1",
+                    "Warn: no topLevel permission defined: .github/workflows/ci-node.yml:1",
+                    "Info: topLevel 'contents' permission set to 'read': .github/workflows/codeql.yml:24",
+                    "Warn: no topLevel permission defined: .github/workflows/renovate.yml:1",
+                    "Info: topLevel permissions set to 'read-all': .github/workflows/scorecards.yml:14",
+                    "Info: no jobLevel write permissions found"
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project's workflows follow the principle of least privilege.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#token-permissions"
+                  },
+                  "name": "Token-Permissions",
+                  "reason": "detected GitHub workflow tokens with excessive permissions",
+                  "score": 0
+                },
+                {
+                  "details": [
+                    "Warn: npmCommand not pinned by hash: .github/workflows/browser-testing.yml:26",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/browser-testing.yml:28",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/ci-bun.yml:29",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/ci-dist-sync.yml:26",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/ci-docs.yml:27",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/ci-node.yml:56",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/ci-node.yml:59",
+                    "Info:  17 out of  17 GitHub-owned GitHubAction dependencies pinned",
+                    "Info:   3 out of   3 third-party GitHubAction dependencies pinned",
+                    "Info:   0 out of   7 npmCommand dependencies pinned"
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project has declared and pinned the dependencies of its build process.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#pinned-dependencies"
+                  },
+                  "name": "Pinned-Dependencies",
+                  "reason": "dependency not pinned by hash detected -- score normalized to 4",
+                  "score": 4
+                },
+                {
+                  "details": [
+                    "Info: project has a license file: LICENSE:0",
+                    "Warn: project license file does not contain an FSF or OSI license."
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project has defined a license.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#license"
+                  },
+                  "name": "License",
+                  "reason": "license file detected",
+                  "score": 9
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project cryptographically signs release artifacts.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#signed-releases"
+                  },
+                  "name": "Signed-Releases",
+                  "reason": "no releases found",
+                  "score": -1
+                },
+                {
+                  "details": [
+                    "Info: OSSFuzz integration found"
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project uses fuzzing.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#fuzzing"
+                  },
+                  "name": "Fuzzing",
+                  "reason": "project is fuzzed",
+                  "score": 10
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the default and release branches are protected with GitHub's branch protection settings.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#branch-protection"
+                  },
+                  "name": "Branch-Protection",
+                  "reason": "internal error: error during branchesHandler.setup: internal error: some github tokens can't read classic branch protection rules: https://github.com/ossf/scorecard-action/blob/main/docs/authentication/fine-grained-auth-token.md",
+                  "score": -1
+                },
+                {
+                  "details": [
+                    "Info: SAST configuration detected: CodeQL",
+                    "Warn: 22 commits out of 25 are checked with a SAST tool"
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project uses static code analysis.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#sast"
+                  },
+                  "name": "SAST",
+                  "reason": "SAST tool detected but not run on all commits",
+                  "score": 9
+                }
+              ],
+              "date": "2026-08-24",
+              "metadata": [],
+              "repo": {
+                "commit": "a666ba591064c8011988275790ad7d625279f09c",
+                "name": "github.com/lodash/lodash"
+              },
+              "score": 7.5,
+              "scorecard": {
+                "commit": "d1fab88f54636ff366076edfc5c239f97b3c8e66",
+                "version": "v5.5.1-0.20260815060127-d1fab88f5463"
+              }
+            },
+            "stars": 61284,
+            "type": "GITHUB"
+          }
+        ],
+        "refreshedAt": 1772791708,
+        "relatedPackages": {},
+        "suggestedVersion": "4.18.1",
+        "symbolicVersions": [],
+        "version": "4.17.15"
+      }
+    },
+    "signal_hash": "0x6bada555a92c5d1abee8cffd7d3e793392a9510a05666c87740cbdf87fbd21c6",
+    "timestamp": "2026-10-27T15:26:15.730481223Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "transaction": "0x7059e6df91e2fc10257b3c4039aafb63ccc89d27b49f3d1f03ca21c384658a93",
+    "network": "eip155:84532"
+  },
+  "receipt": {
+    "receipt_hash": "0x9342ab873f079b2c6a562b85ad891fd3e34a0013e2c7aa45daa26d1d5e5a0752",
+    "rail": "x402",
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "miner": "3853",
+    "intent": "SECURITY_REVIEW",
+    "amount_uusdc": "10000",
+    "epoch_id": 444,
+    "settlement": "onchain",
+    "chain": "eip155:84532",
+    "tx_hash": "0x7059e6df91e2fc10257b3c4039aafb63ccc89d27b49f3d1f03ca21c384658a93",
+    "timestamp": 1793114775
+  }
+}

@@ -201,8 +201,10 @@ export class Telegraph {
     record.paid = Boolean(record.payment);
     record.ok = res.status === 200;
     if (!record.ok) record.reason = res.status === 402 ? "payment_required" : res.status === 422 ? "rejected_by_prevalidation" : `http_${res.status}`;
-    // Telegraph doesn't charge failed miner calls, so only a 200 is counted.
-    if (hold.atomic !== null) this.settle(record, hold.atomic, record.ok);
+    // Trust the payment proof over the status: a TxLens 500 came back with a
+    // settled payment (2026-10-27), although the docs say failures are free.
+    record.charged = record.ok || record.payment?.success === true;
+    if (hold.atomic !== null) this.settle(record, hold.atomic, record.charged);
     return record;
   }
 

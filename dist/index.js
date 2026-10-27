@@ -49288,7 +49288,8 @@ var Telegraph = class {
     record.paid = Boolean(record.payment);
     record.ok = res.status === 200;
     if (!record.ok) record.reason = res.status === 402 ? "payment_required" : res.status === 422 ? "rejected_by_prevalidation" : `http_${res.status}`;
-    if (hold.atomic !== null) this.settle(record, hold.atomic, record.ok);
+    record.charged = record.ok || record.payment?.success === true;
+    if (hold.atomic !== null) this.settle(record, hold.atomic, record.charged);
     return record;
   }
   settle(record, atomic, charged) {

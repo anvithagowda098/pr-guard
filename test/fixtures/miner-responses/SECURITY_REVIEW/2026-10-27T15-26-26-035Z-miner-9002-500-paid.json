@@ -1,0 +1,89 @@
+{
+  "captured_at": "2026-10-27T15:26:26.036Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/9002",
+  "request": {
+    "method": "GET",
+    "endpoint": "/security-review",
+    "payload": {
+      "code": "app.get('/user', async (req, res) => { const rows = await db.query(\"SELECT * FROM users WHERE id = '\" + req.query.id + \"'\"); res.json(rows); });"
+    }
+  },
+  "paid": true,
+  "ok": false,
+  "costUsd": 0,
+  "costAtomic": "0",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8\nAmount: 10000 uUSDC\nResource: /v1/ask/9002\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/9002",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/9002"
+    },
+    "x402Version": 2
+  },
+  "status": 500,
+  "durationMs": 3970,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a512b803c8a9de6d-EWR",
+    "connection": "keep-alive",
+    "content-length": "127",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 15:26:26 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBjZDQ4N2NjYzJkODcwNzA5YmMwNWRmZDZkN2UyN2YwZDVjZmI0NCIsInRyYW5zYWN0aW9uIjoiMHg2NGNhNWNkNDk0OGE1MzVkNWM0MDdkZTljZTJkNjAwMWQ3NTE3NjRmOTc2MGU4NGNkYTUwYjQxM2U1OTM5OGNiIiwibmV0d29yayI6ImVpcDE1NTo4NDUzMiJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=LDhMuxWMEcd7TMIwbhrs7OR8liY7yHhaCwUcCYn4QNdC5heBbdjBtF8YvGQ0K11yfowag0qWzWbt%2BfpW%2BdV%2FyRfSaU58io9U7SuBcF6QqD1zsdyQ4hwcjfNGH6FCS%2FqBqbFBCbZPGpXjXlhK1T94sg%3D%3D\"}]}",
+    "server": "cloudflare",
+    "vary": "Origin, Origin"
+  },
+  "bodyText": "{\"error\":\"miner error 502 [the perplexity key has no credit left]: SECURITY_REVIEW is temporarily unavailable. Retry shortly.\"}",
+  "body": {
+    "error": "miner error 502 [the perplexity key has no credit left]: SECURITY_REVIEW is temporarily unavailable. Retry shortly."
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "transaction": "0x64ca5cd4948a535d5c407de9ce2d6001d751764f9760e84cda50b413e59398cb",
+    "network": "eip155:84532"
+  },
+  "receipt": null,
+  "reason": "http_500"
+}

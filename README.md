@@ -32,7 +32,7 @@ Until `config/miners.json` lists vetted miners and `src/normalize.js` can read t
 
 - `max-usd-per-call` (default $0.05): any quote above this is refused before anything is signed.
 - `max-usd-per-pr` (default $0.10): each quote is reserved against this budget before it's signed, so calls running in parallel can't overspend it together.
-- Failed miner calls aren't charged, and their reservation is released.
+- A call is counted as spent whenever the node returns a settled payment, even if the miner then fails. Telegraph's docs say failed calls are free, but a TxLens 500 was charged on 2026-10-27. Calls with no payment proof release their reservation.
 - When the budget runs out, the lowest-value checks are the ones skipped. Priority order: direct dependencies, then the diff, then transitive dependencies, then the PR description, then URLs.
 
 ## Privacy

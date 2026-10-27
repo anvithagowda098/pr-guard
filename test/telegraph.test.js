@@ -152,3 +152,22 @@ test("a failed miner call after signing releases the reservation", async () => {
   assert.equal(budget.spent, 0n);
   assert.equal(budget.reserved, 0n);
 });
+
+test("a failed miner call that still settled payment is counted as spent", async () => {
+  // Mirrors a captured TxLens response: HTTP 500 plus PAYMENT-RESPONSE success.
+  const budget = new Budget(0.1);
+  const fetch = async (input, init) => {
+    const req = new Request(input, init);
+    if (!req.headers.get("payment-signature")) {
+      return new Response("{}", { status: 402, headers: { "PAYMENT-REQUIRED": b64(challenge(10_000)) } });
+    }
+    return new Response('{"error":"miner error 502"}', { status: 500, headers: { "PAYMENT-RESPONSE": b64({ success: true, transaction: "0x64" }) } });
+  };
+  const tg = new Telegraph({ nodeUrl: "https://node.test", privateKey: generatePrivateKey(), budget, fetch });
+  const r = await tg.ask({});
+
+  assert.equal(r.ok, false);
+  assert.equal(r.charged, true);
+  assert.equal(r.costUsd, 0.01);
+  assert.equal(budget.spent, 10_000n);
+});

@@ -1,0 +1,151 @@
+{
+  "captured_at": "2026-10-27T15:26:35.709Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/7402",
+  "request": {
+    "method": "POST",
+    "endpoint": "/scan",
+    "payload": {
+      "url": "https://testsafebrowsing.appspot.com/s/phishing.html"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8\nAmount: 10000 uUSDC\nResource: /v1/ask/7402\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/7402",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/7402"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 4082,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a512b83daba320f8-EWR",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 15:26:35 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBjZDQ4N2NjYzJkODcwNzA5YmMwNWRmZDZkN2UyN2YwZDVjZmI0NCIsInRyYW5zYWN0aW9uIjoiMHg2YjZiYWI0ZjIwZTNhNjUxMzJlNDEzODdjM2QyZTQ3MzNhYzFkNmVmYzJmM2NlYTEyMGU1OTlmZmQ0OTgzNjJhIiwibmV0d29yayI6ImVpcDE1NTo4NDUzMiJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=Z9dViggqyeijAkB9Tr%2BYepnlHuexbb0Fey56RRdO%2F%2F6B8RIlIvrrSO%2Fg%2F%2Ff0eMEc2yBA2sf42pKmX1ZLUVP8LYX3ZInWv9SEvgGie7gj0ofWbcOFvj4XgT7BNxAO3Zhj%2B1LbsjdlM6Aj07Pe%2Bc%2FCnQ%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGUzY2NmYzMwNTNhN2NmYWI4NmRlZGI0Y2JhNWNiOGNjZGFjZTA1NzQyYjgzNmQzNmEyYWE2NzdjZDhmMDYyYjYiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMGNkNDg3Y2NjMmQ4NzA3MDliYzA1ZGZkNmQ3ZTI3ZjBkNWNmYjQ0IiwibWluZXIiOiIzODYiLCJpbnRlbnQiOiJVUkxfU0NBTiIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjQ0NCwic2V0dGxlbWVudCI6Im9uY2hhaW4iLCJjaGFpbiI6ImVpcDE1NTo4NDUzMiIsInR4X2hhc2giOiIweDZiNmJhYjRmMjBlM2E2NTEzMmU0MTM4N2MzZDJlNDczM2FjMWQ2ZWZjMmYzY2VhMTIwZTU5OWZmZDQ5ODM2MmEiLCJ0aW1lc3RhbXAiOjE3OTMxMTQ3OTV9"
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":1545,\"miner_id\":\"7402\",\"miner_name\":\"ProofGate URL Intelligence\",\"result\":{\"answer\":\"The URL answers with HTTP status 200 over HTTPS with no redirect declared, served by Google Frontend. The host resolves only to public addresses: 192.178.218.153, 2607:f8b0:4004:c0b::99. https://testsafebrowsing.appspot.com/s/phishing.html shows no evidence of phishing or malware. No high-risk URL structure indicator was observed. The registrable domain appspot.com is 7901 days old.\",\"checked_at\":\"2026-10-27T15:26:35.092Z\",\"confidence\":0.65,\"evidence\":[{\"detail\":\"No high-risk URL structure indicator was observed.\",\"source\":\"structure\",\"status\":\"ok\"},{\"detail\":\"The host resolves only to public addresses: 192.178.218.153, 2607:f8b0:4004:c0b::99.\",\"source\":\"dns\",\"status\":\"ok\"},{\"detail\":\"The URL answers with HTTP status 200 over HTTPS with no redirect declared, served by Google Frontend.\",\"source\":\"reachability\",\"status\":\"ok\"},{\"detail\":\"The registrable domain appspot.com is 7901 days old.\",\"source\":\"rdap\",\"status\":\"ok\"}],\"historical_context\":null,\"intent\":\"URL_SCAN\",\"live_reason\":\"The URL answers with HTTP status 200 over HTTPS with no redirect declared, served by Google Frontend. The host resolves only to public addresses: 192.178.218.153, 2607:f8b0:4004:c0b::99. https://testsafebrowsing.appspot.com/s/phishing.html shows no evidence of phishing or malware. No high-risk URL structure indicator was observed. The registrable domain appspot.com is 7901 days old.\",\"policy_version\":\"proofgate-2\",\"providers_not_queried\":[\"phishtank\",\"google\",\"urlhaus\",\"virustotal\"],\"reason\":\"The URL answers with HTTP status 200 over HTTPS with no redirect declared, served by Google Frontend. The host resolves only to public addresses: 192.178.218.153, 2607:f8b0:4004:c0b::99. https://testsafebrowsing.appspot.com/s/phishing.html shows no evidence of phishing or malware. No high-risk URL structure indicator was observed. The registrable domain appspot.com is 7901 days old.\",\"schema_version\":\"1.0\",\"url\":\"https://testsafebrowsing.appspot.com/s/phishing.html\",\"verdict\":\"no_threat_signal\"},\"signal_hash\":\"0x3f6edbd248f80121413ad2d580933255db062c4d5b112b01c78963d7d5416dcc\",\"timestamp\":\"2026-10-27T15:26:35.30583661Z\",\"warnings\":[\"parameter \\\"url\\\" length 0 violates the miner's declared limit (lte 2048): URL input is limited to 2,048 characters.\"]}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 1545,
+    "miner_id": "7402",
+    "miner_name": "ProofGate URL Intelligence",
+    "result": {
+      "answer": "The URL answers with HTTP status 200 over HTTPS with no redirect declared, served by Google Frontend. The host resolves only to public addresses: 192.178.218.153, 2607:f8b0:4004:c0b::99. https://testsafebrowsing.appspot.com/s/phishing.html shows no evidence of phishing or malware. No high-risk URL structure indicator was observed. The registrable domain appspot.com is 7901 days old.",
+      "checked_at": "2026-10-27T15:26:35.092Z",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "detail": "No high-risk URL structure indicator was observed.",
+          "source": "structure",
+          "status": "ok"
+        },
+        {
+          "detail": "The host resolves only to public addresses: 192.178.218.153, 2607:f8b0:4004:c0b::99.",
+          "source": "dns",
+          "status": "ok"
+        },
+        {
+          "detail": "The URL answers with HTTP status 200 over HTTPS with no redirect declared, served by Google Frontend.",
+          "source": "reachability",
+          "status": "ok"
+        },
+        {
+          "detail": "The registrable domain appspot.com is 7901 days old.",
+          "source": "rdap",
+          "status": "ok"
+        }
+      ],
+      "historical_context": null,
+      "intent": "URL_SCAN",
+      "live_reason": "The URL answers with HTTP status 200 over HTTPS with no redirect declared, served by Google Frontend. The host resolves only to public addresses: 192.178.218.153, 2607:f8b0:4004:c0b::99. https://testsafebrowsing.appspot.com/s/phishing.html shows no evidence of phishing or malware. No high-risk URL structure indicator was observed. The registrable domain appspot.com is 7901 days old.",
+      "policy_version": "proofgate-2",
+      "providers_not_queried": [
+        "phishtank",
+        "google",
+        "urlhaus",
+        "virustotal"
+      ],
+      "reason": "The URL answers with HTTP status 200 over HTTPS with no redirect declared, served by Google Frontend. The host resolves only to public addresses: 192.178.218.153, 2607:f8b0:4004:c0b::99. https://testsafebrowsing.appspot.com/s/phishing.html shows no evidence of phishing or malware. No high-risk URL structure indicator was observed. The registrable domain appspot.com is 7901 days old.",
+      "schema_version": "1.0",
+      "url": "https://testsafebrowsing.appspot.com/s/phishing.html",
+      "verdict": "no_threat_signal"
+    },
+    "signal_hash": "0x3f6edbd248f80121413ad2d580933255db062c4d5b112b01c78963d7d5416dcc",
+    "timestamp": "2026-10-27T15:26:35.30583661Z",
+    "warnings": [
+      "parameter \"url\" length 0 violates the miner's declared limit (lte 2048): URL input is limited to 2,048 characters."
+    ]
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "transaction": "0x6b6bab4f20e3a65132e41387c3d2e4733ac1d6efc2f3cea120e599ffd498362a",
+    "network": "eip155:84532"
+  },
+  "receipt": {
+    "receipt_hash": "0xe3ccfc3053a7cfab86dedb4cba5cb8ccdace05742b836d36a2aa677cd8f062b6",
+    "rail": "x402",
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "miner": "386",
+    "intent": "URL_SCAN",
+    "amount_uusdc": "10000",
+    "epoch_id": 444,
+    "settlement": "onchain",
+    "chain": "eip155:84532",
+    "tx_hash": "0x6b6bab4f20e3a65132e41387c3d2e4733ac1d6efc2f3cea120e599ffd498362a",
+    "timestamp": 1793114795
+  }
+}

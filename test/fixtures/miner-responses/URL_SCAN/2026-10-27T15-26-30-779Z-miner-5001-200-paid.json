@@ -1,0 +1,112 @@
+{
+  "captured_at": "2026-10-27T15:26:30.779Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/5001",
+  "request": {
+    "method": "POST",
+    "endpoint": "/scan",
+    "payload": {
+      "url": "https://testsafebrowsing.appspot.com/s/phishing.html"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8\nAmount: 10000 uUSDC\nResource: /v1/ask/5001\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/5001",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/5001"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 3819,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a512b821fc104b85-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 15:26:30 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBjZDQ4N2NjYzJkODcwNzA5YmMwNWRmZDZkN2UyN2YwZDVjZmI0NCIsInRyYW5zYWN0aW9uIjoiMHhhYWM2MzBlNzUxN2Y3NTYzNWM4NTJlZDcwMTA0ZDg0OTg5MzlkZTIyNTgxYWMxMTI0YzAyYWNhZDc1OTFhZTBhIiwibmV0d29yayI6ImVpcDE1NTo4NDUzMiJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=tX4f29asFgiw9%2FICcoS2%2BF%2FrCICBvGBOtUErtqdF03m8FBi2qSsGDv0Z5otjusuGMpzCpKwFlRxND0OjIpyJU2lZKnmOn9YWc8bSGkeElK3QZIst53aDrQor%2FGhLbMxH8YuAotum3Q8GwqCKtLeFqg%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGViODhlNjExMjA3ZDJlZjRkODE1MWVhNDlkNjQzY2YwNGY5NDZjZjkzZmRmNzRjMTBkYWEwZDljMzI2OTA3ZGQiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMGNkNDg3Y2NjMmQ4NzA3MDliYzA1ZGZkNmQ3ZTI3ZjBkNWNmYjQ0IiwibWluZXIiOiIxMjEiLCJpbnRlbnQiOiJVUkxfU0NBTiIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjQ0NCwic2V0dGxlbWVudCI6Im9uY2hhaW4iLCJjaGFpbiI6ImVpcDE1NTo4NDUzMiIsInR4X2hhc2giOiIweGFhYzYzMGU3NTE3Zjc1NjM1Yzg1MmVkNzAxMDRkODQ5ODkzOWRlMjI1ODFhYzExMjRjMDJhY2FkNzU5MWFlMGEiLCJ0aW1lc3RhbXAiOjE3OTMxMTQ3OTB9"
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":688,\"miner_id\":\"5001\",\"miner_name\":\"URL Sentinel\",\"result\":{\"confidence\":0.75,\"reason\":\"no malicious or suspicious signals across 3/4 responding source(s)\",\"verdict\":\"safe\"},\"signal_hash\":\"0x300812d21ffdf96b4095705aee63bf53dee6a776929a5990af2fdcd00890daba\",\"timestamp\":\"2026-10-27T15:26:30.378797979Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 688,
+    "miner_id": "5001",
+    "miner_name": "URL Sentinel",
+    "result": {
+      "confidence": 0.75,
+      "reason": "no malicious or suspicious signals across 3/4 responding source(s)",
+      "verdict": "safe"
+    },
+    "signal_hash": "0x300812d21ffdf96b4095705aee63bf53dee6a776929a5990af2fdcd00890daba",
+    "timestamp": "2026-10-27T15:26:30.378797979Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "transaction": "0xaac630e7517f75635c852ed70104d8498939de22581ac1124c02acad7591ae0a",
+    "network": "eip155:84532"
+  },
+  "receipt": {
+    "receipt_hash": "0xeb88e611207d2ef4d8151ea49d643cf04f946cf93fdf74c10daa0d9c326907dd",
+    "rail": "x402",
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "miner": "121",
+    "intent": "URL_SCAN",
+    "amount_uusdc": "10000",
+    "epoch_id": 444,
+    "settlement": "onchain",
+    "chain": "eip155:84532",
+    "tx_hash": "0xaac630e7517f75635c852ed70104d8498939de22581ac1124c02acad7591ae0a",
+    "timestamp": 1793114790
+  }
+}

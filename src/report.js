@@ -67,7 +67,8 @@ export function renderComment({ verdict, reasons = [], outcomes = [], spentUsd =
     for (const o of detailed) {
       for (const f of o.findings) {
         const where = f.file ? ` (\`${f.file}${f.line ? `:${f.line}` : ""}\`)` : "";
-        lines.push(`- **${f.severity}** ${cell(f.title, 200)}${where}${f.detail ? ` — ${cell(f.detail, 300)}` : ""}`);
+        const title = f.ref ? `[${cell(f.title, 200)}](${f.ref})` : cell(f.title, 200);
+        lines.push(`- **${f.severity}** ${title}${where}${f.detail ? ` — ${cell(f.detail, 300)}` : ""}`);
       }
     }
     lines.push("", "</details>");

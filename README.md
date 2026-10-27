@@ -8,13 +8,23 @@ Payments use **testnet USDC on Base Sepolia**. That money is free from a faucet 
 
 | Part | State |
 |---|---|
-| Telegraph client: discovery, paid asks, receipts, per-call cap, per-PR budget | done, tested offline |
-| Reading the PR: npm (package.json and lockfile), PyPI (requirements, pyproject), Go (go.mod), Cargo (Cargo.toml); added URLs; install scripts; diff chunks | done, tested |
-| Secret redaction before anything leaves the runner; local secret scan | done, tested |
-| Verdict policy, PR comment, purchase ledger, the Action itself | done; end-to-end test against a fake GitHub API and node |
-| **Which miners to use, and how to read their answers** | **waiting on real miner responses** |
+| **Dependency check:** new or bumped npm, PyPI, Go and Cargo packages, each looked up through Telegraph | **live on testnet** |
+| Local checks: committed secrets and keys, new install scripts | live (free, no miner) |
+| Telegraph client: discovery, paid asks, receipts, per-call cap, per-PR budget | done |
+| Verdict policy, PR comment, purchase ledger, the Action itself | done; end-to-end test replays real miner answers |
+| Code-diff review, patch verification, URL safety | **off by default:** no working miner on Telegraph yet (see below) |
 
-Until `config/miners.json` lists vetted miners and `src/normalize.js` can read their answers, paid checks are skipped or come back "unknown". Both of those give CAUTION, never a guessed SAFE. Local checks already work: a committed AWS key gives BLOCK, and a new `postinstall` script gives CAUTION.
+### Which miners, and why
+
+Checked against the live network on 2026-10-27. Discovery data is in `data/miners-summary.json` and the paid answers are in `test/fixtures/miner-responses/`.
+
+- **Dependencies:** two miners, both under SECURITY_REVIEW. No CVE_LOOKUP miner accepts a package and version; they only take a CVE id.
+  - **deps.dev Package Review** (#77010) is asked first, for npm. It returns each advisory with GitHub's severity rating and a CVSS score.
+  - **Secrev Depsdev** (#190048) covers every ecosystem, but returns advisory ids only. It serves as the second opinion: listing the same ids confirms a high finding. For non-npm packages it's the only source, so advisories it finds stay unrated and give CAUTION.
+  - Both are proxies over Google's deps.dev, so they share one upstream. Their agreement shows the miner layer is honest, not that the data was checked twice independently.
+- **Code-diff review:** only TxLens (#9002) accepts code. Its call failed because its upstream AI account ("perplexity key") had no credit, and it was still charged.
+- **URL safety:** URL Sentinel (#5001) and ProofGate (#7402) both rated Google's standard phishing test page safe. ProofGate reported that it hadn't queried any threat feed.
+- **Unknown packages:** both deps.dev miners answer HTTP 500 with "upstream error 404" and charge for it. PR Guard stops at the first such miss instead of paying the next miner for the same answer.
 
 ## How the verdict is decided
 
@@ -45,6 +55,8 @@ Until `config/miners.json` lists vetted miners and `src/normalize.js` can read t
 
 Copy `examples/pr-guard.yml` into `.github/workflows/`. Then add a `TELEGRAPH_PRIVATE_KEY` repository secret holding a funded burner key (see step 2 below).
 
+A dependency check usually costs $0.02 per changed package: $0.01 for the lookup, plus $0.01 to confirm when something high or critical turns up. Pull requests that don't touch a manifest cost nothing.
+
 - **Fork PRs** don't receive secrets, so they get a "skipped" note instead of a check.
 - **Ledger:** every purchase is written to `pr-guard-ledger.jsonl`, which is uploaded as a workflow artifact.
 
@@ -55,7 +67,7 @@ You need Node 20 or later. Behind an HTTPS proxy (Node 22.21+), prefix network c
 ```sh
 cd pr-guard
 npm ci
-npm test         # 49 tests, no network (the end-to-end test uses loopback only)
+npm test         # 60 tests, no network (the end-to-end test uses loopback only)
 npm run build    # bundles dist/index.js; commit it, since the Action runs from it
 ```
 
@@ -88,24 +100,28 @@ The script prints the raw body, all response headers, the decoded payment proof 
 
 ### Step 3: vet miners, then fill the config
 
-Add miners that give sensible answers to `config/miners.json`, best first. Each entry looks like this:
+`config/miners.json` lists vetted miners per **check**, best first. It's keyed by check rather than intent, because two checks can share an intent but need different miners. An entry looks like this:
 
 ```json
-{ "minerId": 123, "name": "…", "method": "POST", "endpoint": "/path", "payload": { "pkg": "{{name}}", "v": "{{version}}" }, "normalizer": "…" }
+{ "minerId": "77010", "name": "…", "intent": "SECURITY_REVIEW", "method": "GET", "endpoint": "/query",
+  "payload": { "pkg": "{{name}}", "ver": "{{version}}" }, "normalizer": "depsdev-version", "ecosystems": ["npm"] }
 ```
 
 These variables are available in payloads:
 
 | Check | Variables |
 |---|---|
-| deps | `ecosystem`, `name`, `version`, `from`, `spec` |
+| deps | `ecosystem`, `name`, `version`, `from`, `spec`, `depsdev_system` |
 | diff | `diff`, `files`, `chunk_index`, `chunk_count` |
 | patch | `title`, `body`, `diff`, `files` |
 | urls | `url`, `file`, `line` |
 
-A string that is exactly `"{{var}}"` is replaced by the raw value, so an array stays an array. Each normalizer goes in `src/normalize.js`, written from that miner's captured responses.
+- A string that is exactly `"{{var}}"` is replaced by the raw value, so an array stays an array.
+- Each normalizer lives in `src/normalize.js` and is tested against that miner's captured responses (`test/normalize.test.js`).
+- A normalizer rejects any answer that is about a different package or version than the one asked.
 
 ## Known limitations
 
 - `npm audit` reports a high-severity advisory in zod 3, which comes in through `@x402/core`. x402 2.28 has no release that fixes it. PR Guard only uses zod to parse small payment headers.
 - Testnet only.
+- For non-npm ecosystems, advisories are found but not rated by severity. That needs a miner that rates them.

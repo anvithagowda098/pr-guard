@@ -17,8 +17,8 @@ inputs:
     description: Fail the job on `block`, `caution` (CAUTION or BLOCK), or `never`.
     default: block
   checks:
-    description: Comma-separated paid checks to run (deps, diff, patch, urls). Secret and install-script checks always run locally.
-    default: deps,diff,patch,urls
+    description: Comma-separated paid checks to run. Only `deps` has vetted miners today; `diff`, `patch` and `urls` are skipped until they do. Secret and install-script checks always run locally.
+    default: deps
   node-url:
     description: Telegraph node URL.
     default: https://devnode.telegraphprotocol.com

@@ -6,6 +6,12 @@ import { maxSeverity } from "./policy.js";
 
 export const ALL_CHECKS = ["deps", "diff", "patch", "urls"];
 
+// Paid checks with a vetted miner today; the others stay opt-in until one exists.
+export const DEFAULT_CHECKS = ["deps"];
+
+// deps.dev's names for our ecosystems.
+const DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
+
 /**
  * Paid jobs in priority order: direct dependencies, the diff, transitive
  * dependencies, the patch-vs-description check, then URLs. The budget is
@@ -19,11 +25,13 @@ export const ALL_CHECKS = ["deps", "diff", "patch", "urls"];
  * @param {Set<string>} enabled check names
  */
 export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12_000 } = {}) {
+  // Package-version vulnerability lookups live under SECURITY_REVIEW on
+  // Telegraph; CVE_LOOKUP miners only take a CVE id (see data/miners-summary.json).
   const depJob = (d) => ({
     check: "deps",
-    intent: "CVE_LOOKUP",
+    intent: "SECURITY_REVIEW",
     target: d.to ? `${d.name}@${d.to}` : `${d.name} (${d.spec})`,
-    vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec },
+    vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec, depsdev_system: DEPSDEV_SYSTEM[d.ecosystem] },
   });
   const resolvable = deps.filter((d) => d.to).slice(0, maxDeps);
   const direct = resolvable.filter((d) => d.direct).map(depJob);

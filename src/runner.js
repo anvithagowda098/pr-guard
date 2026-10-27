@@ -37,6 +37,10 @@ const callSummary = (entry, r) => ({
 
 const isHigh = (s) => s === "high" || s === "critical";
 
+// Seen from both deps.dev proxies for an unknown package: HTTP 500 with
+// {"error":"upstream error 404: ..."} (captured 2026-10-27).
+const isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(r.bodyText ?? "");
+
 /**
  * One check on one target. Tries the intent's miners in order until one
  * answers; a high/critical answer gets a second opinion from the next miner.
@@ -44,10 +48,12 @@ const isHigh = (s) => s === "high" || s === "critical";
  */
 export async function runCheck({ tg, miners, job, deadline, onCall }) {
   const { check, intent, target, vars } = job;
-  const entries = miners[intent] ?? [];
+  // Miners are configured per check (two checks can share an intent but need
+  // different miners); an entry may limit itself to some ecosystems.
+  const entries = (miners[check] ?? []).filter((e) => !e.ecosystems || e.ecosystems.includes(vars.ecosystem));
   const calls = [];
   const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls };
-  if (!entries.length) return { ...base, status: "skipped", severity: "none", reason: `no vetted ${intent} miner yet` };
+  if (!entries.length) return { ...base, status: "skipped", severity: "none", reason: `no vetted ${check} miner yet` };
 
   let next = 0;
   let lastReason = null;
@@ -58,8 +64,11 @@ export async function runCheck({ tg, miners, job, deadline, onCall }) {
       const r = await callMiner(tg, entry, vars);
       calls.push(callSummary(entry, r));
       await onCall?.(ledgerEntry({ check, target, intent, minerId: entry.minerId }, r));
-      if (r.ok) return normalize(entry.normalizer, r.body?.result);
+      if (r.ok) return normalize(entry.normalizer, r.body?.result, vars);
       lastReason = r.reason;
+      // The registry itself doesn't know the package (private or unpublished);
+      // every miner proxies the same registry, and each miss is charged.
+      if (isUpstreamNotFound(r)) { lastReason = "not_found"; return null; }
       if (r.reason === "over_budget") return null; // budget spent: stop rather than shop for a cheaper miner
     }
     return null;
@@ -67,8 +76,9 @@ export async function runCheck({ tg, miners, job, deadline, onCall }) {
 
   const first = await opinion();
   if (!first) {
-    const status = lastReason === "over_budget" || lastReason === "time limit" ? "skipped" : "failed";
-    return { ...base, status, severity: "none", reason: lastReason === "over_budget" ? "budget exhausted" : lastReason };
+    const skipped = { over_budget: "budget exhausted", "time limit": "time limit", not_found: "not in the public registry" };
+    if (skipped[lastReason]) return { ...base, status: "skipped", severity: "none", reason: skipped[lastReason] };
+    return { ...base, status: "failed", severity: "none", reason: lastReason };
   }
   const combined = isHigh(first.severity) ? combineOpinions(first, await opinion()) : first;
   return { ...base, status: "ok", severity: combined.severity, findings: combined.findings, confirmed: combined.confirmed ?? false, disagreement: combined.disagreement ?? false };

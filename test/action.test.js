@@ -1,19 +1,27 @@
-// End to end on loopback: the real action entry point against a fake GitHub
-// API and a fake payment-gated node. Proves the wiring (files -> deps ->
-// paid call -> ledger -> one comment, updated on re-run), not miner quality.
+// End to end on loopback: the real action entry point and bundled miner
+// config against a fake GitHub API and a fake payment-gated node that replays
+// real captured miner answers. Proves the wiring (files -> deps -> paid calls
+// -> second opinion -> ledger -> one comment, updated on re-run).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { generatePrivateKey } from "viem/accounts";
 
+const captured = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/SECURITY_REVIEW/${name}`, import.meta.url), "utf8")).body;
+const ANSWERS = {
+  77010: captured("77010-npm-lodash-4.17.15-200-paid.json"),
+  190048: captured("190048-npm-lodash-4.17.15-200-paid.json"),
+};
+
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64");
 const challenge = {
   x402Version: 2,
-  resource: { url: "http://local/engine/v1/ask/7", description: "t", mimeType: "application/json" },
+  resource: { url: "http://local/engine/v1/ask", description: "t", mimeType: "application/json" },
   accepts: [{ scheme: "exact", network: "eip155:84532", amount: "10000", asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", payTo: "0x000000000000000000000000000000000000dEaD", maxTimeoutSeconds: 60, extra: { name: "USDC", version: "2" } }],
 };
 
@@ -21,7 +29,7 @@ function fakeServer() {
   const state = { comments: [], asks: [], nextId: 1 };
   const files = [
     { filename: "package.json", status: "modified", patch: '@@ -1 +1 @@\n-"lodash": "4.17.21"\n+"lodash": "4.17.15"' },
-    { filename: "src/app.js", status: "modified", patch: "@@ -1,1 +1,2 @@\n const a = 1;\n+const key = \"" + "AKIA" + "Z7QW3XK2LMNOPQRS" + "\";" },
+    { filename: "src/app.js", status: "modified", patch: "@@ -1,1 +1,2 @@\n const a = 1;\n+const b = 2;" },
   ];
   const contents = {
     "mb:package.json": JSON.stringify({ dependencies: { lodash: "4.17.21" } }),
@@ -56,10 +64,11 @@ function fakeServer() {
       c.body = JSON.parse(body).body;
       return json(200, c);
     }
-    if (p === "/engine/v1/ask/7") {
-      state.asks.push(JSON.parse(body));
+    const ask = p.match(/^\/engine\/v1\/ask\/(\d+)$/);
+    if (ask && ANSWERS[ask[1]]) {
       if (!req.headers["payment-signature"]) return json(402, {}, { "PAYMENT-REQUIRED": b64(challenge) });
-      return json(200, { miner_id: 7, miner_name: "fake", result: "opaque", cost_usd: 0.01, signal_hash: "0xsig" }, { "X-TELEGRAPH-RECEIPT": b64({ receipt_hash: "0xrec" }), "PAYMENT-RESPONSE": b64({ success: true }) });
+      state.asks.push({ miner: ask[1], ...JSON.parse(body) });
+      return json(200, ANSWERS[ask[1]], { "X-TELEGRAPH-RECEIPT": b64({ receipt_hash: `0xrec${ask[1]}` }), "PAYMENT-RESPONSE": b64({ success: true }) });
     }
     json(404, { message: `unhandled ${req.method} ${p}` });
   });
@@ -76,13 +85,12 @@ function runAction(env, cwd) {
   });
 }
 
-test("action: pays for a dependency check, blocks on a committed key, one comment across re-runs", async () => {
+test("action: buys a dependency check, confirms it with a second miner, blocks, one comment across re-runs", async () => {
   const { server, state, base } = await fakeServer();
   const dir = await mkdtemp(join(tmpdir(), "pr-guard-"));
   try {
     const event = { pull_request: { number: 1, title: "bump lodash", body: "", base: { sha: "basesha", repo: { full_name: "o/r" } }, head: { sha: "headsha", repo: { full_name: "o/r" } } } };
     await writeFile(join(dir, "event.json"), JSON.stringify(event));
-    await writeFile(join(dir, "miners.json"), JSON.stringify({ CVE_LOOKUP: [{ minerId: 7, endpoint: "/cve", payload: { package: "{{name}}", version: "{{version}}" } }] }));
     for (const f of ["out", "summary"]) await writeFile(join(dir, f), "");
     const env = {
       PATH: process.env.PATH,
@@ -97,8 +105,6 @@ test("action: pays for a dependency check, blocks on a committed key, one commen
       "INPUT_GITHUB-TOKEN": "t",
       "INPUT_TELEGRAPH-PRIVATE-KEY": generatePrivateKey(),
       "INPUT_NODE-URL": base,
-      "INPUT_MINERS-CONFIG": join(dir, "miners.json"),
-      INPUT_CHECKS: "deps",
     };
 
     const first = await runAction(env, dir);
@@ -109,16 +115,19 @@ test("action: pays for a dependency check, blocks on a committed key, one commen
     assert.equal(state.comments.length, 1, "re-run updated the same comment");
     const comment = state.comments[0].body;
     assert.match(comment, /PR Guard: 🔴 BLOCK/);
-    assert.match(comment, /aws access key id/);
-    assert.match(comment, /lodash@4\.17\.15/);
-    assert.match(comment, /\/engine\/v1\/signal\/0xsig/);
-    assert.deepEqual(state.asks[0], { method: "POST", endpoint: "/cve", payload: { package: "lodash", version: "4.17.15" } });
+    assert.match(comment, /deps: lodash@4\.17\.15 — high/);
+    assert.match(comment, /\[Prototype Pollution in lodash\]\(https:\/\/osv\.dev\/vulnerability\/GHSA-p6mc-m468-83gw\)/);
+    assert.match(comment, /confirmed/);
+    assert.match(comment, /\/engine\/v1\/signal\/0x106d54f4/);
+    assert.deepEqual(state.asks.slice(0, 2), [
+      { miner: "77010", method: "GET", endpoint: "/query", payload: { pkg: "lodash", ver: "4.17.15" } },
+      { miner: "190048", method: "GET", endpoint: "/query", payload: { system: "npm", pkg: "lodash", ver: "4.17.15" } },
+    ]);
 
     const ledger = (await readFile(join(dir, "pr-guard-ledger.jsonl"), "utf8")).trim().split("\n").map(JSON.parse);
-    assert.equal(ledger.length, 2);
-    assert.equal(ledger[0].signal_hash, "0xsig");
-    assert.equal(ledger[0].cost_usd, 0.01);
-    assert.match(await readFile(join(dir, "out"), "utf8"), /cost_usd[\s\S]*0\.010000/);
+    assert.equal(ledger.length, 4, "two paid calls per run");
+    assert.deepEqual(ledger.slice(0, 2).map((e) => [e.miner_id, e.cost_usd, e.receipt.receipt_hash]), [["77010", 0.01, "0xrec77010"], ["190048", 0.01, "0xrec190048"]]);
+    assert.match(await readFile(join(dir, "out"), "utf8"), /cost_usd[\s\S]*0\.020000/);
   } finally {
     server.close();
   }

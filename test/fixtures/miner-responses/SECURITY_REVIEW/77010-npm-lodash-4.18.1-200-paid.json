@@ -1,0 +1,362 @@
+{
+  "captured_at": "2026-10-27T15:36:55.147Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/77010",
+  "request": {
+    "method": "GET",
+    "endpoint": "/query",
+    "payload": {
+      "pkg": "lodash",
+      "ver": "4.18.1"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8\nAmount: 10000 uUSDC\nResource: /v1/ask/77010\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/77010",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:84532",
+        "payTo": "0x5a2324aa18613fad4e44bdf0d6c73ec1f6d87ff8",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/77010"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 4522,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a512c75d6eb20ab9-EWR",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 15:36:54 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBjZDQ4N2NjYzJkODcwNzA5YmMwNWRmZDZkN2UyN2YwZDVjZmI0NCIsInRyYW5zYWN0aW9uIjoiMHg4ZjgyYWZkN2UxODFlODJiMWRkMTA5NGVhNWQwZGM0NTRjY2I0Y2FhYTY4ZThkNWMwMzY5MmZkMGYxNTBiNzU4IiwibmV0d29yayI6ImVpcDE1NTo4NDUzMiJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=VPex8w%2FiJGUDKGuJLhGqj1eXzJilTNU4STKVTOrTk6VQELDkaq2m9bwpWekO2w8h338OzcgN4yVSFMwTvzKYyvr5BuJie%2B9nnfvCpDvv%2FsXY3HIEiNDKz6kSfnRH8IC15UmE95yb4jevrWEQrcyxLQ%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGY5MDllY2RlMmE5ZDYwYTUwZTljMjBiZDFlMDRhMGZiYzUyNzcyMjZmYjE2MzFiNDRiNzIyYzQ2ZWJkNTdlZTYiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMGNkNDg3Y2NjMmQ4NzA3MDliYzA1ZGZkNmQ3ZTI3ZjBkNWNmYjQ0IiwibWluZXIiOiIzODUzIiwiaW50ZW50IjoiU0VDVVJJVFlfUkVWSUVXIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6NDQ0LCJzZXR0bGVtZW50Ijoib25jaGFpbiIsImNoYWluIjoiZWlwMTU1Ojg0NTMyIiwidHhfaGFzaCI6IjB4OGY4MmFmZDdlMTgxZTgyYjFkZDEwOTRlYTVkMGRjNDU0Y2NiNGNhYWE2OGU4ZDVjMDM2OTJmZDBmMTUwYjc1OCIsInRpbWVzdGFtcCI6MTc5MzExNTQxNH0="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":391,\"miner_id\":\"77010\",\"miner_name\":\"deps.dev Package Review\",\"result\":{\"defaultVersion\":\"4.18.1\",\"owners\":[],\"package\":{\"name\":\"lodash\",\"system\":\"NPM\"},\"version\":{\"advisories\":[],\"createdAt\":1775077280,\"dependentCount\":701931,\"dependentCountDirect\":177545,\"dependentCountIndirect\":540263,\"description\":\"Lodash modular utilities.\",\"isDefault\":true,\"licenseDetails\":[{\"license\":\"MIT\",\"spdx\":\"MIT\"}],\"licenses\":[\"MIT\"],\"links\":{\"homepage\":\"https://lodash.com/\",\"issues\":\"https://github.com/lodash/lodash/issues\",\"origins\":[\"https://registry.npmjs.org/lodash/4.18.1\",\"https://www.npmjs.com/package/lodash/v/4.18.1\"],\"repo\":\"https://github.com/lodash/lodash\"},\"projects\":[{\"description\":\"A modern JavaScript utility library delivering modularity, performance, \\u0026 extras.\",\"displayName\":\"lodash/lodash\",\"forks\":7199,\"issues\":123,\"license\":\"non-standard\",\"link\":\"https://github.com/lodash/lodash\",\"name\":\"lodash/lodash\",\"observedAt\":1792712991,\"scorecardV2\":{\"check\":[{\"details\":[],\"documentation\":{\"short\":\"Determines if the project is \\\"actively maintained\\\".\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#maintained\"},\"name\":\"Maintained\",\"reason\":\"7 commit(s) and 6 issue activity found in the last 90 days -- score normalized to 10\",\"score\":10},{\"details\":[],\"documentation\":{\"short\":\"Determines if the project requires human code review before pull requests (aka merge requests) are merged.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#code-review\"},\"name\":\"Code-Review\",\"reason\":\"Found 22/30 approved changesets -- score normalized to 7\",\"score\":7},{\"details\":[\"Info: security policy file detected: SECURITY.md:1\",\"Info: Found linked content: SECURITY.md:1\",\"Info: Found disclosure, vulnerability, and/or timelines in security policy: SECURITY.md:1\",\"Info: Found text in security policy: SECURITY.md:1\"],\"documentation\":{\"short\":\"Determines if the project has published a security policy.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#security-policy\"},\"name\":\"Security-Policy\",\"reason\":\"security policy file detected\",\"score\":10},{\"details\":[],\"documentation\":{\"short\":\"Determines if the project's GitHub Action workflows avoid dangerous patterns.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#dangerous-workflow\"},\"name\":\"Dangerous-Workflow\",\"reason\":\"no dangerous workflow patterns detected\",\"score\":10},{\"details\":[],\"documentation\":{\"short\":\"Determines if the project has generated executable (binary) artifacts in the source repository.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#binary-artifacts\"},\"name\":\"Binary-Artifacts\",\"reason\":\"no binaries found in the repo\",\"score\":10},{\"details\":[\"Warn: no GitHub/GitLab publishing workflow detected.\"],\"documentation\":{\"short\":\"Determines if the project is published as a package that others can easily download, install, easily update, and uninstall.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#packaging\"},\"name\":\"Packaging\",\"reason\":\"packaging workflow not detected\",\"score\":-1},{\"details\":[],\"documentation\":{\"short\":\"Determines if the project has an OpenSSF (formerly CII) Best Practices Badge.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#cii-best-practices\"},\"name\":\"CII-Best-Practices\",\"reason\":\"no effort to earn an OpenSSF best practices badge detected\",\"score\":0},{\"details\":[\"Info: jobLevel 'actions' permission set to 'read': .github/workflows/codeql.yml:31\",\"Info: jobLevel 'contents' permission set to 'read': .github/workflows/codeql.yml:32\",\"Info: jobLevel 'contents' permission set to 'read': .github/workflows/scorecards.yml:25\",\"Info: jobLevel 'actions' permission set to 'read': .github/workflows/scorecards.yml:26\",\"Info: jobLevel 'issues' permission set to 'read': .github/workflows/scorecards.yml:28\",\"Info: jobLevel 'pull-requests' permission set to 'read': .github/workflows/scorecards.yml:29\",\"Info: jobLevel 'checks' permission set to 'read': .github/workflows/scorecards.yml:31\",\"Warn: no topLevel permission defined: .github/workflows/browser-testing.yml:1\",\"Warn: no topLevel permission defined: .github/workflows/ci-bun.yml:1\",\"Warn: no topLevel permission defined: .github/workflows/ci-dist-sync.yml:1\",\"Warn: no topLevel permission defined: .github/workflows/ci-docs.yml:1\",\"Warn: no topLevel permission defined: .github/workflows/ci-node.yml:1\",\"Info: topLevel 'contents' permission set to 'read': .github/workflows/codeql.yml:24\",\"Warn: no topLevel permission defined: .github/workflows/renovate.yml:1\",\"Info: topLevel permissions set to 'read-all': .github/workflows/scorecards.yml:14\",\"Info: no jobLevel write permissions found\"],\"documentation\":{\"short\":\"Determines if the project's workflows follow the principle of least privilege.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#token-permissions\"},\"name\":\"Token-Permissions\",\"reason\":\"detected GitHub workflow tokens with excessive permissions\",\"score\":0},{\"details\":[\"Warn: npmCommand not pinned by hash: .github/workflows/browser-testing.yml:26\",\"Warn: npmCommand not pinned by hash: .github/workflows/browser-testing.yml:28\",\"Warn: npmCommand not pinned by hash: .github/workflows/ci-bun.yml:29\",\"Warn: npmCommand not pinned by hash: .github/workflows/ci-dist-sync.yml:26\",\"Warn: npmCommand not pinned by hash: .github/workflows/ci-docs.yml:27\",\"Warn: npmCommand not pinned by hash: .github/workflows/ci-node.yml:56\",\"Warn: npmCommand not pinned by hash: .github/workflows/ci-node.yml:59\",\"Info:  17 out of  17 GitHub-owned GitHubAction dependencies pinned\",\"Info:   3 out of   3 third-party GitHubAction dependencies pinned\",\"Info:   0 out of   7 npmCommand dependencies pinned\"],\"documentation\":{\"short\":\"Determines if the project has declared and pinned the dependencies of its build process.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#pinned-dependencies\"},\"name\":\"Pinned-Dependencies\",\"reason\":\"dependency not pinned by hash detected -- score normalized to 4\",\"score\":4},{\"details\":[\"Info: project has a license file: LICENSE:0\",\"Warn: project license file does not contain an FSF or OSI license.\"],\"documentation\":{\"short\":\"Determines if the project has defined a license.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#license\"},\"name\":\"License\",\"reason\":\"license file detected\",\"score\":9},{\"details\":[],\"documentation\":{\"short\":\"Determines if the project cryptographically signs release artifacts.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#signed-releases\"},\"name\":\"Signed-Releases\",\"reason\":\"no releases found\",\"score\":-1},{\"details\":[\"Info: OSSFuzz integration found\"],\"documentation\":{\"short\":\"Determines if the project uses fuzzing.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#fuzzing\"},\"name\":\"Fuzzing\",\"reason\":\"project is fuzzed\",\"score\":10},{\"details\":[],\"documentation\":{\"short\":\"Determines if the default and release branches are protected with GitHub's branch protection settings.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#branch-protection\"},\"name\":\"Branch-Protection\",\"reason\":\"internal error: error during branchesHandler.setup: internal error: some github tokens can't read classic branch protection rules: https://github.com/ossf/scorecard-action/blob/main/docs/authentication/fine-grained-auth-token.md\",\"score\":-1},{\"details\":[\"Info: SAST configuration detected: CodeQL\",\"Warn: 22 commits out of 25 are checked with a SAST tool\"],\"documentation\":{\"short\":\"Determines if the project uses static code analysis.\",\"url\":\"https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#sast\"},\"name\":\"SAST\",\"reason\":\"SAST tool detected but not run on all commits\",\"score\":9}],\"date\":\"2026-08-24\",\"metadata\":[],\"repo\":{\"commit\":\"a666ba591064c8011988275790ad7d625279f09c\",\"name\":\"github.com/lodash/lodash\"},\"score\":7.5,\"scorecard\":{\"commit\":\"d1fab88f54636ff366076edfc5c239f97b3c8e66\",\"version\":\"v5.5.1-0.20260815060127-d1fab88f5463\"}},\"stars\":61284,\"type\":\"GITHUB\"}],\"refreshedAt\":1775077566,\"relatedPackages\":{},\"symbolicVersions\":[\"latest\"],\"version\":\"4.18.1\"}},\"signal_hash\":\"0x8d3fcc4adfa6a4e31e540e1db8c556bfa1e0f4069eca98910e1d2aad43a17a13\",\"timestamp\":\"2026-10-27T15:36:54.558430172Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 391,
+    "miner_id": "77010",
+    "miner_name": "deps.dev Package Review",
+    "result": {
+      "defaultVersion": "4.18.1",
+      "owners": [],
+      "package": {
+        "name": "lodash",
+        "system": "NPM"
+      },
+      "version": {
+        "advisories": [],
+        "createdAt": 1775077280,
+        "dependentCount": 701931,
+        "dependentCountDirect": 177545,
+        "dependentCountIndirect": 540263,
+        "description": "Lodash modular utilities.",
+        "isDefault": true,
+        "licenseDetails": [
+          {
+            "license": "MIT",
+            "spdx": "MIT"
+          }
+        ],
+        "licenses": [
+          "MIT"
+        ],
+        "links": {
+          "homepage": "https://lodash.com/",
+          "issues": "https://github.com/lodash/lodash/issues",
+          "origins": [
+            "https://registry.npmjs.org/lodash/4.18.1",
+            "https://www.npmjs.com/package/lodash/v/4.18.1"
+          ],
+          "repo": "https://github.com/lodash/lodash"
+        },
+        "projects": [
+          {
+            "description": "A modern JavaScript utility library delivering modularity, performance, & extras.",
+            "displayName": "lodash/lodash",
+            "forks": 7199,
+            "issues": 123,
+            "license": "non-standard",
+            "link": "https://github.com/lodash/lodash",
+            "name": "lodash/lodash",
+            "observedAt": 1792712991,
+            "scorecardV2": {
+              "check": [
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project is \"actively maintained\".",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#maintained"
+                  },
+                  "name": "Maintained",
+                  "reason": "7 commit(s) and 6 issue activity found in the last 90 days -- score normalized to 10",
+                  "score": 10
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project requires human code review before pull requests (aka merge requests) are merged.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#code-review"
+                  },
+                  "name": "Code-Review",
+                  "reason": "Found 22/30 approved changesets -- score normalized to 7",
+                  "score": 7
+                },
+                {
+                  "details": [
+                    "Info: security policy file detected: SECURITY.md:1",
+                    "Info: Found linked content: SECURITY.md:1",
+                    "Info: Found disclosure, vulnerability, and/or timelines in security policy: SECURITY.md:1",
+                    "Info: Found text in security policy: SECURITY.md:1"
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project has published a security policy.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#security-policy"
+                  },
+                  "name": "Security-Policy",
+                  "reason": "security policy file detected",
+                  "score": 10
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project's GitHub Action workflows avoid dangerous patterns.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#dangerous-workflow"
+                  },
+                  "name": "Dangerous-Workflow",
+                  "reason": "no dangerous workflow patterns detected",
+                  "score": 10
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project has generated executable (binary) artifacts in the source repository.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#binary-artifacts"
+                  },
+                  "name": "Binary-Artifacts",
+                  "reason": "no binaries found in the repo",
+                  "score": 10
+                },
+                {
+                  "details": [
+                    "Warn: no GitHub/GitLab publishing workflow detected."
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project is published as a package that others can easily download, install, easily update, and uninstall.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#packaging"
+                  },
+                  "name": "Packaging",
+                  "reason": "packaging workflow not detected",
+                  "score": -1
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project has an OpenSSF (formerly CII) Best Practices Badge.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#cii-best-practices"
+                  },
+                  "name": "CII-Best-Practices",
+                  "reason": "no effort to earn an OpenSSF best practices badge detected",
+                  "score": 0
+                },
+                {
+                  "details": [
+                    "Info: jobLevel 'actions' permission set to 'read': .github/workflows/codeql.yml:31",
+                    "Info: jobLevel 'contents' permission set to 'read': .github/workflows/codeql.yml:32",
+                    "Info: jobLevel 'contents' permission set to 'read': .github/workflows/scorecards.yml:25",
+                    "Info: jobLevel 'actions' permission set to 'read': .github/workflows/scorecards.yml:26",
+                    "Info: jobLevel 'issues' permission set to 'read': .github/workflows/scorecards.yml:28",
+                    "Info: jobLevel 'pull-requests' permission set to 'read': .github/workflows/scorecards.yml:29",
+                    "Info: jobLevel 'checks' permission set to 'read': .github/workflows/scorecards.yml:31",
+                    "Warn: no topLevel permission defined: .github/workflows/browser-testing.yml:1",
+                    "Warn: no topLevel permission defined: .github/workflows/ci-bun.yml:1",
+                    "Warn: no topLevel permission defined: .github/workflows/ci-dist-sync.yml:1",
+                    "Warn: no topLevel permission defined: .github/workflows/ci-docs.yml:1",
+                    "Warn: no topLevel permission defined: .github/workflows/ci-node.yml:1",
+                    "Info: topLevel 'contents' permission set to 'read': .github/workflows/codeql.yml:24",
+                    "Warn: no topLevel permission defined: .github/workflows/renovate.yml:1",
+                    "Info: topLevel permissions set to 'read-all': .github/workflows/scorecards.yml:14",
+                    "Info: no jobLevel write permissions found"
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project's workflows follow the principle of least privilege.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#token-permissions"
+                  },
+                  "name": "Token-Permissions",
+                  "reason": "detected GitHub workflow tokens with excessive permissions",
+                  "score": 0
+                },
+                {
+                  "details": [
+                    "Warn: npmCommand not pinned by hash: .github/workflows/browser-testing.yml:26",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/browser-testing.yml:28",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/ci-bun.yml:29",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/ci-dist-sync.yml:26",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/ci-docs.yml:27",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/ci-node.yml:56",
+                    "Warn: npmCommand not pinned by hash: .github/workflows/ci-node.yml:59",
+                    "Info:  17 out of  17 GitHub-owned GitHubAction dependencies pinned",
+                    "Info:   3 out of   3 third-party GitHubAction dependencies pinned",
+                    "Info:   0 out of   7 npmCommand dependencies pinned"
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project has declared and pinned the dependencies of its build process.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#pinned-dependencies"
+                  },
+                  "name": "Pinned-Dependencies",
+                  "reason": "dependency not pinned by hash detected -- score normalized to 4",
+                  "score": 4
+                },
+                {
+                  "details": [
+                    "Info: project has a license file: LICENSE:0",
+                    "Warn: project license file does not contain an FSF or OSI license."
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project has defined a license.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#license"
+                  },
+                  "name": "License",
+                  "reason": "license file detected",
+                  "score": 9
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the project cryptographically signs release artifacts.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#signed-releases"
+                  },
+                  "name": "Signed-Releases",
+                  "reason": "no releases found",
+                  "score": -1
+                },
+                {
+                  "details": [
+                    "Info: OSSFuzz integration found"
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project uses fuzzing.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#fuzzing"
+                  },
+                  "name": "Fuzzing",
+                  "reason": "project is fuzzed",
+                  "score": 10
+                },
+                {
+                  "details": [],
+                  "documentation": {
+                    "short": "Determines if the default and release branches are protected with GitHub's branch protection settings.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#branch-protection"
+                  },
+                  "name": "Branch-Protection",
+                  "reason": "internal error: error during branchesHandler.setup: internal error: some github tokens can't read classic branch protection rules: https://github.com/ossf/scorecard-action/blob/main/docs/authentication/fine-grained-auth-token.md",
+                  "score": -1
+                },
+                {
+                  "details": [
+                    "Info: SAST configuration detected: CodeQL",
+                    "Warn: 22 commits out of 25 are checked with a SAST tool"
+                  ],
+                  "documentation": {
+                    "short": "Determines if the project uses static code analysis.",
+                    "url": "https://github.com/ossf/scorecard/blob/d1fab88f54636ff366076edfc5c239f97b3c8e66/docs/checks.md#sast"
+                  },
+                  "name": "SAST",
+                  "reason": "SAST tool detected but not run on all commits",
+                  "score": 9
+                }
+              ],
+              "date": "2026-08-24",
+              "metadata": [],
+              "repo": {
+                "commit": "a666ba591064c8011988275790ad7d625279f09c",
+                "name": "github.com/lodash/lodash"
+              },
+              "score": 7.5,
+              "scorecard": {
+                "commit": "d1fab88f54636ff366076edfc5c239f97b3c8e66",
+                "version": "v5.5.1-0.20260815060127-d1fab88f5463"
+              }
+            },
+            "stars": 61284,
+            "type": "GITHUB"
+          }
+        ],
+        "refreshedAt": 1775077566,
+        "relatedPackages": {},
+        "symbolicVersions": [
+          "latest"
+        ],
+        "version": "4.18.1"
+      }
+    },
+    "signal_hash": "0x8d3fcc4adfa6a4e31e540e1db8c556bfa1e0f4069eca98910e1d2aad43a17a13",
+    "timestamp": "2026-10-27T15:36:54.558430172Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "transaction": "0x8f82afd7e181e82b1dd1094ea5d0dc454ccb4caaa68e8d5c03692fd0f150b758",
+    "network": "eip155:84532"
+  },
+  "receipt": {
+    "receipt_hash": "0xf909ecde2a9d60a50e9c20bd1e04a0fbc5277226fb1631b44b722c46ebd57ee6",
+    "rail": "x402",
+    "payer": "0xd0cd487ccc2d870709bc05dfd6d7e27f0d5cfb44",
+    "miner": "3853",
+    "intent": "SECURITY_REVIEW",
+    "amount_uusdc": "10000",
+    "epoch_id": 444,
+    "settlement": "onchain",
+    "chain": "eip155:84532",
+    "tx_hash": "0x8f82afd7e181e82b1dd1094ea5d0dc454ccb4caaa68e8d5c03692fd0f150b758",
+    "timestamp": 1793115414
+  },
+  "charged": true
+}

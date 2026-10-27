@@ -6,7 +6,7 @@ import { readFile } from "node:fs/promises";
 import { Telegraph, Budget, DEFAULT_NODE_URL } from "./telegraph.js";
 import { manifestEcosystem, diffManifest, mergeDependencyChanges, diffInstallScripts } from "./extract.js";
 import { redact } from "./redact.js";
-import { ALL_CHECKS, buildJobs, localOutcomes, unresolvableDepOutcomes } from "./checks.js";
+import { DEFAULT_CHECKS, buildJobs, localOutcomes, unresolvableDepOutcomes } from "./checks.js";
 import { runCheck, runAll } from "./runner.js";
 import { decide, shouldFail } from "./policy.js";
 import { renderComment } from "./report.js";
@@ -30,7 +30,7 @@ function inputs() {
     maxUsdPerPr: num("max-usd-per-pr", 0.1),
     maxUsdPerCall: num("max-usd-per-call", 0.05),
     failOn,
-    checks: new Set((core.getInput("checks") || ALL_CHECKS.join(",")).split(",").map((s) => s.trim()).filter(Boolean)),
+    checks: new Set((core.getInput("checks") || DEFAULT_CHECKS.join(",")).split(",").map((s) => s.trim()).filter(Boolean)),
     nodeUrl: core.getInput("node-url") || DEFAULT_NODE_URL,
     minersConfig: core.getInput("miners-config"),
     token: core.getInput("github-token"),

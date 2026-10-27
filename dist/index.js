@@ -50433,8 +50433,9 @@ function decide(outcomes) {
     if (o.status === "failed") caution.push(`${label} \u2014 check failed (${o.reason ?? "unknown error"})`);
     else if (o.status === "skipped") {
       if (REQUIRED_CHECKS.has(o.check)) caution.push(`${label} \u2014 not checked (${o.reason ?? "skipped"})`);
-    } else if (o.severity === "unknown") caution.push(`${label} \u2014 miner answer could not be interpreted`);
-    else if (isHigh(o.severity) && o.confirmed) block.push(`${label} \u2014 ${o.severity}`);
+    } else if (o.severity === "unknown") {
+      caution.push(o.findings.length ? `${label} \u2014 ${o.findings.length} advisories, severity not rated` : `${label} \u2014 miner answer could not be interpreted`);
+    } else if (isHigh(o.severity) && o.confirmed) block.push(`${label} \u2014 ${o.severity}`);
     else if (isHigh(o.severity)) caution.push(`${label} \u2014 ${o.severity}, unconfirmed${o.disagreement ? " (miners disagree)" : ""}`);
     else if (o.disagreement) caution.push(`${label} \u2014 miners disagree`);
     else if (o.severity === "medium") caution.push(`${label} \u2014 medium`);
@@ -50452,7 +50453,20 @@ function maxSeverity(findings) {
   return findings.reduce((acc, f) => rank(f.severity) > rank(acc) ? f.severity : acc, "none");
 }
 function combineOpinions(first, second) {
-  if (!second || second.severity === "unknown") return { ...first, confirmed: false, disagreement: false };
+  const unconfirmed = { ...first, confirmed: false, disagreement: false };
+  if (!second) return unconfirmed;
+  const highIds = first.findings.filter((f) => isHigh(f.severity) && f.id).map((f) => f.id);
+  const secondIds = new Set(second.findings.map((f) => f.id).filter(Boolean));
+  if (highIds.length && (secondIds.size || second.severity === "none")) {
+    const confirmed = highIds.some((id) => secondIds.has(id));
+    return {
+      severity: first.severity,
+      findings: first.findings.map((f) => secondIds.has(f.id) ? { ...f, corroborated: true } : f),
+      confirmed,
+      disagreement: !confirmed
+    };
+  }
+  if (second.severity === "unknown") return unconfirmed;
   const firstHigh = isHigh(first.severity);
   const secondHigh = isHigh(second.severity);
   return {
@@ -50464,13 +50478,14 @@ function combineOpinions(first, second) {
 }
 
 // src/checks.js
-var ALL_CHECKS = ["deps", "diff", "patch", "urls"];
+var DEFAULT_CHECKS = ["deps"];
+var DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
 function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3 } = {}) {
   const depJob = (d) => ({
     check: "deps",
-    intent: "CVE_LOOKUP",
+    intent: "SECURITY_REVIEW",
     target: d.to ? `${d.name}@${d.to}` : `${d.name} (${d.spec})`,
-    vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec }
+    vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec, depsdev_system: DEPSDEV_SYSTEM[d.ecosystem] }
   });
   const resolvable = deps.filter((d) => d.to).slice(0, maxDeps);
   const direct = resolvable.filter((d) => d.direct).map(depJob);
@@ -50540,13 +50555,56 @@ function localOutcomes(rawFiles, installScripts) {
 }
 
 // src/normalize.js
-var NORMALIZERS = {};
-var UNKNOWN = Object.freeze({ severity: "unknown", findings: [], confidence: 0 });
-function normalize(normalizerId, result) {
+var GITHUB_SEVERITY = { CRITICAL: "critical", HIGH: "high", MODERATE: "medium", LOW: "low" };
+function cvssSeverity(score) {
+  if (typeof score !== "number" || score <= 0) return "unknown";
+  if (score >= 9) return "critical";
+  if (score >= 7) return "high";
+  if (score >= 4) return "medium";
+  return "low";
+}
+var same = (a, b) => String(a ?? "").toLowerCase() === String(b ?? "").toLowerCase();
+function expect(cond, what) {
+  if (!cond) throw new Error(`unexpected answer: ${what}`);
+}
+function overall(findings) {
+  const max = maxSeverity(findings);
+  return findings.length && max === "none" ? "unknown" : max;
+}
+var NORMALIZERS = {
+  // deps.dev Package Review (#77010): GET /query {pkg, ver}, npm only.
+  // result.version.advisories[] carries GitHub's severity and a CVSS score.
+  "depsdev-version": (result, vars) => {
+    const v = result?.version;
+    expect(Array.isArray(v?.advisories), "no version.advisories");
+    expect(same(result.package?.name, vars.name) && same(v.version, vars.version), "answer is for a different package or version");
+    const findings = v.advisories.map((a) => {
+      const severity = GITHUB_SEVERITY[a.gitHubSeverity] ?? cvssSeverity(a.scoreV3);
+      return {
+        id: a.sourceID,
+        title: a.title || a.sourceID,
+        severity,
+        detail: [a.sourceID, ...a.aliases ?? [], a.scoreV3 ? `CVSS ${a.scoreV3}` : null].filter(Boolean).join(" \xB7 "),
+        ref: a.sourceURL
+      };
+    });
+    return { severity: overall(findings), findings };
+  },
+  // Secrev Depsdev (#190048): GET /query {system, pkg, ver}, any deps.dev system.
+  // Advisory ids only, no severity: useful to corroborate another miner by id.
+  "depsdev-advisory-keys": (result, vars) => {
+    expect(Array.isArray(result?.advisoryKeys), "no advisoryKeys");
+    expect(same(result.versionKey?.name, vars.name) && same(result.versionKey?.version, vars.version), "answer is for a different package or version");
+    const findings = result.advisoryKeys.map((k) => ({ id: k.id, title: k.id, severity: "unknown", ref: `https://osv.dev/vulnerability/${k.id}` }));
+    return { severity: overall(findings), findings };
+  }
+};
+var UNKNOWN = Object.freeze({ severity: "unknown", findings: [] });
+function normalize(normalizerId, result, vars = {}) {
   const fn = NORMALIZERS[normalizerId];
   if (!fn) return UNKNOWN;
   try {
-    return fn(result);
+    return fn(result, vars);
   } catch {
     return UNKNOWN;
   }
@@ -50608,12 +50666,13 @@ var callSummary = (entry, r) => ({
   reason: r.reason ?? null
 });
 var isHigh2 = (s) => s === "high" || s === "critical";
+var isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(r.bodyText ?? "");
 async function runCheck({ tg, miners, job, deadline, onCall }) {
   const { check, intent, target, vars } = job;
-  const entries = miners[intent] ?? [];
+  const entries = (miners[check] ?? []).filter((e) => !e.ecosystems || e.ecosystems.includes(vars.ecosystem));
   const calls = [];
   const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls };
-  if (!entries.length) return { ...base, status: "skipped", severity: "none", reason: `no vetted ${intent} miner yet` };
+  if (!entries.length) return { ...base, status: "skipped", severity: "none", reason: `no vetted ${check} miner yet` };
   let next = 0;
   let lastReason = null;
   const opinion = async () => {
@@ -50626,16 +50685,21 @@ async function runCheck({ tg, miners, job, deadline, onCall }) {
       const r = await callMiner(tg, entry, vars);
       calls.push(callSummary(entry, r));
       await onCall?.(ledgerEntry({ check, target, intent, minerId: entry.minerId }, r));
-      if (r.ok) return normalize(entry.normalizer, r.body?.result);
+      if (r.ok) return normalize(entry.normalizer, r.body?.result, vars);
       lastReason = r.reason;
+      if (isUpstreamNotFound(r)) {
+        lastReason = "not_found";
+        return null;
+      }
       if (r.reason === "over_budget") return null;
     }
     return null;
   };
   const first = await opinion();
   if (!first) {
-    const status = lastReason === "over_budget" || lastReason === "time limit" ? "skipped" : "failed";
-    return { ...base, status, severity: "none", reason: lastReason === "over_budget" ? "budget exhausted" : lastReason };
+    const skipped = { over_budget: "budget exhausted", "time limit": "time limit", not_found: "not in the public registry" };
+    if (skipped[lastReason]) return { ...base, status: "skipped", severity: "none", reason: skipped[lastReason] };
+    return { ...base, status: "failed", severity: "none", reason: lastReason };
   }
   const combined = isHigh2(first.severity) ? combineOpinions(first, await opinion()) : first;
   return { ...base, status: "ok", severity: combined.severity, findings: combined.findings, confirmed: combined.confirmed ?? false, disagreement: combined.disagreement ?? false };
@@ -50699,7 +50763,8 @@ function renderComment({ verdict, reasons = [], outcomes = [], spentUsd = 0, bud
     for (const o of detailed) {
       for (const f of o.findings) {
         const where = f.file ? ` (\`${f.file}${f.line ? `:${f.line}` : ""}\`)` : "";
-        lines.push(`- **${f.severity}** ${cell(f.title, 200)}${where}${f.detail ? ` \u2014 ${cell(f.detail, 300)}` : ""}`);
+        const title = f.ref ? `[${cell(f.title, 200)}](${f.ref})` : cell(f.title, 200);
+        lines.push(`- **${f.severity}** ${title}${where}${f.detail ? ` \u2014 ${cell(f.detail, 300)}` : ""}`);
       }
     }
     lines.push("", "</details>");
@@ -50754,11 +50819,31 @@ async function upsertComment(octokit, { owner, repo, issue_number, body }) {
 
 // config/miners.json
 var miners_default = {
-  _comment: 'Vetted miners per intent, in order of preference. Filled from scripts/discover.js output and probing; see README. Entries: {"minerId", "name", "method", "endpoint", "payload", "normalizer"} for direct asks, or {"auto": true, "body", "normalizer"} for auto-routed. Strings in payload/body may use {{var}} placeholders.',
-  CVE_LOOKUP: [],
-  SECURITY_REVIEW: [],
-  CODE_PATCH_VERIFY: [],
-  URL_SAFE: []
+  _comment: "Vetted miners per PR Guard check, best first. Chosen from data/miners-summary.json and paid probes (test/fixtures/miner-responses/). Each entry: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter. A check with no entries is skipped.",
+  deps: [
+    {
+      minerId: "77010",
+      name: "deps.dev Package Review",
+      intent: "SECURITY_REVIEW",
+      method: "GET",
+      endpoint: "/query",
+      payload: { pkg: "{{name}}", ver: "{{version}}" },
+      normalizer: "depsdev-version",
+      ecosystems: ["npm"]
+    },
+    {
+      minerId: "190048",
+      name: "Secrev Depsdev",
+      intent: "SECURITY_REVIEW",
+      method: "GET",
+      endpoint: "/query",
+      payload: { system: "{{depsdev_system}}", pkg: "{{name}}", ver: "{{version}}" },
+      normalizer: "depsdev-advisory-keys"
+    }
+  ],
+  diff: [],
+  patch: [],
+  urls: []
 };
 
 // src/index.js
@@ -50777,7 +50862,7 @@ function inputs() {
     maxUsdPerPr: num2("max-usd-per-pr", 0.1),
     maxUsdPerCall: num2("max-usd-per-call", 0.05),
     failOn,
-    checks: new Set((getInput("checks") || ALL_CHECKS.join(",")).split(",").map((s) => s.trim()).filter(Boolean)),
+    checks: new Set((getInput("checks") || DEFAULT_CHECKS.join(",")).split(",").map((s) => s.trim()).filter(Boolean)),
     nodeUrl: getInput("node-url") || DEFAULT_NODE_URL,
     minersConfig: getInput("miners-config"),
     token: getInput("github-token")

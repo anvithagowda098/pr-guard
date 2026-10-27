@@ -8,7 +8,7 @@ import { decide } from "../src/policy.js";
 import { renderComment, MARKER } from "../src/report.js";
 
 const FAR = Date.now() + 60_000;
-const job = { check: "deps", intent: "CVE_LOOKUP", target: "lodash@4.17.15", vars: { name: "lodash", version: "4.17.15" } };
+const job = { check: "deps", intent: "SECURITY_REVIEW", target: "lodash@4.17.15", vars: { ecosystem: "npm", name: "lodash", version: "4.17.15" } };
 
 function fakeTg(responses) {
   const sent = [];
@@ -36,15 +36,15 @@ test("fillTemplate substitutes strings, keeps raw values for whole placeholders"
 });
 
 test("no configured miner: skipped, which cautions for required checks", async () => {
-  const out = await runCheck({ tg: fakeTg([]), miners: { CVE_LOOKUP: [] }, job, deadline: FAR });
+  const out = await runCheck({ tg: fakeTg([]), miners: { deps: [] }, job, deadline: FAR });
   assert.equal(out.status, "skipped");
-  assert.match(out.reason, /no vetted CVE_LOOKUP miner/);
+  assert.match(out.reason, /no vetted deps miner/);
   assert.equal(decide([out]).verdict, "CAUTION");
 });
 
 test("direct ask fills the payload template; unknown format means CAUTION", async () => {
   const tg = fakeTg([okResponse(7)]);
-  const miners = { CVE_LOOKUP: [{ minerId: 7, endpoint: "/cve", payload: { package: "{{name}}", version: "{{version}}" } }] };
+  const miners = { deps: [{ minerId: 7, endpoint: "/cve", payload: { package: "{{name}}", version: "{{version}}" } }] };
   const ledger = [];
   const out = await runCheck({ tg, miners, job, deadline: FAR, onCall: (e) => ledger.push(e) });
 
@@ -57,16 +57,16 @@ test("direct ask fills the payload template; unknown format means CAUTION", asyn
   assert.equal(decide([out]).verdict, "CAUTION");
 });
 
-test("falls through failed miners (not charged) to the next one", async () => {
+test("falls through failed miners to the next one", async () => {
   const tg = fakeTg([{ ok: false, status: 502, reason: "http_502", costUsd: 0 }, okResponse(9)]);
-  const miners = { CVE_LOOKUP: [{ minerId: 1, endpoint: "/a", payload: {} }, { minerId: 9, endpoint: "/b", payload: {} }] };
+  const miners = { deps: [{ minerId: 1, endpoint: "/a", payload: {} }, { minerId: 9, endpoint: "/b", payload: {} }] };
   const out = await runCheck({ tg, miners, job, deadline: FAR });
   assert.equal(out.status, "ok");
   assert.deepEqual(out.calls.map((c) => [c.minerId, c.ok]), [[1, false], [9, true]]);
 });
 
 test("every miner failing is a failed check; running out of budget is a skip", async () => {
-  const miners = { CVE_LOOKUP: [{ minerId: 1, endpoint: "/a", payload: {} }] };
+  const miners = { deps: [{ minerId: 1, endpoint: "/a", payload: {} }] };
   const failed = await runCheck({ tg: fakeTg([{ ok: false, reason: "timeout", costUsd: 0 }]), miners, job, deadline: FAR });
   assert.deepEqual([failed.status, failed.reason], ["failed", "timeout"]);
   const broke = await runCheck({ tg: fakeTg([{ ok: false, reason: "over_budget", costUsd: 0 }]), miners, job, deadline: FAR });
@@ -75,7 +75,7 @@ test("every miner failing is a failed check; running out of budget is a skip", a
 
 test("past the deadline nothing is bought", async () => {
   const tg = fakeTg([okResponse(1)]);
-  const out = await runCheck({ tg, miners: { CVE_LOOKUP: [{ minerId: 1, endpoint: "/a", payload: {} }] }, job, deadline: Date.now() - 1 });
+  const out = await runCheck({ tg, miners: { deps: [{ minerId: 1, endpoint: "/a", payload: {} }] }, job, deadline: Date.now() - 1 });
   assert.equal(tg.sent.length, 0);
   assert.deepEqual([out.status, out.reason], ["skipped", "time limit"]);
 });
@@ -102,6 +102,8 @@ test("buildJobs orders direct deps, diff, transitive deps, patch, urls and honou
   const files = [{ filename: "src/a.js", patch: "@@ -1 +1 @@\n+fetch('https://new.evil.com/x')" }];
   const all = buildJobs({ deps, files, title: "t", body: "b" }, new Set(["deps", "diff", "patch", "urls"]));
   assert.deepEqual(all.map((j) => `${j.check}:${j.target}`), ["deps:d@2.0.0", "diff:src/a.js", "deps:t@1.0.0", "patch:PR description vs diff", "urls:https://new.evil.com/x"]);
+  assert.equal(all[0].intent, "SECURITY_REVIEW");
+  assert.equal(all[0].vars.depsdev_system, "npm");
   const onlyDeps = buildJobs({ deps, files, title: "t", body: "b" }, new Set(["deps"]));
   assert.deepEqual(onlyDeps.map((j) => j.check), ["deps", "deps"]);
   assert.deepEqual(unresolvableDepOutcomes(deps).map((o) => o.target), ["g (git+https://x)"]);
@@ -135,4 +137,21 @@ test("comment stays under GitHub's size limit", () => {
   const body = renderComment({ verdict: "CAUTION", outcomes, nodeUrl: "https://n", runUrl: "https://r" });
   assert.ok(body.length <= 65_536);
   assert.match(body, /truncated/);
+});
+
+test("an upstream 404 stops at the first miner instead of paying the next one", async () => {
+  const notFound = { ok: false, status: 500, reason: "http_500", costUsd: 0.01, bodyText: '{"error":"upstream error 404: Not Found"}' };
+  const tg = fakeTg([notFound, okResponse(2)]);
+  const miners = { deps: [{ minerId: 1, endpoint: "/a", payload: {} }, { minerId: 2, endpoint: "/b", payload: {} }] };
+  const out = await runCheck({ tg, miners, job, deadline: FAR });
+  assert.equal(tg.sent.length, 1);
+  assert.deepEqual([out.status, out.reason], ["skipped", "not in the public registry"]);
+  assert.equal(out.calls[0].costUsd, 0.01, "the miss is still shown as charged");
+});
+
+test("ecosystem filter: an npm-only miner isn't asked about a PyPI package", async () => {
+  const tg = fakeTg([okResponse(2)]);
+  const miners = { deps: [{ minerId: 1, endpoint: "/a", payload: {}, ecosystems: ["npm"] }, { minerId: 2, endpoint: "/b", payload: {} }] };
+  await runCheck({ tg, miners, job: { ...job, vars: { ...job.vars, ecosystem: "PyPI" } }, deadline: FAR });
+  assert.deepEqual(tg.sent.map((r) => r.minerId), [2]);
 });

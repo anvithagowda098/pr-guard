@@ -210,6 +210,6 @@ test("registration helper sends exactly the intended transactions", async () => 
   assert.deepEqual(reg.args, [r.yamlUrl, r.yamlHash, r.owner, 10000n, ["SECURITY_REVIEW_GENERAL"]]);
   const appr = decodeFunctionData({ abi: parseAbi(["function approve(address,uint256) returns (bool)"]), data: APPROVE_DATA });
   assert.deepEqual(appr.args, [r.diamond, 3n * 10n ** 18n]);
-  const page = await (await createHandler()(new Request("https://miner.test/register"))).text();
-  assert.ok(page.includes(REGISTER_DATA) && page.includes(APPROVE_DATA));
+  // The page was served once at /register (Oct 31) and removed after use.
+  assert.equal((await createHandler()(new Request("https://miner.test/register"))).status, 405);
 });

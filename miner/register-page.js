@@ -2,6 +2,9 @@
 // Diamond straight from the owner's browser wallet. Telegraph's console still
 // offered the pre-migration intent names (Oct 31), which the Diamond rejects.
 // Two transactions: approve the MACHINA bond, then registerMiner.
+// Used once on Oct 31 (registrationId 4857, tx 0x845d4370…f2a4) and then
+// unmounted from the Worker; kept as the record of exactly what was signed.
+// To reuse it, mount REGISTER_PAGE at GET /register again for the session only.
 import { encodeFunctionData, parseAbi, parseEther } from "viem";
 
 export const REGISTRATION = {

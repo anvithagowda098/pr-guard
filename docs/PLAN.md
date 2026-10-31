@@ -25,7 +25,12 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
 - **Funding:** `scripts/fund-testnet.js` mints USDC, swaps to MACHINA and sends gas.
 - **Oct 31:**
   - The burner (`0xd0Cd…cfB44`) holds 22 USDC.
-  - The user's MetaMask holds 3.45 MACHINA plus gas, for re-registering the miner.
+  - The user's MetaMask held 3.45 MACHINA plus gas for re-registering the miner. The bond took about 1.15 MACHINA.
+- **Miner re-registered on the new Diamond, Oct 31:**
+  - registrationId **4857**, tx `0x845d43703f6b5d610f35600f05749d84c27c30369487dd253a07f0b0860bf2a4`;
+  - intent `SECURITY_REVIEW_GENERAL`, YAML hash `0x9c0796…2bab`.
+  - It was done through a one-time helper page (`miner/register-page.js`). Telegraph's console offered only the old intent names, and the Diamond rejected them ("a prefix is not an intent").
+  - **Telegraph's node had not activated it yet.** Its newest listed miner was from Oct 29, so it had ingested no registrations since the move. Recheck `GET /api/miners/4857`.
 
 ## What works today
 

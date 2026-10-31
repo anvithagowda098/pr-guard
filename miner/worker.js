@@ -8,6 +8,7 @@
 import { scan, RULE_COUNT } from "./rules.js";
 import { lookupPackage, packagesIn, osvEcosystem, worst, compareVersions } from "./osv.js";
 import MINER_YAML from "./miner-yaml.generated.js";
+import { REGISTER_PAGE } from "./register-page.js";
 
 export const VERSION = "0.1.0";
 const MAX_BODY_BYTES = 200_000;
@@ -98,6 +99,9 @@ export function createHandler({ fetch: fetchImpl = (...a) => fetch(...a) } = {})
     const url = new URL(request.url);
     if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
       return json(200, { ok: true, name: "PR Guard Sentinel", version: VERSION, rules: RULE_COUNT, intents: ["SECURITY_REVIEW_GENERAL"] });
+    }
+    if (request.method === "GET" && url.pathname === "/register") {
+      return new Response(REGISTER_PAGE, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
     }
     if (request.method === "GET" && url.pathname === "/miner.yaml") {
       // no-store: registration consoles fetch this from the browser, and a cached

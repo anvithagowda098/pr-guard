@@ -198,3 +198,18 @@ test("multi-file diffs: each finding names its file", () => {
   ].join("\n");
   assert.deepEqual(scan(diff).findings.map((f) => `${f.rule}@${f.file}:${f.line}`), ["code-injection@src/calc.js:2", "sql-injection@app/db.py:41"]);
 });
+
+test("registration helper sends exactly the intended transactions", async () => {
+  const { REGISTRATION: r, APPROVE_DATA, REGISTER_DATA } = await import("../miner/register-page.js");
+  const { decodeFunctionData, parseAbi } = await import("viem");
+  const yaml = readFileSync(new URL("../miner/miner.yaml", import.meta.url), "utf8");
+  const { createHash } = await import("node:crypto");
+  assert.equal(r.yamlHash, "0x" + createHash("sha256").update(yaml).digest("hex"), "helper must commit to the current YAML");
+  assert.ok(yaml.includes("- " + r.intents[0]), "helper intents must match the YAML");
+  const reg = decodeFunctionData({ abi: parseAbi(["function registerMiner(string,bytes32,address,uint256,string[]) returns (uint256)"]), data: REGISTER_DATA });
+  assert.deepEqual(reg.args, [r.yamlUrl, r.yamlHash, r.owner, 10000n, ["SECURITY_REVIEW_GENERAL"]]);
+  const appr = decodeFunctionData({ abi: parseAbi(["function approve(address,uint256) returns (bool)"]), data: APPROVE_DATA });
+  assert.deepEqual(appr.args, [r.diamond, 3n * 10n ** 18n]);
+  const page = await (await createHandler()(new Request("https://miner.test/register"))).text();
+  assert.ok(page.includes(REGISTER_DATA) && page.includes(APPROVE_DATA));
+});

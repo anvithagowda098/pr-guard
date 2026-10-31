@@ -1,0 +1,173 @@
+{
+  "captured_at": "2026-10-31T16:37:54.323Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/190048",
+  "request": {
+    "method": "GET",
+    "endpoint": "/query",
+    "payload": {
+      "system": "npm",
+      "pkg": "lodash",
+      "ver": "4.17.15"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/190048\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/190048",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/190048"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 18135,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a53415d82bce3eea-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 31 Oct 2026 16:37:53 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHg3YjI2ZThjMzhhYWVjMTBlZjE1MzJlOGE0YTFlNzNmNDY1OTIyYTRmZTUzODM3MzQ4N2ZmOGI0NWEzNjQ5NTUwIiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=ANXo5f1vbQnpNdkSdwOi%2FCxDSvyJa5LT%2Bkn6sxp2IbPmeE0w4Ht55G70yG8SQHLEcl9tfBn1Inr5kJAZ%2BDJFheSCnXCrP5W3sNweZZ9Cg77tjNywC%2FToTn5peKG7utwjIMpwBBMKqybUAPG8lHJwTw%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGY4NmM2NmQzZTM1ZjQ0MDJjZTYwZGYwMDg0MjQ0OTI0N2RiNWYyOTVkMjdmMGM2M2QwMDUwODI0YmFhZGJmZTkiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI0Nzg3IiwiaW50ZW50IjoiU0VDVVJJVFlfUkVWSUVXIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6MTk0Miwic2V0dGxlbWVudCI6Im9uY2hhaW4iLCJjaGFpbiI6ImVpcDE1NToxMTE1NTExMSIsInR4X2hhc2giOiIweDdiMjZlOGMzOGFhZWMxMGVmMTUzMmU4YTRhMWU3M2Y0NjU5MjJhNGZlNTM4MzczNDg3ZmY4YjQ1YTM2NDk1NTAiLCJ0aW1lc3RhbXAiOjE3OTM0NjQ2NzN9"
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":203,\"miner_id\":\"190048\",\"miner_name\":\"Secrev Depsdev\",\"result\":{\"advisoryKeys\":[{\"id\":\"GHSA-29mw-wpgm-hmr9\"},{\"id\":\"GHSA-35jh-r3h4-6jhm\"},{\"id\":\"GHSA-f23m-r3pf-42rh\"},{\"id\":\"GHSA-p6mc-m468-83gw\"},{\"id\":\"GHSA-r5fr-rjxr-66jc\"},{\"id\":\"GHSA-xxjr-mmjv-4gpg\"}],\"attestations\":[],\"deprecatedReason\":\"\",\"isDefault\":false,\"isDeprecated\":false,\"licenses\":[\"MIT\"],\"links\":[{\"label\":\"HOMEPAGE\",\"url\":\"https://lodash.com/\"},{\"label\":\"ISSUE_TRACKER\",\"url\":\"https://github.com/lodash/lodash/issues\"},{\"label\":\"ORIGIN\",\"url\":\"https://registry.npmjs.org/lodash/4.17.15\"},{\"label\":\"SOURCE_REPO\",\"url\":\"git+https://github.com/lodash/lodash.git\"}],\"publishedAt\":\"2019-07-19T02:28:46Z\",\"registries\":[\"https://registry.npmjs.org/\"],\"relatedProjects\":[{\"projectKey\":{\"id\":\"github.com/lodash/lodash\"},\"relationProvenance\":\"UNVERIFIED_METADATA\",\"relationType\":\"ISSUE_TRACKER\"},{\"projectKey\":{\"id\":\"github.com/lodash/lodash\"},\"relationProvenance\":\"UNVERIFIED_METADATA\",\"relationType\":\"SOURCE_REPO\"}],\"slsaProvenances\":[],\"versionKey\":{\"name\":\"lodash\",\"system\":\"NPM\",\"version\":\"4.17.15\"}},\"result_shape\":\"raw\",\"signal_hash\":\"0xa19b25ed3915cbd947d15bab050fb5e0967f4115f6b50f908e13d559e28b5e7e\",\"timestamp\":\"2026-10-31T16:37:53.592156584Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 203,
+    "miner_id": "190048",
+    "miner_name": "Secrev Depsdev",
+    "result": {
+      "advisoryKeys": [
+        {
+          "id": "GHSA-29mw-wpgm-hmr9"
+        },
+        {
+          "id": "GHSA-35jh-r3h4-6jhm"
+        },
+        {
+          "id": "GHSA-f23m-r3pf-42rh"
+        },
+        {
+          "id": "GHSA-p6mc-m468-83gw"
+        },
+        {
+          "id": "GHSA-r5fr-rjxr-66jc"
+        },
+        {
+          "id": "GHSA-xxjr-mmjv-4gpg"
+        }
+      ],
+      "attestations": [],
+      "deprecatedReason": "",
+      "isDefault": false,
+      "isDeprecated": false,
+      "licenses": [
+        "MIT"
+      ],
+      "links": [
+        {
+          "label": "HOMEPAGE",
+          "url": "https://lodash.com/"
+        },
+        {
+          "label": "ISSUE_TRACKER",
+          "url": "https://github.com/lodash/lodash/issues"
+        },
+        {
+          "label": "ORIGIN",
+          "url": "https://registry.npmjs.org/lodash/4.17.15"
+        },
+        {
+          "label": "SOURCE_REPO",
+          "url": "git+https://github.com/lodash/lodash.git"
+        }
+      ],
+      "publishedAt": "2019-07-19T02:28:46Z",
+      "registries": [
+        "https://registry.npmjs.org/"
+      ],
+      "relatedProjects": [
+        {
+          "projectKey": {
+            "id": "github.com/lodash/lodash"
+          },
+          "relationProvenance": "UNVERIFIED_METADATA",
+          "relationType": "ISSUE_TRACKER"
+        },
+        {
+          "projectKey": {
+            "id": "github.com/lodash/lodash"
+          },
+          "relationProvenance": "UNVERIFIED_METADATA",
+          "relationType": "SOURCE_REPO"
+        }
+      ],
+      "slsaProvenances": [],
+      "versionKey": {
+        "name": "lodash",
+        "system": "NPM",
+        "version": "4.17.15"
+      }
+    },
+    "result_shape": "raw",
+    "signal_hash": "0xa19b25ed3915cbd947d15bab050fb5e0967f4115f6b50f908e13d559e28b5e7e",
+    "timestamp": "2026-10-31T16:37:53.592156584Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x7b26e8c38aaec10ef1532e8a4a1e73f465922a4fe538373487ff8b45a3649550",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0xf86c66d3e35f4402ce60df00842449247db5f295d27f0c63d0050824baadbfe9",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "4787",
+    "intent": "SECURITY_REVIEW",
+    "amount_uusdc": "10000",
+    "epoch_id": 1942,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x7b26e8c38aaec10ef1532e8a4a1e73f465922a4fe538373487ff8b45a3649550",
+    "timestamp": 1793464673
+  },
+  "charged": true
+}

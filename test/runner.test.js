@@ -8,7 +8,7 @@ import { decide } from "../src/policy.js";
 import { renderComment, MARKER } from "../src/report.js";
 
 const FAR = Date.now() + 60_000;
-const job = { check: "deps", intent: "SECURITY_REVIEW", target: "lodash@4.17.15", vars: { ecosystem: "npm", name: "lodash", version: "4.17.15" } };
+const job = { check: "deps", intent: "SECURITY_REVIEW_GENERAL", target: "lodash@4.17.15", vars: { ecosystem: "npm", name: "lodash", version: "4.17.15" } };
 
 function fakeTg(responses) {
   const sent = [];
@@ -102,7 +102,7 @@ test("buildJobs orders direct deps, diff, transitive deps, patch, urls and honou
   const files = [{ filename: "src/a.js", patch: "@@ -1 +1 @@\n+fetch('https://new.evil.com/x')" }];
   const all = buildJobs({ deps, files, title: "t", body: "b" }, new Set(["deps", "diff", "patch", "urls"]));
   assert.deepEqual(all.map((j) => `${j.check}:${j.target}`), ["deps:d@2.0.0", "diff:src/a.js", "deps:t@1.0.0", "patch:PR description vs diff", "urls:https://new.evil.com/x"]);
-  assert.equal(all[0].intent, "SECURITY_REVIEW");
+  assert.equal(all[0].intent, "SECURITY_REVIEW_GENERAL");
   assert.equal(all[0].vars.depsdev_system, "npm");
   const onlyDeps = buildJobs({ deps, files, title: "t", body: "b" }, new Set(["deps"]));
   assert.deepEqual(onlyDeps.map((j) => j.check), ["deps", "deps"]);
@@ -154,4 +154,18 @@ test("ecosystem filter: an npm-only miner isn't asked about a PyPI package", asy
   const miners = { deps: [{ minerId: 1, endpoint: "/a", payload: {}, ecosystems: ["npm"] }, { minerId: 2, endpoint: "/b", payload: {} }] };
   await runCheck({ tg, miners, job: { ...job, vars: { ...job.vars, ecosystem: "PyPI" } }, deadline: FAR });
   assert.deepEqual(tg.sent.map((r) => r.minerId), [2]);
+});
+
+test("disabled entries are kept in config but never called", async () => {
+  const tg = fakeTg([okResponse(2)]);
+  const miners = { deps: [{ minerId: 1, endpoint: "/a", payload: {}, enabled: false }, { minerId: 2, endpoint: "/b", payload: {} }] };
+  await runCheck({ tg, miners, job, deadline: FAR });
+  assert.deepEqual(tg.sent.map((r) => r.minerId), [2]);
+  const none = await runCheck({ tg: fakeTg([]), miners: { deps: [{ minerId: 1, endpoint: "/a", payload: {}, enabled: false }] }, job, deadline: FAR });
+  assert.equal(none.status, "skipped");
+});
+
+test("fix advice reaches the PR comment", () => {
+  const body = renderComment({ verdict: "BLOCK", reasons: [], outcomes: [{ check: "deps", target: "lodash@4.17.15", status: "ok", severity: "high", confirmed: true, disagreement: false, advice: "upgrade to 4.18.0", findings: [{ title: "Prototype Pollution", severity: "high" }], calls: [] }], nodeUrl: "https://n" });
+  assert.match(body, /high: Prototype Pollution · confirmed · fix: upgrade to 4\.18\.0/);
 });

@@ -73,6 +73,35 @@ const NORMALIZERS = {
     const key = text.match(/key finding:\s*(.+?)(?:\.\s|$)/i)?.[1] ?? text.replace(/^verdict:\s*\w+\s*[-–:]?\s*/i, "");
     return { severity, findings: [{ title: key.slice(0, 200), severity, detail: text }] };
   },
+
+  // PR Guard Sentinel (#731001): our own miner, disclosed as such. /package and
+  // /review answer with the same document: verdict, severity, findings, packages.
+  "sentinel-package": (result, vars) => {
+    const p = result?.packages?.[0];
+    expect(Array.isArray(p?.vulnerabilities), "no packages[0].vulnerabilities");
+    expect(same(p.name, vars.name) && same(p.version, vars.version), "answer is for a different package or version");
+    const findings = p.vulnerabilities.map((v) => ({
+      id: v.id,
+      aliases: v.aliases ?? [],
+      title: v.summary || v.id,
+      severity: v.severity === "unrated" ? "unknown" : v.severity,
+      detail: [v.id, ...(v.aliases ?? []).slice(0, 2), v.cvss ? `CVSS ${v.cvss}` : null].filter(Boolean).join(" · "),
+      ref: v.url,
+    }));
+    return { severity: overall(findings), findings, ...(p.upgrade_to && { advice: `upgrade to ${p.upgrade_to}` }) };
+  },
+
+  "sentinel-review": (result) => {
+    expect(["secure", "vulnerable", "needs review"].includes(result?.verdict) && Array.isArray(result.findings), "no verdict or findings");
+    const findings = result.findings.map((f) => ({
+      title: `${f.title} (${f.cwe})`,
+      severity: f.severity,
+      ...(f.file && { file: f.file }),
+      line: f.line,
+      detail: `${f.evidence} → ${f.fix}`,
+    }));
+    return { severity: result.verdict === "secure" ? "none" : overall(findings), findings };
+  },
 };
 
 const UNKNOWN = Object.freeze({ severity: "unknown", findings: [] });

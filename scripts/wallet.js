@@ -1,17 +1,17 @@
 #!/usr/bin/env node
-// Burner testnet wallet for x402 payments on Base Sepolia.
+// Burner testnet wallet for x402 payments on Telegraph's testnet (Ethereum Sepolia since Oct 30 2026).
 //
 //   node scripts/wallet.js            create .env with a new key (refuses to overwrite)
 //   node scripts/wallet.js balance    print address and USDC balance
 //
-// The key never leaves .env. Fund the printed address with testnet USDC at
-// https://faucet.circle.com (network: Base Sepolia). No ETH is needed.
+// The key never leaves .env. Fund it: a little Sepolia ETH from a faucet, then
+// `node scripts/fund-testnet.js mint 20` (Telegraph's test USDC is free to mint).
 import { existsSync, writeFileSync } from "node:fs";
 import { createPublicClient, http, erc20Abi, formatUnits } from "viem";
-import { baseSepolia } from "viem/chains";
+import { sepolia } from "viem/chains";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-const USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+const USDC = "0xcc194e1a843B658526D0D5C431f670028582Ae17"; // Telegraph test USDC on Ethereum Sepolia
 const ENV_FILE = ".env";
 
 if (process.argv[2] === "balance") {
@@ -22,10 +22,10 @@ if (process.argv[2] === "balance") {
     process.exit(1);
   }
   const { address } = privateKeyToAccount(key);
-  const client = createPublicClient({ chain: baseSepolia, transport: http(process.env.BASE_SEPOLIA_RPC_URL) });
+  const client = createPublicClient({ chain: sepolia, transport: http(process.env.SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com") });
   const raw = await client.readContract({ address: USDC, abi: erc20Abi, functionName: "balanceOf", args: [address] });
   console.log(`address: ${address}`);
-  console.log(`USDC:    ${formatUnits(raw, 6)} (Base Sepolia)`);
+  console.log(`USDC:    ${formatUnits(raw, 6)} (Ethereum Sepolia)`);
 } else {
   if (existsSync(ENV_FILE)) {
     console.error(`${ENV_FILE} already exists; not overwriting. Use \`node scripts/wallet.js balance\`.`);
@@ -40,5 +40,5 @@ if (process.argv[2] === "balance") {
   );
   console.log(`wrote ${ENV_FILE}`);
   console.log(`address: ${address}`);
-  console.log("fund it: https://faucet.circle.com -> Base Sepolia -> USDC -> paste the address above");
+  console.log("fund it: Sepolia ETH from a faucet to the address above, then: node scripts/fund-testnet.js mint 20");
 }

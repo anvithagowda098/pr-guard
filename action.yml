@@ -5,7 +5,7 @@ branding:
   color: green
 inputs:
   telegraph-private-key:
-    description: Burner Base Sepolia key holding testnet USDC (store as a secret). Never a key with real funds.
+    description: Burner key holding Telegraph test USDC on Ethereum Sepolia (store as a secret). Never a key with real funds.
     required: false
   max-usd-per-pr:
     description: Hard cap on total spend for one PR run, in USD.
@@ -17,8 +17,8 @@ inputs:
     description: Fail the job on `block`, `caution` (CAUTION or BLOCK), or `never`.
     default: block
   checks:
-    description: Comma-separated paid checks to run. `deps` and `diff` have vetted miners today; `patch` and `urls` are skipped until they do. Secret and install-script checks always run locally.
-    default: deps,diff
+    description: Comma-separated paid checks to run. `deps` has vetted miners on Telegraph's current network; `diff`, `patch` and `urls` are skipped until theirs are live. Secret and install-script checks always run locally.
+    default: deps
   node-url:
     description: Telegraph node URL.
     default: https://devnode.telegraphprotocol.com

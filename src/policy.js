@@ -62,15 +62,18 @@ export function maxSeverity(findings) {
 export function combineOpinions(first, second) {
   const unconfirmed = { ...first, confirmed: false, disagreement: false };
   if (!second) return unconfirmed;
-  const highIds = first.findings.filter((f) => isHigh(f.severity) && f.id).map((f) => f.id);
-  const secondIds = new Set(second.findings.map((f) => f.id).filter(Boolean));
+  // One advisory can carry several ids (GHSA, CVE, PYSEC…); any of them matches.
+  const idsOf = (f) => [f.id, ...(f.aliases ?? [])].filter(Boolean);
+  const highIds = first.findings.filter((f) => isHigh(f.severity)).flatMap(idsOf);
+  const secondIds = new Set(second.findings.flatMap(idsOf));
   if (highIds.length && (secondIds.size || second.severity === "none")) {
     const confirmed = highIds.some((id) => secondIds.has(id));
     return {
       severity: first.severity,
-      findings: first.findings.map((f) => (secondIds.has(f.id) ? { ...f, corroborated: true } : f)),
+      findings: first.findings.map((f) => (idsOf(f).some((id) => secondIds.has(id)) ? { ...f, corroborated: true } : f)),
       confirmed,
       disagreement: !confirmed,
+      ...(first.advice && { advice: first.advice }),
     };
   }
   if (second.severity === "unknown") return unconfirmed;

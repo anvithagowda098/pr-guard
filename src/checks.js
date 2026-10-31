@@ -6,8 +6,9 @@ import { maxSeverity } from "./policy.js";
 
 export const ALL_CHECKS = ["deps", "diff", "patch", "urls"];
 
-// Paid checks with a vetted miner today; the others stay opt-in until one exists.
-export const DEFAULT_CHECKS = ["deps", "diff"];
+// Paid checks with a vetted, routable miner today; the others stay opt-in.
+// "diff" returns once the Sentinel miner is live on Telegraph's new network.
+export const DEFAULT_CHECKS = ["deps"];
 
 // deps.dev's names for our ecosystems.
 const DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
@@ -25,11 +26,11 @@ const DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo
  * @param {Set<string>} enabled check names
  */
 export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12_000 } = {}) {
-  // Package-version vulnerability lookups live under SECURITY_REVIEW on
-  // Telegraph; CVE_LOOKUP miners only take a CVE id (see data/miners-summary.json).
+  // Package-version vulnerability lookups live under SECURITY_REVIEW_GENERAL on
+  // Telegraph; CVE_LOOKUP_CVSS miners only take a CVE id (see data/miners-summary.json).
   const depJob = (d) => ({
     check: "deps",
-    intent: "SECURITY_REVIEW",
+    intent: "SECURITY_REVIEW_GENERAL",
     target: d.to ? `${d.name}@${d.to}` : `${d.name} (${d.spec})`,
     vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec, depsdev_system: DEPSDEV_SYSTEM[d.ecosystem] },
   });
@@ -40,7 +41,7 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
   const chunks = chunkDiff(files, { maxChars });
   const diff = chunks.map((c, i) => ({
     check: "diff",
-    intent: "SECURITY_REVIEW",
+    intent: "SECURITY_REVIEW_GENERAL",
     target: chunks.length > 1 ? `chunk ${i + 1}/${chunks.length}: ${c.files.join(", ")}` : c.files.join(", "),
     vars: { diff: c.text, files: c.files, chunk_index: i + 1, chunk_count: chunks.length },
   }));
@@ -48,7 +49,7 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
   const patch = chunks.length
     ? [{
         check: "patch",
-        intent: "CODE_PATCH_VERIFY",
+        intent: "CODE_PATCH_VERIFY_GENERAL",
         target: "PR description vs diff",
         vars: { title, body: (body ?? "").slice(0, 4000), diff: chunks[0].text, files: files.map((f) => f.filename) },
       }]
@@ -56,7 +57,7 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
 
   const urls = extractUrls(files, { max: maxUrls }).map((u) => ({
     check: "urls",
-    intent: "URL_SAFE",
+    intent: "URL_SAFE_GENERAL",
     target: u.url,
     vars: { url: u.url, file: u.file, line: u.line },
   }));

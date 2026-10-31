@@ -1,10 +1,10 @@
 {
-  "_comment": "Vetted miners per PR Guard check, best first. Chosen from data/miners-summary.json and paid probes (test/fixtures/miner-responses/). Each entry: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter. A check with no entries is skipped.",
+  "_comment": "Vetted miners per PR Guard check, best first. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional enabled:false (kept but not called). A check with no enabled entries is skipped. Re-vetted after Telegraph's Oct 30 move to Ethereum Sepolia: ChainSight (#302) is gone and id 302 now belongs to another miner.",
   "deps": [
     {
       "minerId": "77010",
       "name": "deps.dev Package Review",
-      "intent": "SECURITY_REVIEW",
+      "intent": "SECURITY_REVIEW_GENERAL",
       "method": "GET",
       "endpoint": "/query",
       "payload": {
@@ -17,9 +17,29 @@
       ]
     },
     {
+      "minerId": "731001",
+      "name": "PR Guard Sentinel",
+      "intent": "SECURITY_REVIEW_GENERAL",
+      "method": "POST",
+      "endpoint": "/package",
+      "payload": {
+        "ecosystem": "{{ecosystem}}",
+        "name": "{{name}}",
+        "version": "{{version}}"
+      },
+      "normalizer": "sentinel-package",
+      "ecosystems": [
+        "PyPI",
+        "Go",
+        "crates.io"
+      ],
+      "enabled": false,
+      "_note": "Our own miner (disclosed). Registered Oct 31 (registrationId 4857); enable once Telegraph's node lists it."
+    },
+    {
       "minerId": "190048",
       "name": "Secrev Depsdev",
-      "intent": "SECURITY_REVIEW",
+      "intent": "SECURITY_REVIEW_GENERAL",
       "method": "GET",
       "endpoint": "/query",
       "payload": {
@@ -32,15 +52,17 @@
   ],
   "diff": [
     {
-      "minerId": "302",
-      "name": "ChainSight",
-      "intent": "SECURITY_REVIEW",
+      "minerId": "731001",
+      "name": "PR Guard Sentinel",
+      "intent": "SECURITY_REVIEW_GENERAL",
       "method": "POST",
-      "endpoint": "/secreview",
+      "endpoint": "/review",
       "payload": {
-        "query": "Security review of this pull request diff. List each vulnerability with a severity (critical/high/medium/low), or say none found:\n{{diff}}"
+        "diff": "{{diff}}"
       },
-      "normalizer": "chainsight-verdict"
+      "normalizer": "sentinel-review",
+      "enabled": false,
+      "_note": "Rule-based reviewer (ours, disclosed). ChainSight, the AI reviewer, did not survive the Oct 30 move; add a second reviewer when one is vetted."
     }
   ],
   "patch": [],

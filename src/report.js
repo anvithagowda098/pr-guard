@@ -1,5 +1,7 @@
 // The one PR comment: verdict, why, what was checked, what it cost, and the
 // Telegraph evidence for every paid call.
+import { NETWORK_LABEL } from "./telegraph.js";
+
 
 export const MARKER = "<!-- pr-guard -->";
 const GITHUB_COMMENT_LIMIT = 65_536;
@@ -19,7 +21,8 @@ function resultCell(o) {
   const top = o.findings.find((f) => f.severity === o.severity) ?? o.findings[0];
   const high = o.severity === "high" || o.severity === "critical";
   const extra = o.disagreement ? " · miners disagree" : high && o.confirmed ? " · confirmed" : "";
-  return `${SEV_ICON[o.severity] ?? ""} ${o.severity}${top ? `: ${top.title}` : ""}${extra}`;
+  const advice = o.advice ? ` · fix: ${o.advice}` : "";
+  return `${SEV_ICON[o.severity] ?? ""} ${o.severity}${top ? `: ${top.title}` : ""}${extra}${advice}`;
 }
 
 const minerCell = (calls) => calls.map((c) => `#${c.minerId}${c.minerName ? ` ${c.minerName}` : ""}`).join(", ") || "local";
@@ -59,7 +62,7 @@ export function renderComment({ verdict, reasons = [], outcomes = [], spentUsd =
   const calls = outcomes.flatMap((o) => o.calls);
   const paid = calls.filter((c) => c.costUsd > 0);
   const budget = budgetUsd !== undefined ? ` of ${usd(budgetUsd)} budget` : "";
-  lines.push(`**Spent:** ${usd(spentUsd)}${budget} · ${paid.length} paid call${paid.length === 1 ? "" : "s"} · Telegraph testnet (Base Sepolia)`);
+  lines.push(`**Spent:** ${usd(spentUsd)}${budget} · ${paid.length} paid call${paid.length === 1 ? "" : "s"} · Telegraph testnet (${NETWORK_LABEL})`);
 
   const detailed = outcomes.filter((o) => o.findings.length);
   if (detailed.length) {

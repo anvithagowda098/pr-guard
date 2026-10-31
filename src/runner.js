@@ -50,7 +50,7 @@ export async function runCheck({ tg, miners, job, deadline, onCall }) {
   const { check, intent, target, vars } = job;
   // Miners are configured per check (two checks can share an intent but need
   // different miners); an entry may limit itself to some ecosystems.
-  const entries = (miners[check] ?? []).filter((e) => !e.ecosystems || e.ecosystems.includes(vars.ecosystem));
+  const entries = (miners[check] ?? []).filter((e) => e.enabled !== false && (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)));
   const calls = [];
   const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls };
   if (!entries.length) return { ...base, status: "skipped", severity: "none", reason: `no vetted ${check} miner yet` };
@@ -81,7 +81,15 @@ export async function runCheck({ tg, miners, job, deadline, onCall }) {
     return { ...base, status: "failed", severity: "none", reason: lastReason };
   }
   const combined = isHigh(first.severity) ? combineOpinions(first, await opinion()) : first;
-  return { ...base, status: "ok", severity: combined.severity, findings: combined.findings, confirmed: combined.confirmed ?? false, disagreement: combined.disagreement ?? false };
+  return {
+    ...base,
+    status: "ok",
+    severity: combined.severity,
+    findings: combined.findings,
+    confirmed: combined.confirmed ?? false,
+    disagreement: combined.disagreement ?? false,
+    ...((combined.advice ?? first.advice) && { advice: combined.advice ?? first.advice }),
+  };
 }
 
 /** Run jobs in order with at most `concurrency` in flight. */

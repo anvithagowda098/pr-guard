@@ -110,7 +110,7 @@ async function run() {
   const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, cfg.checks);
 
   const budget = new Budget(cfg.maxUsdPerPr);
-  const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 30_000 });
+  const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 45_000 });
   const onCall = (entry) => appendLedger(LEDGER_PATH, { pr: pr.number, ...entry });
 
   const paid = await runAll(jobs, (job) => runCheck({ tg, miners, job, deadline, onCall }));

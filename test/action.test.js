@@ -16,14 +16,13 @@ const captured = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-res
 const ANSWERS = {
   77010: captured("77010-npm-lodash-4.17.15-200-paid.json"),
   190048: captured("190048-npm-lodash-4.17.15-200-paid.json"),
-  302: captured("302-secreview-clean-200-paid.json"),
 };
 
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64");
 const challenge = {
   x402Version: 2,
   resource: { url: "http://local/engine/v1/ask", description: "t", mimeType: "application/json" },
-  accepts: [{ scheme: "exact", network: "eip155:84532", amount: "10000", asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", payTo: "0x000000000000000000000000000000000000dEaD", maxTimeoutSeconds: 60, extra: { name: "USDC", version: "2" } }],
+  accepts: [{ scheme: "exact", network: "eip155:11155111", amount: "10000", asset: "0xcc194e1a843B658526D0D5C431f670028582Ae17", payTo: "0x000000000000000000000000000000000000dEaD", maxTimeoutSeconds: 60, extra: { name: "USD Coin", version: "2" } }],
 };
 
 function fakeServer() {
@@ -123,14 +122,13 @@ test("action: buys a dependency check, confirms it with a second miner, blocks, 
     const askedOf = (id) => state.asks.find((a) => a.miner === id);
     assert.deepEqual(askedOf("77010"), { miner: "77010", method: "GET", endpoint: "/query", payload: { pkg: "lodash", ver: "4.17.15" } });
     assert.deepEqual(askedOf("190048"), { miner: "190048", method: "GET", endpoint: "/query", payload: { system: "npm", pkg: "lodash", ver: "4.17.15" } });
-    assert.equal(askedOf("302").endpoint, "/secreview");
-    assert.match(askedOf("302").payload.query, /^Security review of this pull request diff[\s\S]*diff --git a\/src\/app\.js/);
-    assert.match(comment, /\| diff \| package\.json, src\/app\.js \| ✅ none \|/);
+    assert.equal(askedOf("302"), undefined, "id 302 is no longer ChainSight and must not be called");
+    assert.doesNotMatch(comment, /\| diff \|/, "the diff check is off by default until Sentinel is live");
 
     const ledger = (await readFile(join(dir, "pr-guard-ledger.jsonl"), "utf8")).trim().split("\n").map(JSON.parse);
-    assert.equal(ledger.length, 6, "three paid calls per run: deps, its confirmation, the diff review");
+    assert.equal(ledger.length, 4, "two paid calls per run: deps and its confirmation");
     assert.ok(ledger.every((e) => e.cost_usd === 0.01 && e.receipt.receipt_hash.startsWith("0xrec")));
-    assert.match(await readFile(join(dir, "out"), "utf8"), /cost_usd[\s\S]*0\.030000/);
+    assert.match(await readFile(join(dir, "out"), "utf8"), /cost_usd[\s\S]*0\.020000/);
   } finally {
     server.close();
   }

@@ -49106,7 +49106,14 @@ function privateKeyToAccount(privateKey, options = {}) {
 
 // src/telegraph.js
 var DEFAULT_NODE_URL = "https://devnode.telegraphprotocol.com";
-var NETWORK = "eip155:84532";
+var PAYMENT_ASSETS = [
+  { network: "eip155:11155111", asset: "0xcc194e1a843B658526D0D5C431f670028582Ae17", label: "Ethereum Sepolia" },
+  // since Oct 30 2026
+  { network: "eip155:84532", asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", label: "Base Sepolia" }
+  // until Oct 30 2026
+];
+var NETWORK_LABEL = PAYMENT_ASSETS[0].label;
+var isAllowedAsset = (r) => PAYMENT_ASSETS.some((a) => a.network === r.network && a.asset.toLowerCase() === String(r.asset).toLowerCase());
 var USDC_DECIMALS = 6;
 var usdToAtomic = (usd2) => BigInt(Math.round(Number(usd2) * 10 ** USDC_DECIMALS));
 var atomicToUsd = (atomic) => Number(BigInt(atomic)) / 10 ** USDC_DECIMALS;
@@ -49144,7 +49151,12 @@ var Budget = class {
 function callPolicy(maxAtomicPerCall, budget, hold) {
   return (_version, reqs) => {
     if (hold.atomic !== null) return reqs.filter((r) => quotedAtomic(r) === hold.atomic);
-    const underCap = reqs.filter((r) => quotedAtomic(r) <= maxAtomicPerCall);
+    const known = reqs.filter(isAllowedAsset);
+    if (!known.length) {
+      hold.refusal = "unsupported_asset";
+      return [];
+    }
+    const underCap = known.filter((r) => quotedAtomic(r) <= maxAtomicPerCall);
     if (!underCap.length) {
       hold.refusal = "over_cap";
       return [];
@@ -49196,9 +49208,12 @@ var Telegraph = class {
   // A fresh client per call, so each call's policy tracks its own reservation.
   paymentClient(hold) {
     const client = x402Client.fromConfig({
-      schemes: [{ network: NETWORK, client: new ExactEvmScheme(this.signer) }],
-      // The library's own USD cap applies first; ours is the binding one.
-      spendControls: { maxAmountPerPayment: atomicToUsd(this.maxAtomicPerCall) }
+      schemes: [...new Set(PAYMENT_ASSETS.map((a) => a.network))].map((network) => ({ network, client: new ExactEvmScheme(this.signer) })),
+      // The library's own caps apply first; ours (callPolicy) are the binding ones.
+      spendControls: {
+        maxAmountPerPayment: atomicToUsd(this.maxAtomicPerCall),
+        allowedAssets: PAYMENT_ASSETS.map(({ network, asset }) => ({ network, asset, maxAmountPerPayment: String(this.maxAtomicPerCall) }))
+      }
     });
     return client.registerPolicy(callPolicy(this.maxAtomicPerCall, this.budget, hold));
   }
@@ -50455,15 +50470,17 @@ function maxSeverity(findings) {
 function combineOpinions(first, second) {
   const unconfirmed = { ...first, confirmed: false, disagreement: false };
   if (!second) return unconfirmed;
-  const highIds = first.findings.filter((f) => isHigh(f.severity) && f.id).map((f) => f.id);
-  const secondIds = new Set(second.findings.map((f) => f.id).filter(Boolean));
+  const idsOf = (f) => [f.id, ...f.aliases ?? []].filter(Boolean);
+  const highIds = first.findings.filter((f) => isHigh(f.severity)).flatMap(idsOf);
+  const secondIds = new Set(second.findings.flatMap(idsOf));
   if (highIds.length && (secondIds.size || second.severity === "none")) {
     const confirmed = highIds.some((id) => secondIds.has(id));
     return {
       severity: first.severity,
-      findings: first.findings.map((f) => secondIds.has(f.id) ? { ...f, corroborated: true } : f),
+      findings: first.findings.map((f) => idsOf(f).some((id) => secondIds.has(id)) ? { ...f, corroborated: true } : f),
       confirmed,
-      disagreement: !confirmed
+      disagreement: !confirmed,
+      ...first.advice && { advice: first.advice }
     };
   }
   if (second.severity === "unknown") return unconfirmed;
@@ -50478,12 +50495,12 @@ function combineOpinions(first, second) {
 }
 
 // src/checks.js
-var DEFAULT_CHECKS = ["deps", "diff"];
+var DEFAULT_CHECKS = ["deps"];
 var DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
 function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3 } = {}) {
   const depJob = (d) => ({
     check: "deps",
-    intent: "SECURITY_REVIEW",
+    intent: "SECURITY_REVIEW_GENERAL",
     target: d.to ? `${d.name}@${d.to}` : `${d.name} (${d.spec})`,
     vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec, depsdev_system: DEPSDEV_SYSTEM[d.ecosystem] }
   });
@@ -50493,19 +50510,19 @@ function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrl
   const chunks = chunkDiff(files, { maxChars });
   const diff = chunks.map((c, i) => ({
     check: "diff",
-    intent: "SECURITY_REVIEW",
+    intent: "SECURITY_REVIEW_GENERAL",
     target: chunks.length > 1 ? `chunk ${i + 1}/${chunks.length}: ${c.files.join(", ")}` : c.files.join(", "),
     vars: { diff: c.text, files: c.files, chunk_index: i + 1, chunk_count: chunks.length }
   }));
   const patch = chunks.length ? [{
     check: "patch",
-    intent: "CODE_PATCH_VERIFY",
+    intent: "CODE_PATCH_VERIFY_GENERAL",
     target: "PR description vs diff",
     vars: { title, body: (body ?? "").slice(0, 4e3), diff: chunks[0].text, files: files.map((f) => f.filename) }
   }] : [];
   const urls = extractUrls(files, { max: maxUrls }).map((u) => ({
     check: "urls",
-    intent: "URL_SAFE",
+    intent: "URL_SAFE_GENERAL",
     target: u.url,
     vars: { url: u.url, file: u.file, line: u.line }
   }));
@@ -50611,6 +50628,33 @@ var NORMALIZERS = {
     const severity = words.length ? maxSeverity(words.map((w) => ({ severity: w }))) : "unknown";
     const key = text.match(/key finding:\s*(.+?)(?:\.\s|$)/i)?.[1] ?? text.replace(/^verdict:\s*\w+\s*[-–:]?\s*/i, "");
     return { severity, findings: [{ title: key.slice(0, 200), severity, detail: text }] };
+  },
+  // PR Guard Sentinel (#731001): our own miner, disclosed as such. /package and
+  // /review answer with the same document: verdict, severity, findings, packages.
+  "sentinel-package": (result, vars) => {
+    const p = result?.packages?.[0];
+    expect(Array.isArray(p?.vulnerabilities), "no packages[0].vulnerabilities");
+    expect(same(p.name, vars.name) && same(p.version, vars.version), "answer is for a different package or version");
+    const findings = p.vulnerabilities.map((v) => ({
+      id: v.id,
+      aliases: v.aliases ?? [],
+      title: v.summary || v.id,
+      severity: v.severity === "unrated" ? "unknown" : v.severity,
+      detail: [v.id, ...(v.aliases ?? []).slice(0, 2), v.cvss ? `CVSS ${v.cvss}` : null].filter(Boolean).join(" \xB7 "),
+      ref: v.url
+    }));
+    return { severity: overall(findings), findings, ...p.upgrade_to && { advice: `upgrade to ${p.upgrade_to}` } };
+  },
+  "sentinel-review": (result) => {
+    expect(["secure", "vulnerable", "needs review"].includes(result?.verdict) && Array.isArray(result.findings), "no verdict or findings");
+    const findings = result.findings.map((f) => ({
+      title: `${f.title} (${f.cwe})`,
+      severity: f.severity,
+      ...f.file && { file: f.file },
+      line: f.line,
+      detail: `${f.evidence} \u2192 ${f.fix}`
+    }));
+    return { severity: result.verdict === "secure" ? "none" : overall(findings), findings };
   }
 };
 var UNKNOWN = Object.freeze({ severity: "unknown", findings: [] });
@@ -50683,7 +50727,7 @@ var isHigh2 = (s) => s === "high" || s === "critical";
 var isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(r.bodyText ?? "");
 async function runCheck({ tg, miners, job, deadline, onCall }) {
   const { check, intent, target, vars } = job;
-  const entries = (miners[check] ?? []).filter((e) => !e.ecosystems || e.ecosystems.includes(vars.ecosystem));
+  const entries = (miners[check] ?? []).filter((e) => e.enabled !== false && (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)));
   const calls = [];
   const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls };
   if (!entries.length) return { ...base, status: "skipped", severity: "none", reason: `no vetted ${check} miner yet` };
@@ -50716,7 +50760,15 @@ async function runCheck({ tg, miners, job, deadline, onCall }) {
     return { ...base, status: "failed", severity: "none", reason: lastReason };
   }
   const combined = isHigh2(first.severity) ? combineOpinions(first, await opinion()) : first;
-  return { ...base, status: "ok", severity: combined.severity, findings: combined.findings, confirmed: combined.confirmed ?? false, disagreement: combined.disagreement ?? false };
+  return {
+    ...base,
+    status: "ok",
+    severity: combined.severity,
+    findings: combined.findings,
+    confirmed: combined.confirmed ?? false,
+    disagreement: combined.disagreement ?? false,
+    ...(combined.advice ?? first.advice) && { advice: combined.advice ?? first.advice }
+  };
 }
 async function runAll(jobs, worker, concurrency = 4) {
   const results = new Array(jobs.length);
@@ -50747,7 +50799,8 @@ function resultCell(o) {
   const top = o.findings.find((f) => f.severity === o.severity) ?? o.findings[0];
   const high = o.severity === "high" || o.severity === "critical";
   const extra = o.disagreement ? " \xB7 miners disagree" : high && o.confirmed ? " \xB7 confirmed" : "";
-  return `${SEV_ICON[o.severity] ?? ""} ${o.severity}${top ? `: ${top.title}` : ""}${extra}`;
+  const advice = o.advice ? ` \xB7 fix: ${o.advice}` : "";
+  return `${SEV_ICON[o.severity] ?? ""} ${o.severity}${top ? `: ${top.title}` : ""}${extra}${advice}`;
 }
 var minerCell = (calls) => calls.map((c) => `#${c.minerId}${c.minerName ? ` ${c.minerName}` : ""}`).join(", ") || "local";
 var evidenceCell = (calls, nodeUrl) => calls.filter((c) => c.signalHash).map((c) => `[signal](${nodeUrl}/engine/v1/signal/${c.signalHash})`).join(" ") || "\u2014";
@@ -50770,7 +50823,7 @@ function renderComment({ verdict, reasons = [], outcomes = [], spentUsd = 0, bud
   const calls = outcomes.flatMap((o) => o.calls);
   const paid = calls.filter((c) => c.costUsd > 0);
   const budget = budgetUsd !== void 0 ? ` of ${usd(budgetUsd)} budget` : "";
-  lines.push(`**Spent:** ${usd(spentUsd)}${budget} \xB7 ${paid.length} paid call${paid.length === 1 ? "" : "s"} \xB7 Telegraph testnet (Base Sepolia)`);
+  lines.push(`**Spent:** ${usd(spentUsd)}${budget} \xB7 ${paid.length} paid call${paid.length === 1 ? "" : "s"} \xB7 Telegraph testnet (${NETWORK_LABEL})`);
   const detailed = outcomes.filter((o) => o.findings.length);
   if (detailed.length) {
     lines.push("", "<details><summary>Findings</summary>", "");
@@ -50833,12 +50886,12 @@ async function upsertComment(octokit, { owner, repo, issue_number, body }) {
 
 // config/miners.json
 var miners_default = {
-  _comment: "Vetted miners per PR Guard check, best first. Chosen from data/miners-summary.json and paid probes (test/fixtures/miner-responses/). Each entry: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter. A check with no entries is skipped.",
+  _comment: "Vetted miners per PR Guard check, best first. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional enabled:false (kept but not called). A check with no enabled entries is skipped. Re-vetted after Telegraph's Oct 30 move to Ethereum Sepolia: ChainSight (#302) is gone and id 302 now belongs to another miner.",
   deps: [
     {
       minerId: "77010",
       name: "deps.dev Package Review",
-      intent: "SECURITY_REVIEW",
+      intent: "SECURITY_REVIEW_GENERAL",
       method: "GET",
       endpoint: "/query",
       payload: {
@@ -50851,9 +50904,29 @@ var miners_default = {
       ]
     },
     {
+      minerId: "731001",
+      name: "PR Guard Sentinel",
+      intent: "SECURITY_REVIEW_GENERAL",
+      method: "POST",
+      endpoint: "/package",
+      payload: {
+        ecosystem: "{{ecosystem}}",
+        name: "{{name}}",
+        version: "{{version}}"
+      },
+      normalizer: "sentinel-package",
+      ecosystems: [
+        "PyPI",
+        "Go",
+        "crates.io"
+      ],
+      enabled: false,
+      _note: "Our own miner (disclosed). Registered Oct 31 (registrationId 4857); enable once Telegraph's node lists it."
+    },
+    {
       minerId: "190048",
       name: "Secrev Depsdev",
-      intent: "SECURITY_REVIEW",
+      intent: "SECURITY_REVIEW_GENERAL",
       method: "GET",
       endpoint: "/query",
       payload: {
@@ -50866,15 +50939,17 @@ var miners_default = {
   ],
   diff: [
     {
-      minerId: "302",
-      name: "ChainSight",
-      intent: "SECURITY_REVIEW",
+      minerId: "731001",
+      name: "PR Guard Sentinel",
+      intent: "SECURITY_REVIEW_GENERAL",
       method: "POST",
-      endpoint: "/secreview",
+      endpoint: "/review",
       payload: {
-        query: "Security review of this pull request diff. List each vulnerability with a severity (critical/high/medium/low), or say none found:\n{{diff}}"
+        diff: "{{diff}}"
       },
-      normalizer: "chainsight-verdict"
+      normalizer: "sentinel-review",
+      enabled: false,
+      _note: "Rule-based reviewer (ours, disclosed). ChainSight, the AI reviewer, did not survive the Oct 30 move; add a second reviewer when one is vetted."
     }
   ],
   patch: [],
@@ -50965,7 +51040,7 @@ async function run() {
   const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
   const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, cfg.checks);
   const budget = new Budget(cfg.maxUsdPerPr);
-  const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 3e4 });
+  const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 45e3 });
   const onCall = (entry) => appendLedger(LEDGER_PATH, { pr: pr.number, ...entry });
   const paid = await runAll(jobs, (job) => runCheck({ tg, miners, job, deadline, onCall }));
   const outcomes = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps), ...paid];

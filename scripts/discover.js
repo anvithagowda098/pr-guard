@@ -7,15 +7,15 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { Telegraph } from "../src/telegraph.js";
 
+// Intent names since Telegraph's Oct 30 move: family children, not prefixes.
 const DEFAULT_INTENTS = [
-  "CVE_LOOKUP",
-  "VULNERABILITY_TRIAGE",
-  "SECURITY_REVIEW",
-  "CODE_PATCH_VERIFY",
-  "CODE_REVIEW",
-  "URL_SCAN",
-  "URL_SAFE",
-  "MALWARE_DETECTION",
+  "SECURITY_REVIEW_GENERAL",
+  "CODE_REVIEW_GENERAL",
+  "VULNERABILITY_TRIAGE_GENERAL",
+  "CVE_LOOKUP_CVSS",
+  "CODE_PATCH_VERIFY_GENERAL",
+  "URL_SCAN_VERDICT",
+  "URL_SAFE_GENERAL",
 ];
 
 const intents = process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT_INTENTS;

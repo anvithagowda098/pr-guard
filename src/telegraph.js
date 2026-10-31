@@ -6,7 +6,17 @@ import { ExactEvmScheme, toClientEvmSigner } from "@x402/evm";
 import { privateKeyToAccount } from "viem/accounts";
 
 export const DEFAULT_NODE_URL = "https://devnode.telegraphprotocol.com";
-export const NETWORK = "eip155:84532"; // Base Sepolia
+// The only payment options PR Guard will sign: Telegraph's test USDC on each
+// network Telegraph has run on. A 402 asking for any other token or chain is
+// refused before anything is signed.
+export const PAYMENT_ASSETS = [
+  { network: "eip155:11155111", asset: "0xcc194e1a843B658526D0D5C431f670028582Ae17", label: "Ethereum Sepolia" }, // since Oct 30 2026
+  { network: "eip155:84532", asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", label: "Base Sepolia" }, // until Oct 30 2026
+];
+export const NETWORK_LABEL = PAYMENT_ASSETS[0].label;
+
+const isAllowedAsset = (r) =>
+  PAYMENT_ASSETS.some((a) => a.network === r.network && a.asset.toLowerCase() === String(r.asset).toLowerCase());
 export const USDC_DECIMALS = 6;
 
 export const usdToAtomic = (usd) => BigInt(Math.round(Number(usd) * 10 ** USDC_DECIMALS));
@@ -53,7 +63,12 @@ export function callPolicy(maxAtomicPerCall, budget, hold) {
   return (_version, reqs) => {
     // The library re-runs policies if it has to rebuild the payment; don't reserve twice.
     if (hold.atomic !== null) return reqs.filter((r) => quotedAtomic(r) === hold.atomic);
-    const underCap = reqs.filter((r) => quotedAtomic(r) <= maxAtomicPerCall);
+    const known = reqs.filter(isAllowedAsset);
+    if (!known.length) {
+      hold.refusal = "unsupported_asset";
+      return [];
+    }
+    const underCap = known.filter((r) => quotedAtomic(r) <= maxAtomicPerCall);
     if (!underCap.length) {
       hold.refusal = "over_cap";
       return [];
@@ -109,9 +124,12 @@ export class Telegraph {
   // A fresh client per call, so each call's policy tracks its own reservation.
   paymentClient(hold) {
     const client = x402Client.fromConfig({
-      schemes: [{ network: NETWORK, client: new ExactEvmScheme(this.signer) }],
-      // The library's own USD cap applies first; ours is the binding one.
-      spendControls: { maxAmountPerPayment: atomicToUsd(this.maxAtomicPerCall) },
+      schemes: [...new Set(PAYMENT_ASSETS.map((a) => a.network))].map((network) => ({ network, client: new ExactEvmScheme(this.signer) })),
+      // The library's own caps apply first; ours (callPolicy) are the binding ones.
+      spendControls: {
+        maxAmountPerPayment: atomicToUsd(this.maxAtomicPerCall),
+        allowedAssets: PAYMENT_ASSETS.map(({ network, asset }) => ({ network, asset, maxAmountPerPayment: String(this.maxAtomicPerCall) })),
+      },
     });
     return client.registerPolicy(callPolicy(this.maxAtomicPerCall, this.budget, hold));
   }

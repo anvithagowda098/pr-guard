@@ -98,3 +98,36 @@ test("ChainSight: no verdict means unknown; one miner alone can't BLOCK", () => 
   assert.equal(verdict, "CAUTION");
   assert.match(reasons[0], /critical, unconfirmed/);
 });
+
+test("Sentinel /package: real answer through Telegraph, rated, with upgrade advice", () => {
+  const n = normalize("sentinel-package", result("731001-package-npm-lodash-4.17.15-200-paid.json"), lodash15);
+  assert.equal(n.severity, "high");
+  assert.equal(n.findings.length, 6);
+  assert.equal(n.advice, "upgrade to 4.18.0");
+  assert.ok(n.findings.every((f) => f.id && Array.isArray(f.aliases)));
+  assert.equal(normalize("sentinel-package", result("731001-package-npm-lodash-4.17.15-200-paid.json"), { name: "lodash", version: "4.17.21" }).severity, "unknown");
+});
+
+test("Sentinel answers corroborated by deps.dev ids, through aliases too", () => {
+  const first = normalize("sentinel-package", result("731001-package-npm-lodash-4.17.15-200-paid.json"), lodash15);
+  const second = normalize("depsdev-advisory-keys", result("190048-npm-lodash-4.17.15-200-paid.json"), lodash15);
+  const c = combineOpinions(first, second);
+  assert.equal(c.confirmed, true);
+  assert.equal(c.advice, "upgrade to 4.18.0");
+  const viaAlias = combineOpinions(
+    { severity: "high", findings: [{ id: "GHSA-aaaa", aliases: ["PYSEC-2021-1"], severity: "high", title: "x" }] },
+    { severity: "unknown", findings: [{ id: "PYSEC-2021-1", severity: "unknown", title: "PYSEC-2021-1" }] },
+  );
+  assert.equal(viaAlias.confirmed, true);
+});
+
+test("Sentinel /review: findings keep file and line; clean code is none", async () => {
+  const { createHandler } = await import("../miner/worker.js");
+  const ask = async (diff) => (await (await createHandler()(new Request("https://m.test/review", { method: "POST", body: JSON.stringify({ diff }) }))).json());
+  const bad = normalize("sentinel-review", await ask("diff --git a/db.js b/db.js\n@@ -1,1 +1,2 @@\n x\n+db.query(\"SELECT * FROM t WHERE id = '\" + req.query.id + \"'\")"));
+  assert.equal(bad.severity, "critical");
+  assert.deepEqual([bad.findings[0].file, bad.findings[0].line], ["db.js", 2]);
+  assert.match(bad.findings[0].title, /SQL built from strings \(CWE-89\)/);
+  assert.deepEqual(normalize("sentinel-review", await ask("diff --git a/a.js b/a.js\n@@ -1,1 +1,2 @@\n x\n+const y = 2;")), { severity: "none", findings: [] });
+  assert.equal(normalize("sentinel-review", { answer: "no structure" }).severity, "unknown");
+});

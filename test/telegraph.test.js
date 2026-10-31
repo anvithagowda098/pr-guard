@@ -3,34 +3,37 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { generatePrivateKey } from "viem/accounts";
-import { Telegraph, Budget, decodeHeader, callPolicy, usdToAtomic } from "../src/telegraph.js";
+import { Telegraph, Budget, decodeHeader, callPolicy, usdToAtomic, PAYMENT_ASSETS } from "../src/telegraph.js";
 
 const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString("base64");
 
-function challenge(amount) {
+const ETH_SEPOLIA = { network: "eip155:11155111", asset: "0xcc194e1a843B658526D0D5C431f670028582Ae17" };
+
+// The shape of Telegraph's live challenge since its Oct 30 move to Ethereum Sepolia.
+function challenge(amount, { network = ETH_SEPOLIA.network, asset = ETH_SEPOLIA.asset } = {}) {
   return {
     x402Version: 2,
     resource: { url: "https://node.test/engine/v1/ask", description: "test", mimeType: "application/json" },
     accepts: [{
       scheme: "exact",
-      network: "eip155:84532",
+      network,
       amount: String(amount),
-      asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      asset,
       payTo: "0x000000000000000000000000000000000000dEaD",
       maxTimeoutSeconds: 60,
-      extra: { name: "USDC", version: "2" },
+      extra: { name: "USD Coin", version: "2" },
     }],
   };
 }
 
 // Answers 402 until it sees a PAYMENT-SIGNATURE header, then 200.
-function stubNode({ amount, okBody = { ok: true }, okHeaders = {} }) {
+function stubNode({ amount, okBody = { ok: true }, okHeaders = {}, ...where }) {
   const calls = [];
   const fetch = async (input, init) => {
     const req = new Request(input, init);
     calls.push({ url: req.url, signature: req.headers.get("payment-signature") });
     if (!req.headers.get("payment-signature")) {
-      return new Response("{}", { status: 402, headers: { "PAYMENT-REQUIRED": b64(challenge(amount)) } });
+      return new Response("{}", { status: 402, headers: { "PAYMENT-REQUIRED": b64(challenge(amount, where)) } });
     }
     return new Response(JSON.stringify(okBody), { status: 200, headers: okHeaders });
   };
@@ -46,8 +49,8 @@ test("decodeHeader handles base64 JSON, missing and garbage values", () => {
 test("callPolicy keeps quotes under the cap across v1/v2 field names and reserves one", () => {
   const budget = new Budget(1);
   const hold = { atomic: null, refusal: null };
-  const keep = callPolicy(50_000n, budget, hold)(2, [{ value: "90000" }, { maxAmountRequired: "20000" }, { amount: "10000" }]);
-  assert.deepEqual(keep, [{ maxAmountRequired: "20000" }]);
+  const keep = callPolicy(50_000n, budget, hold)(2, [{ ...ETH_SEPOLIA, value: "90000" }, { ...ETH_SEPOLIA, maxAmountRequired: "20000" }, { ...ETH_SEPOLIA, amount: "10000" }]);
+  assert.deepEqual(keep, [{ ...ETH_SEPOLIA, maxAmountRequired: "20000" }]);
   assert.equal(hold.atomic, 20_000n);
   assert.equal(budget.reserved, 20_000n);
 });
@@ -56,8 +59,8 @@ test("callPolicy does not reserve twice when the library re-runs it", () => {
   const budget = new Budget(1);
   const hold = { atomic: null, refusal: null };
   const policy = callPolicy(50_000n, budget, hold);
-  policy(2, [{ amount: "10000" }]);
-  policy(2, [{ amount: "10000" }]);
+  policy(2, [{ ...ETH_SEPOLIA, amount: "10000" }]);
+  policy(2, [{ ...ETH_SEPOLIA, amount: "10000" }]);
   assert.equal(budget.reserved, 10_000n);
 });
 
@@ -68,7 +71,7 @@ test("usdToAtomic uses 6 decimals", () => {
 
 test("under-cap quote is signed, retried, and the receipt decoded", async () => {
   const receipt = { receipt_hash: "0xabc" };
-  const payment = { success: true, transaction: "0x1", network: "eip155:84532" };
+  const payment = { success: true, transaction: "0x1", network: "eip155:11155111" };
   const node = stubNode({
     amount: 10_000,
     okBody: { miner_id: 1, result: "raw", signal_hash: "0xsig" },
@@ -170,4 +173,25 @@ test("a failed miner call that still settled payment is counted as spent", async
   assert.equal(r.charged, true);
   assert.equal(r.costUsd, 0.01);
   assert.equal(budget.spent, 10_000n);
+});
+
+test("only Telegraph's test USDC is ever paid: another token or chain is refused unsigned", async () => {
+  for (const where of [
+    { network: "eip155:11155111", asset: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" }, // Circle's Sepolia USDC, not Telegraph's
+    { network: "eip155:1", asset: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" }, // mainnet USDC: real money
+  ]) {
+    const node = stubNode({ amount: 10_000, ...where });
+    const tg = new Telegraph({ nodeUrl: "https://node.test", privateKey: generatePrivateKey(), fetch: node.fetch });
+    const r = await tg.ask({});
+    assert.equal(node.calls.length, 1, `no paid retry for ${where.network}`);
+    assert.equal(r.paid, false);
+    assert.ok(["unsupported_asset", "payment_failed"].includes(r.reason), r.reason);
+  }
+});
+
+test("the old Base Sepolia challenge still signs (for replaying captured runs)", async () => {
+  const old = PAYMENT_ASSETS.find((a) => a.network === "eip155:84532");
+  const node = stubNode({ amount: 10_000, network: old.network, asset: old.asset });
+  const tg = new Telegraph({ nodeUrl: "https://node.test", privateKey: generatePrivateKey(), fetch: node.fetch });
+  assert.equal((await tg.ask({})).ok, true);
 });

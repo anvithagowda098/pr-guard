@@ -2,7 +2,7 @@
 
 A GitHub Action that buys security checks from Telegraph's miner network on every pull request. It posts one comment with a verdict (🟢 SAFE / 🟡 CAUTION / 🔴 BLOCK), the evidence, what the checks cost, and the Telegraph receipts.
 
-Payments use **testnet USDC on Base Sepolia**. That money is free from a faucet and worth $0. The wallet is a burner and never holds real funds.
+Payments use **Telegraph's test USDC on Ethereum Sepolia**, Telegraph's testnet since Oct 30, 2026; before that it was Base Sepolia. That money is free to mint and worth $0. The wallet is a burner and never holds real funds.
 
 ## Status
 
@@ -12,12 +12,17 @@ Payments use **testnet USDC on Base Sepolia**. That money is free from a faucet 
 | Local checks: committed secrets and keys, new install scripts | live (free, no miner) |
 | Telegraph client: discovery, paid asks, receipts, per-call cap, per-PR budget | done |
 | Verdict policy, PR comment, purchase ledger, the Action itself | done; end-to-end test replays real miner answers |
-| **Code-diff security review:** redacted diff chunks reviewed by ChainSight | **live on testnet**, CAUTION at most until a second reviewer exists |
+| **Code-diff security review:** redacted diff chunks reviewed by PR Guard Sentinel (our own rule-based miner) | **built and registered; off by default** until Telegraph's node activates it (ChainSight, the AI reviewer used before, did not survive the Oct 30 move) |
 | Patch verification, URL safety | **off by default:** no working miner on Telegraph yet (see below) |
 
 ### Which miners, and why
 
-Checked against the live network on 2026-10-27. Discovery data is in `data/miners-summary.json` and the paid answers are in `test/fixtures/miner-responses/`.
+First vetted on 2026-10-27 on Base Sepolia; the answers are in `test/fixtures/miner-responses/`. Re-checked on 2026-10-31 after Telegraph's move to Ethereum Sepolia:
+- Both dependency miners carried over with identical answers (`test/fixtures/miner-responses/SECURITY_REVIEW_GENERAL/`).
+- ChainSight did not carry over.
+- Intent names are now family children, e.g. `SECURITY_REVIEW_GENERAL`.
+
+What follows is the original Oct 27 assessment.
 
 - **Dependencies:** two miners, both under SECURITY_REVIEW. No CVE_LOOKUP miner accepts a package and version; they only take a CVE id.
   - **deps.dev Package Review** (#77010) is asked first, for npm. It returns each advisory with GitHub's severity rating and a CVSS score.
@@ -92,7 +97,8 @@ This saves the raw intent specs and miner records to `data/miners.json` and prin
 
 ```sh
 node scripts/wallet.js            # creates .env with a burner key and prints its address
-# fund it: https://faucet.circle.com -> Base Sepolia -> USDC (no ETH needed)
+# fund it: a little Sepolia ETH from a faucet (e.g. Coinbase's CDP faucet, network "Ethereum Sepolia"),
+# then mint free test USDC:  node scripts/fund-testnet.js mint 20
 node scripts/wallet.js balance
 ```
 

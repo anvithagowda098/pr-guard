@@ -181,6 +181,7 @@ test("upgrade advice: the lowest version that fixes everything", () => {
 test("GET /miner.yaml serves exactly the committed YAML", async () => {
   const res = await createHandler()(new Request("https://miner.test/miner.yaml"));
   assert.equal(res.status, 200);
+  assert.equal(res.headers.get("cache-control"), "no-store");
   assert.equal(await res.text(), readFileSync(new URL("../miner/miner.yaml", import.meta.url), "utf8"), "run node scripts/embed-yaml.js");
 });
 

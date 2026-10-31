@@ -100,7 +100,9 @@ export function createHandler({ fetch: fetchImpl = (...a) => fetch(...a) } = {})
       return json(200, { ok: true, name: "PR Guard Sentinel", version: VERSION, rules: RULE_COUNT, intents: ["SECURITY_REVIEW_GENERAL"] });
     }
     if (request.method === "GET" && url.pathname === "/miner.yaml") {
-      return new Response(MINER_YAML, { headers: { "content-type": "text/yaml; charset=utf-8" } });
+      // no-store: registration consoles fetch this from the browser, and a cached
+      // copy of an older YAML would register the wrong hash or intents.
+      return new Response(MINER_YAML, { headers: { "content-type": "text/yaml; charset=utf-8", "cache-control": "no-store" } });
     }
     if (request.method !== "POST") return json(405, { error: "use POST" });
     const { body, error } = await readJson(request);

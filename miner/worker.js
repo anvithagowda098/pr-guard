@@ -1,4 +1,4 @@
-// PR Guard Sentinel: a Telegraph miner for SECURITY_REVIEW.
+// PR Guard Sentinel: a Telegraph miner for SECURITY_REVIEW_GENERAL.
 //   POST /review   { code | diff | query }        rule scan + any packages named
 //   POST /package  { ecosystem, name, version }   known vulnerabilities via OSV
 //   GET  /health
@@ -97,7 +97,7 @@ export function createHandler({ fetch: fetchImpl = (...a) => fetch(...a) } = {})
   return async function handle(request) {
     const url = new URL(request.url);
     if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
-      return json(200, { ok: true, name: "PR Guard Sentinel", version: VERSION, rules: RULE_COUNT, intents: ["SECURITY_REVIEW"] });
+      return json(200, { ok: true, name: "PR Guard Sentinel", version: VERSION, rules: RULE_COUNT, intents: ["SECURITY_REVIEW_GENERAL"] });
     }
     if (request.method === "GET" && url.pathname === "/miner.yaml") {
       return new Response(MINER_YAML, { headers: { "content-type": "text/yaml; charset=utf-8" } });

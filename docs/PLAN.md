@@ -13,6 +13,20 @@ Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) p
 - **Disqualifying:** fake receipts, manufactured adoption, collusive requests. PR Guard buying from our own miner must be disclosed. The miner's case rests on independent tests, not self-purchases.
 - **Reviewers check each mission in five steps:** run with new input, check the result, inspect the Telegraph request, break it, reproduce it.
 
+## Network move (Oct 30): read this first
+
+Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 11155111) on Oct 30.
+- **Contracts:** new Diamond `0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b`. Test USDC is `0xcc194e1a843B658526D0D5C431f670028582Ae17`, which anyone can mint.
+- **Intents** are now family children: `SECURITY_REVIEW` → `SECURITY_REVIEW_GENERAL`, `CVE_LOOKUP` → `CVE_LOOKUP_CVSS`, `URL_SCAN` → `URL_SCAN_VERDICT`, and so on.
+- **Miners:**
+  - Registration needs a MACHINA bond: $1 for the first intent, refundable.
+  - ChainSight (#302) was not carried over, and neither was our Oct 27 registration.
+  - deps.dev Package Review (#77010) and Secrev Depsdev (#190048) were, with the same inputs.
+- **Funding:** `scripts/fund-testnet.js` mints USDC, swaps to MACHINA and sends gas.
+- **Oct 31:**
+  - The burner (`0xd0Cd…cfB44`) holds 22 USDC.
+  - The user's MetaMask holds 3.45 MACHINA plus gas, for re-registering the miner.
+
 ## What works today
 
 - **The Action** (`src/`), 75 tests:

@@ -1,6 +1,6 @@
 # PR Guard Sentinel (miner)
 
-A Telegraph miner for `SECURITY_REVIEW`. It's a Cloudflare Worker with two endpoints:
+A Telegraph miner for `SECURITY_REVIEW_GENERAL`. It was `SECURITY_REVIEW` before Telegraph's Oct 30 move to Ethereum Sepolia. It's a Cloudflare Worker with two endpoints:
 
 | Endpoint | Does |
 |---|---|
@@ -36,7 +36,7 @@ Console path (Oct 2026): https://integrate.telegraphprotocol.com/register → st
 
 1. **Check the URL:** `base_url` in `miner.yaml` must match the deployed Worker (`https://pr-guard-sentinel.pr-guard.workers.dev`).
 2. **Validate:** paste `miner.yaml` into the console at https://integrate.telegraphprotocol.com, which checks it against the live endpoints. The documented `POST /api/validate` answered 404 on 2026-10-27.
-3. **Register:** with the miner wallet, at https://integrate.telegraphprotocol.com. It pins the YAML and sends `registerMiner`. Registration costs only Base Sepolia gas; there's no stake.
+3. **Register:** with the miner wallet, at https://integrate.telegraphprotocol.com. It pins the YAML and sends `registerMiner`. Since Oct 30, registration is on Ethereum Sepolia. It needs a little Sepolia ETH for gas and a refundable MACHINA bond ($1 for the first intent); `scripts/fund-testnet.js` gets both.
 4. **Confirm it's live:** `GET https://devnode.telegraphprotocol.com/api/miners/731001` should return the record.
 
 PR Guard (the app) uses this miner as a second, independent opinion: rules here, an AI reviewer (ChainSight) there. That relationship is disclosed in the submission.

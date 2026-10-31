@@ -46,7 +46,7 @@ function packageSentence(p) {
 }
 
 function findingSentence(f) {
-  return `${f.severity}: ${f.title} (${f.cwe}) at line ${f.line}: \`${f.evidence}\`; fix: ${f.fix}`;
+  return `${f.severity}: ${f.title} (${f.cwe}) at ${f.file ? `${f.file}:` : "line "}${f.line}: \`${f.evidence}\`; fix: ${f.fix}`;
 }
 
 /** Combine a rule scan and package lookups into one answer. */

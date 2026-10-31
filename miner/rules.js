@@ -127,10 +127,19 @@ export const RULE_COUNT = RULES.length + 1;
 
 const looksLikeDiff = (text) => /^(diff --git |@@ -\d)/m.test(text);
 
-/** The lines to scan: added lines of a diff, or every line of plain code. */
+/**
+ * The lines to scan: added lines of a diff (with the file they belong to,
+ * when the diff names it), or every line of plain code.
+ */
 export function linesOf(text) {
-  if (looksLikeDiff(text)) return addedLines(text.replace(/^diff --git .*$/gm, ""));
-  return text.split(/\r?\n/).map((t, i) => ({ line: i + 1, text: t }));
+  if (!looksLikeDiff(text)) return text.split(/\r?\n/).map((t, i) => ({ line: i + 1, text: t }));
+  // Split a multi-file diff at its file headers; a bare hunk has no file.
+  const out = [];
+  for (const section of text.split(/^(?=diff --git )/m)) {
+    const file = section.match(/^diff --git a\/\S+ b\/(\S+)/)?.[1] ?? section.match(/^\+\+\+ b\/(\S+)/m)?.[1] ?? null;
+    for (const l of addedLines(section.replace(/^diff --git .*$/gm, ""))) out.push(file ? { ...l, file } : l);
+  }
+  return out;
 }
 
 const evidence = (line) => redact(line.trim()).text.slice(0, 160);
@@ -142,14 +151,14 @@ const evidence = (line) => redact(line.trim()).text.slice(0, 160);
 export function scan(text) {
   const lines = linesOf(String(text ?? ""));
   const findings = [];
-  for (const { line, text: l } of lines) {
+  for (const { line, text: l, file } of lines) {
     for (const s of new Set(secretSpans(l).map((x) => `${x.type}\0${x.severity}`))) {
       const [type, severity] = s.split("\0");
-      findings.push({ rule: SECRET_RULE.id, title: `hardcoded secret (${type.replace(/_/g, " ")})`, severity, cwe: SECRET_RULE.cwe, line, evidence: evidence(l), fix: SECRET_RULE.fix, confidence: SECRET_RULE.confidence });
+      findings.push({ rule: SECRET_RULE.id, title: `hardcoded secret (${type.replace(/_/g, " ")})`, severity, cwe: SECRET_RULE.cwe, ...(file && { file }), line, evidence: evidence(l), fix: SECRET_RULE.fix, confidence: SECRET_RULE.confidence });
     }
     if (COMMENT.test(l)) continue;
     for (const r of RULES) {
-      if (r.test(l)) findings.push({ rule: r.id, title: r.title, severity: r.severity(l), cwe: r.cwe, line, evidence: evidence(l), fix: r.fix, confidence: r.confidence });
+      if (r.test(l)) findings.push({ rule: r.id, title: r.title, severity: r.severity(l), cwe: r.cwe, ...(file && { file }), line, evidence: evidence(l), fix: r.fix, confidence: r.confidence });
     }
   }
   return { findings, linesScanned: lines.length };

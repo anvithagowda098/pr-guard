@@ -183,3 +183,17 @@ test("GET /miner.yaml serves exactly the committed YAML", async () => {
   assert.equal(res.status, 200);
   assert.equal(await res.text(), readFileSync(new URL("../miner/miner.yaml", import.meta.url), "utf8"), "run node scripts/embed-yaml.js");
 });
+
+test("multi-file diffs: each finding names its file", () => {
+  const diff = [
+    "diff --git a/src/calc.js b/src/calc.js",
+    "@@ -1,1 +1,2 @@",
+    " const x = 1;",
+    "+res.send(eval(req.body.expr));",
+    "diff --git a/app/db.py b/app/db.py",
+    "@@ -40,1 +40,2 @@",
+    " def get(uid):",
+    '+    cur.execute(f"SELECT * FROM users WHERE id = {uid}")',
+  ].join("\n");
+  assert.deepEqual(scan(diff).findings.map((f) => `${f.rule}@${f.file}:${f.line}`), ["code-injection@src/calc.js:2", "sql-injection@app/db.py:41"]);
+});

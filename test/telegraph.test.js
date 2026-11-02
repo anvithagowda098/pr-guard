@@ -195,3 +195,17 @@ test("the old Base Sepolia challenge still signs (for replaying captured runs)",
   const tg = new Telegraph({ nodeUrl: "https://node.test", privateKey: generatePrivateKey(), fetch: node.fetch });
   assert.equal((await tg.ask({})).ok, true);
 });
+
+test("private keys are accepted with or without 0x and surrounding whitespace", async () => {
+  const { normalizePrivateKey } = await import("../src/telegraph.js");
+  const hex = "ab".repeat(32);
+  assert.equal(normalizePrivateKey(hex), `0x${hex}`); // MetaMask's export format
+  assert.equal(normalizePrivateKey(`  0x${hex}\n`), `0x${hex}`);
+  assert.equal(normalizePrivateKey(`0X${hex.toUpperCase()}`), `0x${hex.toUpperCase()}`);
+  for (const bad of ["", "0x1234", "not a key", `${hex}00`, "0xFb49DF5c009e60749776bF3CBed3D1C25Dde0297"]) {
+    assert.throws(() => normalizePrivateKey(bad), (e) => /64 hex characters/.test(e.message) && !e.message.includes(bad.trim() || "\u0000"), bad);
+  }
+  // A key without 0x works end to end.
+  const tg = new Telegraph({ nodeUrl: "https://node.test", privateKey: hex, fetch: async () => new Response("{}") });
+  assert.match(tg.address, /^0x[0-9a-fA-F]{40}$/);
+});

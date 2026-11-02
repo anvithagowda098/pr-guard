@@ -6,6 +6,8 @@ import { readFileSync } from "node:fs";
 import { generatePrivateKey } from "viem/accounts";
 import { createApp } from "../web/worker.js";
 import { parsePullUrl } from "../web/github.js";
+import { scanHosted, HostedRefusal } from "../src/hosted.js";
+import { decide } from "../src/policy.js";
 
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64");
 const captured = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/SECURITY_REVIEW_GENERAL/${name}`, import.meta.url), "utf8")).body;
@@ -149,4 +151,50 @@ test("the page is served with a strict content security policy", async () => {
     assert.match(r.headers.get("content-security-policy"), /default-src 'none'.*connect-src 'self'/);
     assert.match(await r.text(), /<title>PR Guard<\/title>/);
   }
+});
+
+// The Action without a wallet: src/hosted.js driving this same service.
+const hostedFetch = (app, env) => (url, init) => app(new Request(url, { ...init, headers: { ...init?.headers, "cf-connecting-ip": "20.1.2.3" } }), env);
+
+test("hosted mode: the Action's client runs a whole scan through the service", async () => {
+  const { app, env, asks } = world();
+  const scan = await scanHosted({ serviceUrl: "https://web.test/", prUrl: "https://github.com/o/r/pull/7", deadline: Date.now() + 60_000, fetch: hostedFetch(app, env) });
+  assert.equal(scan.status, "done");
+  assert.equal(scan.verdict, "BLOCK");
+  assert.equal(scan.spentUsd, 0.03);
+  assert.match(scan.reportUrl, /^https:\/\/web\.test\/r\/[a-z0-9]+$/);
+  assert.deepEqual(asks.map((a) => a.miner), ["77010", "190048", "5530"]);
+  assert.equal(JSON.parse(env.SCANS.m.get(`scan:${scan.id}`)).source, "action");
+});
+
+test("hosted mode: limits are per repository, and a refusal says why", async () => {
+  const { app, env } = world();
+  env.SCANS_PER_REPO_PER_DAY = "1";
+  env.SCANS_PER_IP_PER_DAY = "0"; // the page's per-visitor limit doesn't apply to the Action
+  const run = (n) => scanHosted({ serviceUrl: "https://web.test", prUrl: `https://github.com/o/r/pull/${n}`, deadline: Date.now() + 60_000, fetch: hostedFetch(app, env) });
+  assert.equal((await run(8)).verdict, "SAFE");
+  await assert.rejects(run(7), (err) => err instanceof HostedRefusal && /used its 1 free hosted scans/.test(err.message));
+});
+
+test("hosted mode: checks still waiting at the deadline count as skipped", async () => {
+  const { app, env, asks } = world();
+  const scan = await scanHosted({ serviceUrl: "https://web.test", prUrl: "https://github.com/o/r/pull/7", deadline: Date.now() - 1, fetch: hostedFetch(app, env) });
+  assert.equal(scan.timedOut, true);
+  assert.equal(asks.length, 0);
+  assert.deepEqual(scan.outcomes.filter((o) => o.status === "skipped").map((o) => `${o.check}:${o.reason}`), ["deps:time limit", "diff:time limit"]);
+  assert.equal(decide(scan.outcomes).verdict, "CAUTION");
+});
+
+test("hosted mode: a dropped connection mid-check is retried without paying twice", async () => {
+  const { app, env, asks } = world();
+  let dropped = 0;
+  const flaky = async (url, init) => {
+    const res = await hostedFetch(app, env)(url, init);
+    // The first step's answer is lost on the way back, after the service recorded it.
+    if (String(url).endsWith("/step") && dropped++ === 0) throw new TypeError("fetch failed");
+    return res;
+  };
+  const scan = await scanHosted({ serviceUrl: "https://web.test", prUrl: "https://github.com/o/r/pull/7", deadline: Date.now() + 60_000, fetch: flaky, sleep: async () => {} });
+  assert.equal(scan.verdict, "BLOCK");
+  assert.deepEqual(asks.map((a) => a.miner), ["77010", "190048", "5530"], "each miner paid once");
 });

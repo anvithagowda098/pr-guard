@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { fillTemplate, runCheck, runAll } from "../src/runner.js";
-import { buildJobs, localOutcomes, unresolvableDepOutcomes } from "../src/checks.js";
+import { buildJobs, rankDeps, localOutcomes, unresolvableDepOutcomes } from "../src/checks.js";
 import { decide } from "../src/policy.js";
 import { renderComment, MARKER } from "../src/report.js";
 
@@ -168,4 +168,30 @@ test("disabled entries are kept in config but never called", async () => {
 test("fix advice reaches the PR comment", () => {
   const body = renderComment({ verdict: "BLOCK", reasons: [], outcomes: [{ check: "deps", target: "lodash@4.17.15", status: "ok", severity: "high", confirmed: true, disagreement: false, advice: "upgrade to 4.18.0", findings: [{ title: "Prototype Pollution", severity: "high" }], calls: [] }], nodeUrl: "https://n" });
   assert.match(body, /high: Prototype Pollution · confirmed · fix: upgrade to 4\.18\.0/);
+});
+
+test("rankDeps: over the cap, the packages the PR is about are checked first", () => {
+  const d = (name, extra = {}) => ({ ecosystem: "npm", name, to: "1.0.0", direct: false, ...extra });
+  const deps = [d("@rtsao/scc"), d("array-includes", { from: "0.9.0" }), d("lodash", { from: "4.17.15" }), d("express", { direct: true }), d("@babel/core")];
+  const order = (title) => rankDeps(deps, title).map((x) => x.name);
+  assert.deepEqual(order("Bump lodash from 4.17.15 to 4.17.21"), ["express", "lodash", "array-includes", "@rtsao/scc", "@babel/core"]);
+  assert.deepEqual(order("Bump @babel/core"), ["express", "@babel/core", "array-includes", "lodash", "@rtsao/scc"]);
+  const jobs = buildJobs({ deps, files: [], title: "Bump lodash and n8n-workflow" }, new Set(["deps"]), { maxDeps: 2 });
+  assert.deepEqual(jobs.map((j) => j.target), ["express@1.0.0", "lodash@1.0.0"]);
+});
+
+test("planScan notes the packages left over by the cap", async () => {
+  const { planScan } = await import("../src/plan.js");
+  const lock = (names) => JSON.stringify({ lockfileVersion: 3, packages: Object.fromEntries([["", {}], ...names.map((n) => [`node_modules/${n}`, { version: "1.0.0" }])]) });
+  const texts = { "b:package-lock.json": lock([]), "h:package-lock.json": lock(["a", "b", "c", "lodash"]) };
+  const { jobs, notes } = await planScan({
+    pr: { title: "Bump lodash" },
+    rawFiles: [{ filename: "package-lock.json", status: "modified", patch: "" }],
+    baseSha: "b", headSha: "h",
+    getText: async ({ path, ref }) => texts[`${ref}:${path}`] ?? null,
+    checks: new Set(["deps", "diff"]),
+    limits: { maxDeps: 2 },
+  });
+  assert.deepEqual(jobs.map((j) => j.target), ["lodash@1.0.0", "a@1.0.0"]);
+  assert.deepEqual(notes, ["2 of 4 changed packages were not checked (limit 2): direct dependencies and packages named in the title go first."]);
 });

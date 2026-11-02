@@ -11,9 +11,11 @@ import { decide, shouldFail } from "./policy.js";
 import { renderComment } from "./report.js";
 import { appendLedger } from "./ledger.js";
 import { listPrFiles, mergeBase, getText, upsertComment } from "./github.js";
+import { scanHosted, HostedRefusal, DEFAULT_SERVICE_URL } from "./hosted.js";
 import bundledMiners from "../config/miners.json" with { type: "json" };
 
 const RUN_DEADLINE_MS = 100_000; // leave headroom under the 2-minute target
+const HOSTED_DEADLINE_MS = 4 * 60_000; // hosted checks run one after another
 const LEDGER_PATH = "pr-guard-ledger.jsonl";
 
 function inputs() {
@@ -33,6 +35,7 @@ function inputs() {
     nodeUrl: core.getInput("node-url") || DEFAULT_NODE_URL,
     minersConfig: core.getInput("miners-config"),
     token: core.getInput("github-token"),
+    serviceUrl: core.getInput("service-url") || DEFAULT_SERVICE_URL,
   };
 }
 
@@ -65,15 +68,37 @@ async function run() {
     }
   };
 
+  const finish = async ({ verdict, spentUsd, signalHashes = [], ledgerPath = "" }) => {
+    core.setOutput("verdict", verdict);
+    core.setOutput("cost_usd", spentUsd.toFixed(6));
+    core.setOutput("signal_hashes", signalHashes.join(","));
+    core.setOutput("ledger_path", ledgerPath);
+    if (shouldFail(verdict, cfg.failOn)) core.setFailed(`PR Guard verdict: ${verdict}`);
+  };
+
   if (!cfg.privateKey) {
-    const fork = pr.head?.repo?.full_name !== pr.base?.repo?.full_name;
-    const note = fork
-      ? "Skipped: workflows on fork PRs don't receive secrets, so there is no wallet to pay for checks."
-      : "Skipped: no `telegraph-private-key` secret is configured, so there is no wallet to pay for checks.";
-    await post(renderComment({ verdict: "SKIPPED", note, nodeUrl: cfg.nodeUrl }));
-    core.setOutput("verdict", "SKIPPED");
-    core.setOutput("cost_usd", "0");
-    return;
+    // No wallet here: public repositories are scanned by the hosted service.
+    if (context.payload.repository?.private) {
+      const note = "Skipped: this repository is private. Free hosted scans cover public repositories only; add a `TELEGRAPH_PRIVATE_KEY` secret to pay for checks from your own wallet.";
+      await post(renderComment({ verdict: "SKIPPED", note, nodeUrl: cfg.nodeUrl }));
+      return finish({ verdict: "SKIPPED", spentUsd: 0 });
+    }
+    let scan;
+    try {
+      scan = await scanHosted({ serviceUrl: cfg.serviceUrl, prUrl: pr.html_url, deadline: Date.now() + HOSTED_DEADLINE_MS });
+    } catch (err) {
+      if (!(err instanceof HostedRefusal)) throw err;
+      await post(renderComment({ verdict: "SKIPPED", note: `Skipped: ${err.message}`, nodeUrl: cfg.nodeUrl }));
+      return finish({ verdict: "SKIPPED", spentUsd: 0 });
+    }
+    const { verdict, reasons } = scan.verdict ? scan : decide(scan.outcomes);
+    const note = [
+      `Free hosted scan: checks were paid from PR Guard's sponsor wallet in test USDC. [Full report](${scan.reportUrl})${scan.timedOut ? " (some checks ran out of time)" : ""}.`,
+      ...(scan.notes ?? []),
+    ].join(" ");
+    await post(renderComment({ verdict, reasons, outcomes: scan.outcomes, spentUsd: scan.spentUsd, budgetUsd: scan.budgetUsd, nodeUrl: scan.nodeUrl, runUrl, note }));
+    const signalHashes = scan.outcomes.flatMap((o) => o.calls.map((c) => c.signalHash)).filter(Boolean);
+    return finish({ verdict, spentUsd: scan.spentUsd, signalHashes });
   }
 
   const deadline = Date.now() + RUN_DEADLINE_MS;
@@ -82,7 +107,7 @@ async function run() {
   const rawFiles = await listPrFiles(octokit, { ...repoRef, pull_number: pr.number });
   const base = await mergeBase(octokit, { ...repoRef, base: pr.base.sha, head: pr.head.sha });
   const getFileText = ({ path, ref }) => getText(octokit, { ...repoRef, path, ref });
-  const { jobs, local, errors } = await planScan({ pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks });
+  const { jobs, local, errors, notes } = await planScan({ pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks });
   for (const e of errors) core.warning(`could not read ${e.file}: ${e.error}`);
 
   const budget = new Budget(cfg.maxUsdPerPr);
@@ -94,14 +119,10 @@ async function run() {
   const { verdict, reasons } = decide(outcomes);
   const spentUsd = Number(budget.spent) / 1e6;
 
-  await post(renderComment({ verdict, reasons, outcomes, spentUsd, budgetUsd: cfg.maxUsdPerPr, nodeUrl: cfg.nodeUrl, runUrl }));
+  await post(renderComment({ verdict, reasons, outcomes, spentUsd, budgetUsd: cfg.maxUsdPerPr, nodeUrl: cfg.nodeUrl, runUrl, note: notes.join(" ") || undefined }));
 
   const signalHashes = outcomes.flatMap((o) => o.calls.map((c) => c.signalHash)).filter(Boolean);
-  core.setOutput("verdict", verdict);
-  core.setOutput("cost_usd", spentUsd.toFixed(6));
-  core.setOutput("signal_hashes", signalHashes.join(","));
-  core.setOutput("ledger_path", LEDGER_PATH);
-  if (shouldFail(verdict, cfg.failOn)) core.setFailed(`PR Guard verdict: ${verdict}`);
+  await finish({ verdict, spentUsd, signalHashes, ledgerPath: LEDGER_PATH });
 }
 
 run().catch(async (err) => {

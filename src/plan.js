@@ -39,6 +39,7 @@ export async function collectDependencies(getText, files, baseSha, headSha) {
  * @param {Function} p.getText see collectDependencies
  * @param {Set<string>} p.checks paid checks to plan
  * @param {object} [p.limits] passed to buildJobs
+ * @returns {{ jobs: object[], local: object[], errors: object[], notes: string[] }}
  */
 export async function planScan({ pr, rawFiles, baseSha, headSha, getText, checks, limits }) {
   const { deps, installScripts, errors } = await collectDependencies(getText, rawFiles, baseSha, headSha);
@@ -46,5 +47,11 @@ export async function planScan({ pr, rawFiles, baseSha, headSha, getText, checks
   const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
   const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, checks, limits);
   const local = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps)];
-  return { jobs, local, errors };
+  const notes = [];
+  const changed = deps.filter((d) => d.to).length;
+  const checked = jobs.filter((j) => j.check === "deps").length;
+  if (checks.has("deps") && changed > checked) {
+    notes.push(`${changed - checked} of ${changed} changed packages were not checked (limit ${checked}): direct dependencies and packages named in the title go first.`);
+  }
+  return { jobs, local, errors, notes };
 }

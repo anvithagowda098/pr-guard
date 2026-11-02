@@ -28931,7 +28931,7 @@ var init_withResolvers = __esm({
 });
 
 // node_modules/viem/_esm/utils/promise/createBatchScheduler.js
-function createBatchScheduler({ fn, id, shouldSplitBatch, wait: wait2 = 0, sort }) {
+function createBatchScheduler({ fn, id, shouldSplitBatch, wait: wait3 = 0, sort }) {
   const exec = async () => {
     const scheduler = getScheduler();
     flush();
@@ -28969,7 +28969,7 @@ function createBatchScheduler({ fn, id, shouldSplitBatch, wait: wait2 = 0, sort 
         return promise;
       }
       setScheduler({ args, resolve, reject });
-      setTimeout(exec, wait2);
+      setTimeout(exec, wait3);
       return promise;
     }
   };
@@ -29463,7 +29463,7 @@ function getRequestOptionsId(requestOptions) {
   return nextId;
 }
 async function scheduleMulticall(client, args) {
-  const { batchSize = 1024, deployless = false, wait: wait2 = 0 } = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
+  const { batchSize = 1024, deployless = false, wait: wait3 = 0 } = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
   const { blockHash, blockNumber, blockTag = client.experimental_blockTag ?? "latest", requireCanonical, data, multicallAddress: multicallAddress_, requestOptions, rpcStateOverride, to } = args;
   const multicallAddress = multicallAddress_ !== void 0 ? multicallAddress_ : getMulticallAddress(client, {
     blockNumber,
@@ -29479,7 +29479,7 @@ async function scheduleMulticall(client, args) {
   const stateOverrideKey = rpcStateOverride ? `.${JSON.stringify(rpcStateOverride)}` : "";
   const { schedule } = createBatchScheduler({
     id: `${client.uid}.${blockId}.${getRequestOptionsId(requestOptions)}${stateOverrideKey}`,
-    wait: wait2,
+    wait: wait3,
     shouldSplitBatch(args2) {
       const size5 = args2.reduce((size6, { data: data2 }) => size6 + (data2.length - 2), 0);
       return size5 > batchSize * 2;
@@ -45768,10 +45768,10 @@ async function multicall(client, parameters) {
 }
 async function scheduleMulticall2(client, parameters) {
   const { batchSize, call: call2, multicallAddress, ...rest } = parameters;
-  const { wait: wait2 = 0 } = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
+  const { wait: wait3 = 0 } = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
   const { schedule } = createBatchScheduler({
     id: stringify(["multicall", client.uid, batchSize, multicallAddress, rest]),
-    wait: wait2,
+    wait: wait3,
     shouldSplitBatch(calls) {
       if (batchSize === 0)
         return false;
@@ -47973,7 +47973,7 @@ function getSignalId(signal) {
 function http(url, config = {}) {
   const { batch, fetchFn, fetchOptions, key = "http", maxResponseBodySize, methods, name = "HTTP JSON-RPC", onFetchRequest, onFetchResponse, retryDelay, raw } = config;
   return ({ chain, retryCount: retryCount_, timeout: timeout_ }) => {
-    const { batchSize = 1e3, wait: wait2 = 0 } = typeof batch === "object" ? batch : {};
+    const { batchSize = 1e3, wait: wait3 = 0 } = typeof batch === "object" ? batch : {};
     const retryCount = config.retryCount ?? retryCount_;
     const timeout = timeout_ ?? config.timeout ?? 1e4;
     const url_ = url || chain?.rpcUrls.default.http[0];
@@ -47996,7 +47996,7 @@ function http(url, config = {}) {
         const fetchOptions2 = options?.signal ? { signal: options.signal } : void 0;
         const { schedule } = createBatchScheduler({
           id: `${url_}.${getSignalId(options?.signal)}`,
-          wait: wait2,
+          wait: wait3,
           shouldSplitBatch(requests) {
             return requests.length > batchSize;
           },
@@ -50537,6 +50537,11 @@ function combineOpinions(first, second) {
 // src/checks.js
 var DEFAULT_CHECKS = ["deps", "diff"];
 var DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
+function rankDeps(deps, title = "") {
+  const named = new Set(String(title).toLowerCase().match(/[@\w./-]+/g) ?? []);
+  const rank2 = (d) => d.direct ? 0 : named.has(d.name.toLowerCase()) ? 1 : d.from ? 2 : 3;
+  return deps.map((d, i) => [d, i]).sort((a, b) => rank2(a[0]) - rank2(b[0]) || a[1] - b[1]).map(([d]) => d);
+}
 function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3, maxChunks = Infinity } = {}) {
   const depJob = (d) => ({
     check: "deps",
@@ -50544,7 +50549,7 @@ function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrl
     target: d.to ? `${d.name}@${d.to}` : `${d.name} (${d.spec})`,
     vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec, depsdev_system: DEPSDEV_SYSTEM[d.ecosystem] }
   });
-  const resolvable = deps.filter((d) => d.to).slice(0, maxDeps);
+  const resolvable = rankDeps(deps.filter((d) => d.to), title).slice(0, maxDeps);
   const direct = resolvable.filter((d) => d.direct).map(depJob);
   const transitive = resolvable.filter((d) => !d.direct).map(depJob);
   const chunks = chunkDiff(files, { maxChars }).slice(0, maxChunks);
@@ -50637,7 +50642,13 @@ async function planScan({ pr, rawFiles, baseSha, headSha, getText: getText2, che
   const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
   const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, checks, limits);
   const local2 = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps)];
-  return { jobs, local: local2, errors };
+  const notes = [];
+  const changed = deps.filter((d) => d.to).length;
+  const checked = jobs.filter((j) => j.check === "deps").length;
+  if (checks.has("deps") && changed > checked) {
+    notes.push(`${changed - checked} of ${changed} changed packages were not checked (limit ${checked}): direct dependencies and packages named in the title go first.`);
+  }
+  return { jobs, local: local2, errors, notes };
 }
 
 // src/normalize.js
@@ -50972,6 +50983,66 @@ async function upsertComment(octokit, { owner, repo, issue_number, body }) {
   return data;
 }
 
+// src/hosted.js
+var DEFAULT_SERVICE_URL = "https://pr-guard-app.pr-guard.workers.dev";
+var HostedRefusal = class extends Error {
+};
+var wait2 = (ms) => new Promise((r) => setTimeout(r, ms));
+async function scanHosted({ serviceUrl = DEFAULT_SERVICE_URL, prUrl, deadline, fetch: fetchImpl = (...a) => globalThis.fetch(...a), sleep = wait2, busyWaitMs = 5e3 }) {
+  const base = serviceUrl.replace(/\/+$/, "");
+  const call2 = async (method, path, body) => {
+    const res = await fetchImpl(base + path, {
+      method,
+      headers: { "content-type": "application/json", "user-agent": "pr-guard-action" },
+      body: body ? JSON.stringify(body) : void 0
+    });
+    const data = await res.json().catch(() => ({}));
+    return { status: res.status, data };
+  };
+  const start = await call2("POST", "/api/scan", { url: prUrl, source: "action" });
+  if (start.status === 400 || start.status === 429) throw new HostedRefusal(start.data.error ?? `the service answered ${start.status}`);
+  if (start.status >= 300) throw new Error(`PR Guard service answered ${start.status}: ${start.data.error ?? "no reason given"}`);
+  const id = start.data.id;
+  let scan = start.data.scan ?? (await call2("GET", `/api/scan/${id}`)).data.scan;
+  let failures = 0;
+  while (scan?.status !== "done") {
+    if (Date.now() >= deadline) return { ...timedOut(scan), reportUrl: `${base}/r/${id}` };
+    let r;
+    try {
+      r = await call2("POST", `/api/scan/${id}/step`);
+      failures = 0;
+    } catch (err) {
+      if (++failures > 3) throw err;
+      await sleep(busyWaitMs);
+      scan = (await call2("GET", `/api/scan/${id}`)).data.scan ?? scan;
+      continue;
+    }
+    if (r.status === 409) {
+      await sleep(busyWaitMs);
+      scan = (await call2("GET", `/api/scan/${id}`)).data.scan ?? scan;
+      continue;
+    }
+    if (r.status !== 200) throw new Error(`PR Guard service answered ${r.status}: ${r.data.error ?? "no reason given"}`);
+    scan = r.data.scan;
+  }
+  return { ...scan, reportUrl: `${base}/r/${id}` };
+}
+function timedOut(scan) {
+  const skipped = scan.jobs.slice(scan.next).map(({ check, intent, target }) => ({
+    check,
+    intent,
+    target,
+    status: "skipped",
+    reason: "time limit",
+    severity: "none",
+    findings: [],
+    confirmed: false,
+    disagreement: false,
+    calls: []
+  }));
+  return { ...scan, outcomes: [...scan.outcomes, ...skipped], verdict: null, reasons: [], timedOut: true };
+}
+
 // config/miners.json
 var miners_default = {
   _comment: "Vetted miners per PR Guard check, best first. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional enabled:false (kept but not called). A check with no enabled entries is skipped. Re-vetted after Telegraph's Oct 30 move to Ethereum Sepolia: ChainSight (#302) is gone and id 302 now belongs to another miner.",
@@ -51059,6 +51130,7 @@ var miners_default = {
 
 // src/index.js
 var RUN_DEADLINE_MS = 1e5;
+var HOSTED_DEADLINE_MS = 4 * 6e4;
 var LEDGER_PATH = "pr-guard-ledger.jsonl";
 function inputs() {
   const num2 = (name, dflt) => {
@@ -51076,7 +51148,8 @@ function inputs() {
     checks: new Set((getInput("checks") || DEFAULT_CHECKS.join(",")).split(",").map((s) => s.trim()).filter(Boolean)),
     nodeUrl: getInput("node-url") || DEFAULT_NODE_URL,
     minersConfig: getInput("miners-config"),
-    token: getInput("github-token")
+    token: getInput("github-token"),
+    serviceUrl: getInput("service-url") || DEFAULT_SERVICE_URL
   };
 }
 async function run() {
@@ -51104,20 +51177,42 @@ async function run() {
       warning(`could not write the job summary: ${err.message}`);
     }
   };
+  const finish = async ({ verdict: verdict2, spentUsd: spentUsd2, signalHashes: signalHashes2 = [], ledgerPath = "" }) => {
+    setOutput("verdict", verdict2);
+    setOutput("cost_usd", spentUsd2.toFixed(6));
+    setOutput("signal_hashes", signalHashes2.join(","));
+    setOutput("ledger_path", ledgerPath);
+    if (shouldFail(verdict2, cfg.failOn)) setFailed(`PR Guard verdict: ${verdict2}`);
+  };
   if (!cfg.privateKey) {
-    const fork = pr.head?.repo?.full_name !== pr.base?.repo?.full_name;
-    const note = fork ? "Skipped: workflows on fork PRs don't receive secrets, so there is no wallet to pay for checks." : "Skipped: no `telegraph-private-key` secret is configured, so there is no wallet to pay for checks.";
-    await post(renderComment({ verdict: "SKIPPED", note, nodeUrl: cfg.nodeUrl }));
-    setOutput("verdict", "SKIPPED");
-    setOutput("cost_usd", "0");
-    return;
+    if (context3.payload.repository?.private) {
+      const note2 = "Skipped: this repository is private. Free hosted scans cover public repositories only; add a `TELEGRAPH_PRIVATE_KEY` secret to pay for checks from your own wallet.";
+      await post(renderComment({ verdict: "SKIPPED", note: note2, nodeUrl: cfg.nodeUrl }));
+      return finish({ verdict: "SKIPPED", spentUsd: 0 });
+    }
+    let scan;
+    try {
+      scan = await scanHosted({ serviceUrl: cfg.serviceUrl, prUrl: pr.html_url, deadline: Date.now() + HOSTED_DEADLINE_MS });
+    } catch (err) {
+      if (!(err instanceof HostedRefusal)) throw err;
+      await post(renderComment({ verdict: "SKIPPED", note: `Skipped: ${err.message}`, nodeUrl: cfg.nodeUrl }));
+      return finish({ verdict: "SKIPPED", spentUsd: 0 });
+    }
+    const { verdict: verdict2, reasons: reasons2 } = scan.verdict ? scan : decide(scan.outcomes);
+    const note = [
+      `Free hosted scan: checks were paid from PR Guard's sponsor wallet in test USDC. [Full report](${scan.reportUrl})${scan.timedOut ? " (some checks ran out of time)" : ""}.`,
+      ...scan.notes ?? []
+    ].join(" ");
+    await post(renderComment({ verdict: verdict2, reasons: reasons2, outcomes: scan.outcomes, spentUsd: scan.spentUsd, budgetUsd: scan.budgetUsd, nodeUrl: scan.nodeUrl, runUrl, note }));
+    const signalHashes2 = scan.outcomes.flatMap((o) => o.calls.map((c) => c.signalHash)).filter(Boolean);
+    return finish({ verdict: verdict2, spentUsd: scan.spentUsd, signalHashes: signalHashes2 });
   }
   const deadline = Date.now() + RUN_DEADLINE_MS;
   const miners = cfg.minersConfig ? JSON.parse(await readFile(cfg.minersConfig, "utf8")) : miners_default;
   const rawFiles = await listPrFiles(octokit, { ...repoRef, pull_number: pr.number });
   const base = await mergeBase(octokit, { ...repoRef, base: pr.base.sha, head: pr.head.sha });
   const getFileText = ({ path, ref }) => getText(octokit, { ...repoRef, path, ref });
-  const { jobs, local: local2, errors } = await planScan({ pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks });
+  const { jobs, local: local2, errors, notes } = await planScan({ pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks });
   for (const e of errors) warning(`could not read ${e.file}: ${e.error}`);
   const budget = new Budget(cfg.maxUsdPerPr);
   const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 45e3 });
@@ -51126,13 +51221,9 @@ async function run() {
   const outcomes = [...local2, ...paid];
   const { verdict, reasons } = decide(outcomes);
   const spentUsd = Number(budget.spent) / 1e6;
-  await post(renderComment({ verdict, reasons, outcomes, spentUsd, budgetUsd: cfg.maxUsdPerPr, nodeUrl: cfg.nodeUrl, runUrl }));
+  await post(renderComment({ verdict, reasons, outcomes, spentUsd, budgetUsd: cfg.maxUsdPerPr, nodeUrl: cfg.nodeUrl, runUrl, note: notes.join(" ") || void 0 }));
   const signalHashes = outcomes.flatMap((o) => o.calls.map((c) => c.signalHash)).filter(Boolean);
-  setOutput("verdict", verdict);
-  setOutput("cost_usd", spentUsd.toFixed(6));
-  setOutput("signal_hashes", signalHashes.join(","));
-  setOutput("ledger_path", LEDGER_PATH);
-  if (shouldFail(verdict, cfg.failOn)) setFailed(`PR Guard verdict: ${verdict}`);
+  await finish({ verdict, spentUsd, signalHashes, ledgerPath: LEDGER_PATH });
 }
 run().catch(async (err) => {
   error(err.stack ?? String(err));

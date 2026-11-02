@@ -18,7 +18,8 @@ import { createGitHub, parsePullUrl, UserError } from "./github.js";
 import { PAGE } from "./page.js";
 
 const DEFAULTS = {
-  scansPerIpPerDay: 5,
+  scansPerIpPerDay: 5, // visitors of the page
+  scansPerRepoPerDay: 20, // repositories using the Action without a wallet
   scansPerDay: 100,
   usdPerDay: 1.5, // the sponsor wallet's daily ceiling across all visitors
   usdPerScan: 0.1,
@@ -37,6 +38,7 @@ const num = (v, d) => (v === undefined || v === "" ? d : Number(v));
 function limitsFrom(env) {
   return {
     scansPerIpPerDay: num(env.SCANS_PER_IP_PER_DAY, DEFAULTS.scansPerIpPerDay),
+    scansPerRepoPerDay: num(env.SCANS_PER_REPO_PER_DAY, DEFAULTS.scansPerRepoPerDay),
     scansPerDay: num(env.SCANS_PER_DAY, DEFAULTS.scansPerDay),
     usdPerDay: num(env.USD_PER_DAY, DEFAULTS.usdPerDay),
     usdPerScan: num(env.USD_PER_SCAN, DEFAULTS.usdPerScan),
@@ -82,11 +84,14 @@ async function createScan(request, env, deps) {
   const cached = await env.SCANS.get(cacheKey);
   if (cached) return json(200, { id: cached, cached: true });
 
+  // The page is limited per visitor, the Action (no wallet) per repository.
+  const source = body.source === "action" ? "action" : "page";
   const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
-  const ipKey = `rl:${today()}:${ip}`;
+  const rlKey = source === "action" ? `rl:${today()}:repo:${label.replace(/#\d+$/, "").toLowerCase()}` : `rl:${today()}:${ip}`;
   const dayKey = `day:${today()}`;
-  const [ipCount, day] = await Promise.all([kvGet(env, ipKey), kvGet(env, dayKey)]);
-  if ((ipCount ?? 0) >= lim.scansPerIpPerDay) return json(429, { error: `This page allows ${lim.scansPerIpPerDay} free scans per visitor per day. Try again tomorrow, or install the GitHub Action.` });
+  const [used, day] = await Promise.all([kvGet(env, rlKey), kvGet(env, dayKey)]);
+  if (source === "action" && (used ?? 0) >= lim.scansPerRepoPerDay) return json(429, { error: `this repository has used its ${lim.scansPerRepoPerDay} free hosted scans for today (they reset at 00:00 UTC). Add a \`TELEGRAPH_PRIVATE_KEY\` secret to pay for more from your own wallet.` });
+  if (source === "page" && (used ?? 0) >= lim.scansPerIpPerDay) return json(429, { error: `This page allows ${lim.scansPerIpPerDay} free scans per visitor per day. Try again tomorrow, or install the GitHub Action.` });
   if ((day?.scans ?? 0) >= lim.scansPerDay || (day?.usd ?? 0) >= lim.usdPerDay) return json(429, { error: "Today's free scans are used up. Please try again tomorrow." });
 
   const rawFiles = await gh.listFiles(where.owner, where.repo, where.number, MAX_FILES);
@@ -94,7 +99,7 @@ async function createScan(request, env, deps) {
   const headRepo = pull.head.repo?.full_name ?? `${where.owner}/${where.repo}`;
   const baseRepo = pull.base.repo?.full_name ?? `${where.owner}/${where.repo}`;
   const getText = ({ path, ref }) => gh.rawText(ref === pull.head.sha ? headRepo : baseRepo, ref, path);
-  const { jobs, local, errors } = await planScan({
+  const { jobs, local, errors, notes: planNotes } = await planScan({
     pr: pull,
     rawFiles,
     baseSha,
@@ -104,7 +109,7 @@ async function createScan(request, env, deps) {
     limits: LIMITS,
   });
 
-  const notes = [];
+  const notes = [...planNotes];
   if (rawFiles.length >= MAX_FILES) notes.push(`Only the first ${MAX_FILES} changed files were read.`);
   if (errors.length) notes.push(`Could not read ${errors.map((e) => e.file).join(", ")}.`);
 
@@ -112,6 +117,7 @@ async function createScan(request, env, deps) {
   const scan = {
     id,
     pr: { owner: where.owner, repo: where.repo, number: where.number, label, title: pull.title, url: pull.html_url, headSha: pull.head.sha },
+    source,
     status: jobs.length ? "running" : "done",
     createdAt: new Date().toISOString(),
     jobs,
@@ -128,7 +134,7 @@ async function createScan(request, env, deps) {
   await Promise.all([
     kvPut(env, `scan:${id}`, scan, SCAN_TTL),
     env.SCANS.put(cacheKey, id, { expirationTtl: SCAN_TTL }),
-    kvPut(env, ipKey, (ipCount ?? 0) + 1, 60 * 60 * 26),
+    kvPut(env, rlKey, (used ?? 0) + 1, 60 * 60 * 26),
     kvPut(env, dayKey, { scans: (day?.scans ?? 0) + 1, usd: day?.usd ?? 0 }, 60 * 60 * 26),
   ]);
   if (scan.status === "done") await addRecent(env, scan);
@@ -192,7 +198,7 @@ async function step(id, env, deps) {
 
 /** @param deps test seams: fetch, github, telegraph, miners */
 export function createApp(deps = {}) {
-  return async function handle(request, env) {
+  return async function handle(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
     try {
@@ -207,7 +213,12 @@ export function createApp(deps = {}) {
       }
       if (request.method === "POST" && path === "/api/scan") return await createScan(request, env, deps);
       let m = path.match(/^\/api\/scan\/([a-z0-9]+)\/step$/);
-      if (request.method === "POST" && m) return await step(m[1], env, deps);
+      if (request.method === "POST" && m) {
+        // A paid check must finish and be recorded even if the caller hangs up.
+        const work = step(m[1], env, deps);
+        ctx?.waitUntil(work.catch(() => {}));
+        return await work;
+      }
       m = path.match(/^\/api\/scan\/([a-z0-9]+)$/);
       if (request.method === "GET" && m) {
         const scan = await kvGet(env, `scan:${m[1]}`);

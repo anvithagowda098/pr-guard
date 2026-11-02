@@ -139,3 +139,89 @@ test("action: buys a dependency check, confirms it with a second miner, blocks, 
     server.close();
   }
 });
+
+// Hosted mode: no key in the repository. A canned service stands in for
+// web/worker.js (tested against the real one in web.test.js).
+function fakeHostedWorld() {
+  const state = { comments: [], api: [] };
+  const job = { check: "diff", intent: "SECURITY_REVIEW_GENERAL", target: "src/app.js" };
+  const call = { minerId: 5530, minerName: "Telegraph Verity", costUsd: 0.01, signalHash: "0xsig5530", receiptHash: "0xrec5530" };
+  const scan = (done) => ({
+    id: "abc123", status: done ? "done" : "running", next: done ? 1 : 0, jobs: [job], budgetUsd: 0.1, spentUsd: done ? 0.01 : 0,
+    outcomes: done ? [{ ...job, status: "ok", severity: "none", findings: [], confirmed: false, disagreement: false, calls: [call] }] : [],
+    verdict: done ? "SAFE" : null, reasons: [], nodeUrl: "https://node.test",
+  });
+  const server = createServer(async (req, res) => {
+    let body = "";
+    for await (const c of req) body += c;
+    const p = new URL(req.url, "http://x").pathname;
+    const json = (code, data) => { res.writeHead(code, { "content-type": "application/json" }); res.end(JSON.stringify(data)); };
+    if (p.startsWith("/api/")) state.api.push(`${req.method} ${p} ${body}`);
+    if (p === "/api/scan" && req.method === "POST") return json(201, { id: "abc123", scan: scan(false) });
+    if (p === "/api/scan/abc123/step") return json(200, { scan: scan(true) });
+    if (p === "/repos/o/r/issues/1/comments" && req.method === "GET") return json(200, state.comments);
+    if (p === "/repos/o/r/issues/1/comments" && req.method === "POST") {
+      state.comments.push({ id: 1, body: JSON.parse(body).body });
+      return json(201, state.comments[0]);
+    }
+    json(404, { message: `unhandled ${req.method} ${p}` });
+  });
+  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ server, state, base: `http://127.0.0.1:${server.address().port}` })));
+}
+
+async function hostedEnv(base, repository) {
+  const dir = await mkdtemp(join(tmpdir(), "pr-guard-"));
+  const event = { repository, pull_request: { number: 1, title: "t", body: "", html_url: "https://github.com/o/r/pull/1", base: { sha: "b", repo: { full_name: "o/r" } }, head: { sha: "h", repo: { full_name: "o/r" } } } };
+  await writeFile(join(dir, "event.json"), JSON.stringify(event));
+  for (const f of ["out", "summary"]) await writeFile(join(dir, f), "");
+  const env = {
+    PATH: process.env.PATH,
+    GITHUB_EVENT_NAME: "pull_request",
+    GITHUB_EVENT_PATH: join(dir, "event.json"),
+    GITHUB_REPOSITORY: "o/r",
+    GITHUB_API_URL: base,
+    GITHUB_SERVER_URL: "https://github.com",
+    GITHUB_RUN_ID: "1",
+    GITHUB_OUTPUT: join(dir, "out"),
+    GITHUB_STEP_SUMMARY: join(dir, "summary"),
+    "INPUT_GITHUB-TOKEN": "t",
+    "INPUT_SERVICE-URL": base,
+  };
+  return { dir, env };
+}
+
+test("action without a key: a public repository gets a free hosted scan", async () => {
+  const { server, state, base } = await fakeHostedWorld();
+  try {
+    const { dir, env } = await hostedEnv(base, { private: false });
+    const r = await runAction(env, dir);
+    assert.equal(r.code, 0, r.out);
+    assert.deepEqual(state.api, [
+      'POST /api/scan {"url":"https://github.com/o/r/pull/1","source":"action"}',
+      "POST /api/scan/abc123/step ",
+    ]);
+    const comment = state.comments[0].body;
+    assert.match(comment, /PR Guard: 🟢 SAFE/);
+    assert.match(comment, /Free hosted scan: checks were paid from PR Guard's sponsor wallet/);
+    assert.ok(comment.includes(`[Full report](${base}/r/abc123)`));
+    assert.match(comment, /`0xsig5530`/);
+    const out = await readFile(join(dir, "out"), "utf8");
+    assert.match(out, /verdict[\s\S]*SAFE/);
+    assert.match(out, /signal_hashes[\s\S]*0xsig5530/);
+  } finally {
+    server.close();
+  }
+});
+
+test("action without a key: a private repository is skipped, nothing is sent out", async () => {
+  const { server, state, base } = await fakeHostedWorld();
+  try {
+    const { dir, env } = await hostedEnv(base, { private: true });
+    const r = await runAction(env, dir);
+    assert.equal(r.code, 0, r.out);
+    assert.deepEqual(state.api, [], "a private PR never reaches the hosted service");
+    assert.match(state.comments[0].body, /⚪ SKIPPED[\s\S]*repository is private/);
+  } finally {
+    server.close();
+  }
+});

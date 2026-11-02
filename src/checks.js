@@ -13,6 +13,18 @@ export const DEFAULT_CHECKS = ["deps", "diff"];
 const DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
 
 /**
+ * Which changed packages to check first when there are more than the cap:
+ * direct dependencies, then packages the PR title names (dependency bots
+ * write "Bump lodash from 4.17.15 to 4.17.21"), then upgrades of existing
+ * packages, then newly added ones. Stable within each group.
+ */
+export function rankDeps(deps, title = "") {
+  const named = new Set(String(title).toLowerCase().match(/[@\w./-]+/g) ?? []);
+  const rank = (d) => (d.direct ? 0 : named.has(d.name.toLowerCase()) ? 1 : d.from ? 2 : 3);
+  return deps.map((d, i) => [d, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([d]) => d);
+}
+
+/**
  * Paid jobs in priority order: direct dependencies, the diff, transitive
  * dependencies, the patch-vs-description check, then URLs. The budget is
  * spent front to back, so low-value checks are the ones that get skipped.
@@ -33,7 +45,7 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
     target: d.to ? `${d.name}@${d.to}` : `${d.name} (${d.spec})`,
     vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec, depsdev_system: DEPSDEV_SYSTEM[d.ecosystem] },
   });
-  const resolvable = deps.filter((d) => d.to).slice(0, maxDeps);
+  const resolvable = rankDeps(deps.filter((d) => d.to), title).slice(0, maxDeps);
   const direct = resolvable.filter((d) => d.direct).map(depJob);
   const transitive = resolvable.filter((d) => !d.direct).map(depJob);
 

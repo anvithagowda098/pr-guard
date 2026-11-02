@@ -1,0 +1,12 @@
+{
+  "name": "pr-guard-demo-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A tiny API used to demo PR Guard. The demo pull requests change it.",
+  "main": "server.js",
+  "dependencies": {
+    "express": "4.21.2",
+    "lodash": "4.18.1",
+    "pg": "8.13.1"
+  }
+}

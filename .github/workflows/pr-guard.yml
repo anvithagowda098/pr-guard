@@ -1,0 +1,28 @@
+# PR Guard guarding its own repository. Pull requests that touch demo/ are
+# the reviewer demos (see demo/README.md); every other PR is scanned too.
+name: PR Guard
+on:
+  pull_request: # opened, synchronize, reopened: each run is a paid scan
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - id: guard
+        uses: ./
+        with:
+          telegraph-private-key: ${{ secrets.TELEGRAPH_PRIVATE_KEY }}
+          max-usd-per-pr: "0.10"
+          fail-on: block
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-guard-ledger
+          path: pr-guard-ledger.jsonl
+          if-no-files-found: ignore

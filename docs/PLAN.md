@@ -33,6 +33,18 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
   - **Active on Telegraph since Nov 2.** Listed among the 24 `SECURITY_REVIEW_GENERAL` miners. Paid calls through Telegraph to `/review` and `/package` both work.
 - **Diff review on the new network (Nov 2):** Verity (#5530, independent) asks first; Sentinel confirms. On the planted bugs both agree at the same file:line, giving BLOCK.
 
+## Evidence log (in-event, from Nov 1)
+
+| When (UTC) | What | Proof |
+|---|---|---|
+| Nov 2, 17:40–17:46 | Paid calls through Telegraph to the Sentinel miner (`/review`, `/package`), plus Verity and TxLens | fixtures in `test/fixtures/miner-responses/SECURITY_REVIEW_GENERAL/` |
+| Nov 2, 18:08 | Demo PR #1 (clean change): 🟢 SAFE, check passed, 28 s, $0.01 | Actions run 41497627143, signal `0x9295941f…` |
+| Nov 2, 18:08 | Demo PR #2 (lodash 4.17.15): 🔴 BLOCK, confirmed by #77010 and #190048, 39 s, $0.03 | Actions run 41497634721, signals `0x0de90d58…`, `0x9bd69588…`, `0x2e618468…` |
+| Nov 2, 18:08 | Demo PR #3 (fake key + SQL injection + eval): 🔴 BLOCK, local key scan; injection confirmed by Verity #5530 and Sentinel #731001, 32 s, $0.02 | Actions run 41497642958, signals `0x66fe812b…`, `0x997dd666…` |
+
+- The demo PRs are paid by the bot wallet `0x83b5…abcc`, whose key is in the repo secret `TELEGRAPH_PRIVATE_KEY`. They stay open as fixtures.
+- The first runs failed safely, with nothing spent: MetaMask exports keys without the 0x prefix. Fixed in `ff78842`.
+
 ## What works today
 
 - **The Action** (`src/`), 75 tests:

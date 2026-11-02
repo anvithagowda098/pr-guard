@@ -1,155 +1,151 @@
 # PR Guard
 
-A GitHub Action that buys security checks from Telegraph's miner network on every pull request. It posts one comment with a verdict (🟢 SAFE / 🟡 CAUTION / 🔴 BLOCK), the evidence, what the checks cost, and the Telegraph receipts.
+**Security review for pull requests, bought from an open network of specialist miners.**
 
-Payments use **Telegraph's test USDC on Ethereum Sepolia**, Telegraph's testnet since Oct 30, 2026; before that it was Base Sepolia. That money is free to mint and worth $0. The wallet is a burner and never holds real funds.
+PR Guard reads a pull request and buys independent security checks from miners on [Telegraph](https://telegraphprotocol.com). It then posts one comment with the verdict (🟢 SAFE, 🟡 CAUTION or 🔴 BLOCK), the evidence, what the checks cost, and a Telegraph receipt for every paid check.
 
-## Status
+**Try it now:** paste any public pull request link into **https://pr-guard-app.pr-guard.workers.dev**. You don't need an account, a wallet or a key.
 
-| Part | State |
-|---|---|
-| **Dependency check:** new or bumped npm, PyPI, Go and Cargo packages, each looked up through Telegraph | **live on testnet** |
-| Local checks: committed secrets and keys, new install scripts | live (free, no miner) |
-| Telegraph client: discovery, paid asks, receipts, per-call cap, per-PR budget | done |
-| Verdict policy, PR comment, purchase ledger, the Action itself | done; end-to-end test replays real miner answers |
-| **Code-diff security review:** redacted diff chunks reviewed by **Telegraph Verity** (#5530, an independent operator) first. A high or critical finding is then confirmed by **PR Guard Sentinel** (#731001, our own rule-based miner, disclosed). Both agreeing gives BLOCK | **live on Ethereum Sepolia** (verified with paid calls Nov 2) |
-| Patch verification, URL safety | **off by default:** no working miner on Telegraph yet (see below) |
+> Telegraph runs on a testnet. Checks are paid in test USDC on Ethereum Sepolia, which is free and has no real value.
 
-### Which miners, and why
+## What it checks
 
-First vetted on 2026-10-27 on Base Sepolia; the answers are in `test/fixtures/miner-responses/`. Re-checked on 2026-10-31 after Telegraph's move to Ethereum Sepolia:
-- Both dependency miners carried over with identical answers (`test/fixtures/miner-responses/SECURITY_REVIEW_GENERAL/`).
-- ChainSight did not carry over.
-- Intent names are now family children, e.g. `SECURITY_REVIEW_GENERAL`.
+| Check | How | Cost |
+|---|---|---|
+| **New or upgraded dependencies** (npm, PyPI, Go, Cargo) | A miner looks up each package version for known vulnerabilities. A second miner confirms any high or critical result. | $0.01 per package, plus $0.01 to confirm |
+| **Code changes** | A miner reviews the redacted diff for vulnerabilities such as injection and `eval` on input. A second reviewer confirms any high or critical finding. | $0.01 per chunk of up to 12,000 characters |
+| **Committed secrets and keys** | Local scan of added lines | free |
+| **New install scripts** (`preinstall`, `install`, `postinstall`, `prepare` in `package.json`) | Local check | free |
 
-Nov 2: the code-diff check has new reviewers.
-- **Verity (#5530):** it still takes the old `SECURITY_REVIEW` name and code under `input.code`. It found both planted bugs (SQL injection, `eval`) and stayed quiet on a parameterized query.
-- **Sentinel (#731001):** went live on Telegraph's node and found the same two at the same file:line.
-- **TxLens (#9002):** still fails ("perplexity key has no credit left").
-- **Failed calls:** on the new network they are credited back to the caller's Telegraph escrow balance ("nothing was billed").
+## Get started
 
-What follows is the original Oct 27 assessment.
+There are three ways to use it, and only the last one needs a wallet.
 
-- **Dependencies:** two miners, both under SECURITY_REVIEW. No CVE_LOOKUP miner accepts a package and version; they only take a CVE id.
-  - **deps.dev Package Review** (#77010) is asked first, for npm. It returns each advisory with GitHub's severity rating and a CVSS score.
-  - **Secrev Depsdev** (#190048) covers every ecosystem, but returns advisory ids only. It serves as the second opinion: listing the same ids confirms a high finding. For non-npm packages it's the only source, so advisories it finds stay unrated and give CAUTION.
-  - Both are proxies over Google's deps.dev, so they share one upstream. Their agreement shows the miner layer is honest, not that the data was checked twice independently.
-- **Code-diff review:** **ChainSight** (#302, `POST /secreview`, takes a plain-language `query`). It's also what auto-routing picks for security questions.
-  - It got 4 of 4 test cases right: SQL injection, `eval` on user input and shell injection flagged; a parameterized query called secure.
-  - Its answers are free text and sometimes cut off mid-sentence. PR Guard reads only the verdict and the worst severity word.
-  - With one reviewer, a finding can give CAUTION but never BLOCK.
-  - TxLens (#9002) also takes code, but its call failed because its upstream AI account ("perplexity key") had no credit, and it was still charged.
-- **URL safety:** URL Sentinel (#5001) and ProofGate (#7402) both rated Google's standard phishing test page safe. ProofGate reported that it hadn't queried any threat feed.
-- **Unknown packages:** both deps.dev miners answer HTTP 500 with "upstream error 404" and charge for it. PR Guard stops at the first such miss instead of paying the next miner for the same answer.
+### 1. In the browser
+
+Open **https://pr-guard-app.pr-guard.workers.dev** and paste a pull request link from any public repository.
+- **Cost:** none to you. A sponsor wallet pays for the checks, up to $0.10 per scan.
+- **Limits:** 5 scans per visitor per day.
+- **Reports:** each one gets a permanent link.
+
+### 2. On your repository, with no setup (public repositories)
+
+Add this file as `.github/workflows/pr-guard.yml` (also in [`examples/pr-guard.yml`](examples/pr-guard.yml)):
+
+```yaml
+name: PR Guard
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: anvithagowda098/pr-guard@main
+```
+
+Every pull request then gets a PR Guard comment. How it works without a key:
+- **What is sent:** the Action passes only the PR link to PR Guard's hosted service.
+- **Who pays:** the hosted service buys the checks from the sponsor wallet, up to $0.10 per scan and 20 scans per repository per day.
+- **Private repositories** are never sent anywhere. They get a "skipped" note instead.
+- **Fork pull requests:** GitHub gives their workflows a read-only token, so the result appears in the run's job summary instead of a comment.
+
+### 3. With your own wallet (private repositories, your own budget)
+
+The Action pays each miner itself, from a burner wallet that you fund with free test USDC. Use [`examples/pr-guard-wallet.yml`](examples/pr-guard-wallet.yml) and add a `TELEGRAPH_PRIVATE_KEY` repository secret.
+
+1. **Create a burner:** create a new wallet that is used only for this (`node scripts/wallet.js` makes one). Never use a key that holds real funds.
+2. **Fund it:** get a little Sepolia ETH from a faucet, then mint test USDC with `node scripts/fund-testnet.js mint 20`.
+3. **Store the key:** save it as the `TELEGRAPH_PRIVATE_KEY` repository secret. The `0x` prefix is optional.
+
+The key stays in GitHub's secret store. The Action uses it only to sign each payment, and every payment is capped by `max-usd-per-call` and `max-usd-per-pr`. Each run uploads a purchase ledger (`pr-guard-ledger.jsonl`) as an artifact.
+
+### Inputs
+
+| Input | Default | |
+|---|---|---|
+| `telegraph-private-key` | none | A burner key with test USDC. Leave it out for free hosted scans. |
+| `fail-on` | `block` | Fail the check on `block`, on `caution` (CAUTION or BLOCK), or `never`. |
+| `max-usd-per-pr` | `0.10` | Budget for one run (own wallet). |
+| `max-usd-per-call` | `0.05` | Quotes above this are refused before anything is signed (own wallet). |
+| `checks` | `deps,diff` | Paid checks to run (own wallet). The local checks always run. |
+| `service-url` | the hosted service | Used when no key is set. |
+| `node-url` | `https://devnode.telegraphprotocol.com` | Telegraph node. |
+| `miners-config` | bundled | Path to a miners allowlist overriding [`config/miners.json`](config/miners.json). |
+
+**Outputs:**
+- `verdict`
+- `cost_usd`
+- `signal_hashes`: one per paid call
+- `ledger_path`
 
 ## How the verdict is decided
 
-- **BLOCK:** a confirmed high or critical finding. Confirmed means two miners agree, or a local check (such as a committed key) found it. One miner on its own can't block a PR.
+- **BLOCK:** a confirmed high or critical finding. Confirmed means two miners agree, or a deterministic local check found it, such as a committed key. **One miner on its own can never block a pull request.**
 - **CAUTION:** any of the following:
   - a medium finding;
   - an unconfirmed high finding;
   - miners that disagree;
-  - a check that failed;
-  - an answer that couldn't be read;
-  - a dependency or diff check skipped because the budget or time ran out.
+  - a check that failed, or an answer that couldn't be read;
+  - a dependency or diff check skipped because the budget or the time ran out.
 - **SAFE:** none of the above.
 
-## Spending limits
+## Miners
 
-- `max-usd-per-call` (default $0.05): any quote above this is refused before anything is signed.
-- `max-usd-per-pr` (default $0.10): each quote is reserved against this budget before it's signed, so calls running in parallel can't overspend it together.
-- A call is counted as spent whenever the node returns a settled payment, even if the miner then fails. Telegraph's docs say failed calls are free, but a TxLens 500 was charged on 2026-10-27. Calls with no payment proof release their reservation.
-- When the budget runs out, the lowest-value checks are the ones skipped. Priority order: direct dependencies, then the diff, then transitive dependencies, then the PR description, then URLs.
+| Miner | Operator | Used for |
+|---|---|---|
+| #77010 deps.dev Package Review | independent | npm packages, with severity and CVSS |
+| #190048 Secrev Depsdev | independent | second opinion on advisories, every ecosystem |
+| #5530 Telegraph Verity | independent | code review of each diff chunk |
+| #731001 PR Guard Sentinel | **this project** (disclosed) | PyPI, Go and crates.io packages; confirms code findings |
 
-## Privacy
+Every miner was tested with paid calls before it was added, and its raw answers are kept as test fixtures. [docs/MINERS.md](docs/MINERS.md) covers how each one was chosen and how to vet and add another. PR Guard Sentinel is a rule-based miner with no AI model and no API key; its code is in [`miner/`](miner/).
 
-- Diffs are redacted before they go to a miner: cloud keys, tokens, private keys, URL passwords and labelled credentials.
-- `.env`, `*.pem`, `id_rsa` and similar files are never sent, even redacted.
-- Lockfiles, vendored and minified code, and binaries are skipped.
+## Spending and privacy
 
-## Try it in the browser
-
-**https://pr-guard-app.pr-guard.workers.dev**: paste any public pull request link.
-- **Cost to visitors:** none. Checks are paid from a sponsor wallet in test USDC.
-- **Limits:** 5 scans per visitor per day, a daily cap across all visitors, and $0.10 at most per scan.
-- **Links:** every report gets a permanent link, and the home page lists recent scans.
-- **How it runs:** `web/` is a Cloudflare Worker sharing PR Guard's engine (`src/plan.js`, `src/runner.js`). It runs one paid check per request, so each request stays inside the Workers free plan's CPU limit.
-
-## Use it
-
-Copy `examples/pr-guard.yml` into `.github/workflows/`. Then add a `TELEGRAPH_PRIVATE_KEY` repository secret holding a funded burner key (see step 2 below).
-
-Typical cost per PR:
-- $0.01 per diff chunk of up to 12,000 characters for the code review;
-- $0.01 per changed package, plus $0.01 to confirm when something high or critical turns up.
-
-Every run is capped by `max-usd-per-pr`.
-
-- **Fork PRs** don't receive secrets, so they get a "skipped" note instead of a check.
-- **Ledger:** every purchase is written to `pr-guard-ledger.jsonl`, which is uploaded as a workflow artifact.
+- **Spending:**
+  - **Before a call:** each price quote is checked against the per-call cap and reserved against the run's budget before it's signed. Calls running in parallel therefore can't overspend together.
+  - **After a call:** any call that returns a settled payment counts as spent.
+  - **When the budget runs out:** the lowest-value checks are skipped first, so the verdict says CAUTION rather than SAFE.
+- **Privacy:**
+  - **What miners see:** diffs are redacted before they go to a miner. Cloud keys, tokens, private keys, URL passwords and labelled credentials are removed.
+  - **Never sent:** `.env`, `*.pem`, `id_rsa` and similar files, even redacted.
+  - **Skipped:** lockfiles, vendored and minified code, binaries and documentation.
 
 ## Development
 
-You need Node 20 or later. Behind an HTTPS proxy (Node 22.21+), prefix network commands with `NODE_USE_ENV_PROXY=1`.
+You need Node 20 or later.
 
 ```sh
 npm ci
-npm test         # 62 tests, no network (the end-to-end test uses loopback only)
-npm run build    # bundles dist/index.js; commit it, since the Action runs from it
+npm test             # 109 tests, all offline
+npm run build        # bundles dist/index.js; commit it, the Action runs from it
+npm run deploy:web   # the hosted page and API (Cloudflare Workers)
+npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)
 ```
 
-### Step 1: discovery (free)
-
-```sh
-node scripts/discover.js                  # all PR Guard intents
-node scripts/discover.js CVE_LOOKUP       # or just one
-```
-
-This saves the raw intent specs and miner records to `data/miners.json` and prints, per miner: id, floor price, rank or score, endpoints and input schema. A miner listed on every intent gets a flag, because that usually means a relabelled proxy.
-
-### Step 2: wallet and the first paid call
-
-```sh
-node scripts/wallet.js            # creates .env with a burner key and prints its address
-# fund it: a little Sepolia ETH from a faucet (e.g. Coinbase's CDP faucet, network "Ethereum Sepolia"),
-# then mint free test USDC:  node scripts/fund-testnet.js mint 20
-node scripts/wallet.js balance
-```
-
-Probes are unpaid: they return the price quote (402), or 422 if the payload is wrong, at no cost. Build the payload from the miner's record.
-
-```sh
-node scripts/first-call.js --miner <id> --endpoint <path> --payload '<json for lodash@4.17.15>'
-```
-
-Add `--pay` to buy the answer. For the auto-routed endpoint, pass the whole body with `--body '<json>'` instead.
-
-The script prints the raw body, all response headers, the decoded payment proof and receipt, and the signal lookup. Each response is saved under `test/fixtures/miner-responses/`.
-
-### Step 3: vet miners, then fill the config
-
-`config/miners.json` lists vetted miners per **check**, best first. It's keyed by check rather than intent, because two checks can share an intent but need different miners. An entry looks like this:
-
-```json
-{ "minerId": "77010", "name": "…", "intent": "SECURITY_REVIEW", "method": "GET", "endpoint": "/query",
-  "payload": { "pkg": "{{name}}", "ver": "{{version}}" }, "normalizer": "depsdev-version", "ecosystems": ["npm"] }
-```
-
-These variables are available in payloads:
-
-| Check | Variables |
+| Folder | What it is |
 |---|---|
-| deps | `ecosystem`, `name`, `version`, `from`, `spec`, `depsdev_system` |
-| diff | `diff`, `files`, `chunk_index`, `chunk_count` |
-| patch | `title`, `body`, `diff`, `files` |
-| urls | `url`, `file`, `line` |
-
-- A string that is exactly `"{{var}}"` is replaced by the raw value, so an array stays an array.
-- Each normalizer lives in `src/normalize.js` and is tested against that miner's captured responses (`test/normalize.test.js`).
-- A normalizer rejects any answer that is about a different package or version than the one asked.
+| `src/` | The Action and the shared engine: plan the scan, buy checks over x402, normalize answers, decide, report |
+| `web/` | The hosted page and API: one paid check per request, results in Workers KV |
+| `miner/` | PR Guard Sentinel, the miner |
+| `config/` | The vetted miner list |
+| `scripts/` | Discovery, wallet, funding and first-call tools |
+| `test/` | Unit and end-to-end tests. They replay real captured miner answers against a fake payment-gated node |
+| `demo/` | A small app and three demo pull requests (SAFE, dependency BLOCK, code BLOCK) |
 
 ## Known limitations
 
-- `npm audit` reports a high-severity advisory in zod 3, which comes in through `@x402/core`. x402 2.28 has no release that fixes it. PR Guard only uses zod to parse small payment headers.
-- Testnet only.
-- For non-npm ecosystems, advisories are found but not rated by severity. That needs a miner that rates them.
+- **Testnet only:** Telegraph's mainnet isn't live yet.
+- **Patch verification and URL safety are off:** no miner on Telegraph does them reliably yet (see [docs/MINERS.md](docs/MINERS.md)).
+- **Hosted scans are smaller:** at most 8 packages and 3 diff chunks per pull request, and the checks run one after another.
+- **zod advisory:** `npm audit` reports a high-severity advisory in zod 3, which comes in through `@x402/core`; x402 2.28 has no release that fixes it. PR Guard uses zod only to parse small payment headers.
+
+---
+
+Built for the Telegraph Hackathon, Season II. Apps & Agents track: PR Guard. Miners track: PR Guard Sentinel.

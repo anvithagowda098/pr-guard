@@ -1,4 +1,7 @@
-# Copy to .github/workflows/pr-guard.yml in the repo you want guarded.
+# Copy to .github/workflows/pr-guard.yml in the repository you want guarded.
+# PR Guard pays for each check itself from your burner wallet: works for
+# private repositories, with your own budget and a purchase ledger per run.
+# Needs a TELEGRAPH_PRIVATE_KEY secret holding only Telegraph test USDC.
 name: PR Guard
 on:
   pull_request: # opened, synchronize, reopened: each run is a paid scan

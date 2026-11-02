@@ -41,17 +41,22 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
 | Nov 2, 18:08 | Demo PR #1 (clean change): 🟢 SAFE, check passed, 28 s, $0.01 | Actions run 41497627143, signal `0x9295941f…` |
 | Nov 2, 18:08 | Demo PR #2 (lodash 4.17.15): 🔴 BLOCK, confirmed by #77010 and #190048, 39 s, $0.03 | Actions run 41497634721, signals `0x0de90d58…`, `0x9bd69588…`, `0x2e618468…` |
 | Nov 2, 18:08 | Demo PR #3 (fake key + SQL injection + eval): 🔴 BLOCK, local key scan; injection confirmed by Verity #5530 and Sentinel #731001, 32 s, $0.02 | Actions run 41497642958, signals `0x66fe812b…`, `0x997dd666…` |
+| Nov 2 | Hosted page, first live paid scan: expressjs/express#6100 → 🟢 SAFE, Verity #5530, $0.01 | signal `0x765e1625…` (our own test, not adoption) |
 
 - The demo PRs are paid by the bot wallet `0x83b5…abcc`, whose key is in the repo secret `TELEGRAPH_PRIVATE_KEY`. They stay open as fixtures.
 - The first runs failed safely, with nothing spent: MetaMask exports keys without the 0x prefix. Fixed in `ff78842`.
 
-## What works today
+## What works today (Nov 2)
 
-- **The Action** (`src/`), 75 tests:
-  - Dependency check: deps.dev Package Review #77010, confirmed by Secrev Depsdev #190048 matching advisory ids.
-  - Diff security review: ChainSight #302 `/secreview`.
-  - Local secret and install-script scan.
-  - Budget reserved at quote time, a PR comment, a ledger.
+- **The Action** (`src/`), 109 tests, all offline:
+  - Dependencies: deps.dev Package Review #77010 (npm), PR Guard Sentinel #731001 (PyPI, Go, crates.io), Secrev Depsdev #190048 (confirms by advisory id).
+  - Code diff: Telegraph Verity #5530 first; Sentinel #731001 confirms high or critical findings.
+  - Local secret and install-script scans; budget reserved at quote time; one PR comment; a purchase ledger.
+  - **Two modes:** with `TELEGRAPH_PRIVATE_KEY` it pays miners itself. Without a key, public repositories get a free hosted scan through the web service (sponsor wallet), and private ones are skipped. Hosted mode needs this repository to be public, because other repositories `uses:` it.
+- **The hosted page and API** (`web/`): https://pr-guard-app.pr-guard.workers.dev.
+  - Paste a public PR link; one paid check per request; permalinks; a recent-scans feed.
+  - Limits: 5 scans per visitor per day on the page, 20 per repository per day through the Action, $1.50 per day overall, $0.10 per scan.
+  - Secrets in Cloudflare: `SPONSOR_KEY`, `GITHUB_TOKEN` (no scopes).
 - **The miner** (`miner/`): PR Guard Sentinel, `SECURITY_REVIEW`.
   - Rule-based `/review` and OSV-backed `/package`.
   - **Deployed:** https://pr-guard-sentinel.pr-guard.workers.dev (Cloudflare Workers, `npm run deploy:miner`).
@@ -61,7 +66,7 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
     - tx `0x88e4ca7650af50613b85b018a91882b75339f395845eb44236a968727e09de67`, relayed by the console.
   - The registered YAML URL is `/miner.yaml` on the Worker, committed by hash. **Any YAML change needs `updateMiner` from the owner wallet.**
   - **First paid call through Telegraph:** `/engine/v1/ask/731001`, /package lodash 4.17.15, 200, $0.01. Signal `0x2d457569…b48d`. This was a self-test from the PR Guard burner, to be disclosed; it predates the event, so it isn't evidence.
-- **Network facts learned:** see the README section "Which miners, and why". Failed miner calls are charged. Unknown packages answer 500 with "upstream error 404".
+- **Network facts learned:** see `docs/MINERS.md` (vetting history). Unknown packages answer 500 with "upstream error 404".
 
 ## Timeline (dates in UTC; the deadline is Dec 1 23:59 UTC, which is Dec 2 05:29 IST)
 

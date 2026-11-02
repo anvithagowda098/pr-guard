@@ -19,6 +19,19 @@ const isAllowedAsset = (r) =>
   PAYMENT_ASSETS.some((a) => a.network === r.network && a.asset.toLowerCase() === String(r.asset).toLowerCase());
 export const USDC_DECIMALS = 6;
 
+/**
+ * A private key as viem wants it: 0x + 64 hex. Wallets such as MetaMask export
+ * keys without the 0x, and pasted secrets often carry whitespace; both are
+ * accepted. The value never appears in the error.
+ */
+export function normalizePrivateKey(raw) {
+  const k = String(raw ?? "").trim().replace(/^0x/i, "");
+  if (!/^[0-9a-fA-F]{64}$/.test(k)) {
+    throw new Error("telegraph-private-key must be a private key: 64 hex characters, with or without 0x");
+  }
+  return `0x${k}`;
+}
+
 export const usdToAtomic = (usd) => BigInt(Math.round(Number(usd) * 10 ** USDC_DECIMALS));
 export const atomicToUsd = (atomic) => Number(BigInt(atomic)) / 10 ** USDC_DECIMALS;
 
@@ -115,7 +128,7 @@ export class Telegraph {
     this.maxAtomicPerCall = usdToAtomic(maxUsdPerCall);
     this.budget = budget;
     if (privateKey) {
-      const account = privateKeyToAccount(privateKey);
+      const account = privateKeyToAccount(normalizePrivateKey(privateKey));
       this.signer = toClientEvmSigner(account);
       this.address = account.address;
     }

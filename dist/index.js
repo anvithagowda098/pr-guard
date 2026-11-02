@@ -49115,6 +49115,13 @@ var PAYMENT_ASSETS = [
 var NETWORK_LABEL = PAYMENT_ASSETS[0].label;
 var isAllowedAsset = (r) => PAYMENT_ASSETS.some((a) => a.network === r.network && a.asset.toLowerCase() === String(r.asset).toLowerCase());
 var USDC_DECIMALS = 6;
+function normalizePrivateKey(raw) {
+  const k = String(raw ?? "").trim().replace(/^0x/i, "");
+  if (!/^[0-9a-fA-F]{64}$/.test(k)) {
+    throw new Error("telegraph-private-key must be a private key: 64 hex characters, with or without 0x");
+  }
+  return `0x${k}`;
+}
 var usdToAtomic = (usd2) => BigInt(Math.round(Number(usd2) * 10 ** USDC_DECIMALS));
 var atomicToUsd = (atomic) => Number(BigInt(atomic)) / 10 ** USDC_DECIMALS;
 function decodeHeader(value) {
@@ -49200,7 +49207,7 @@ var Telegraph = class {
     this.maxAtomicPerCall = usdToAtomic(maxUsdPerCall);
     this.budget = budget;
     if (privateKey) {
-      const account = privateKeyToAccount(privateKey);
+      const account = privateKeyToAccount(normalizePrivateKey(privateKey));
       this.signer = toClientEvmSigner(account);
       this.address = account.address;
     }

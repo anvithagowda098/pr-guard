@@ -198,7 +198,7 @@ test("diffLineLocation maps a line of diff text to its file and new-file line", 
 
 test("documentation is not sent for a paid code review", async () => {
   const { isDocFile } = await import("../src/extract.js");
-  for (const p of ["README.md", "docs/guide.mdx", "CHANGELOG", "LICENSE.txt", "notes.rst"]) assert.ok(isDocFile(p), p);
+  for (const p of ["README.md", "README", "docs/guide.mdx", "CHANGELOG", "LICENSE.txt", "notes.rst"]) assert.ok(isDocFile(p), p);
   for (const p of ["src/app.js", "readme.js", "docs/build.py", "Dockerfile"]) assert.ok(!isDocFile(p), p);
   assert.deepEqual(chunkDiff([{ filename: "README.md", patch: "@@ -1 +1 @@\n+x" }, { filename: "a.js", patch: "@@ -1 +1 @@\n+y" }]).map((c) => c.files), [["a.js"]]);
 });

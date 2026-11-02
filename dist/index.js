@@ -49200,7 +49200,9 @@ var Telegraph = class {
    * @param {number} [opts.timeoutMs] per-request timeout, default 45s
    * @param {typeof fetch} [opts.fetch] injectable for tests
    */
-  constructor({ nodeUrl = DEFAULT_NODE_URL, privateKey, maxUsdPerCall = 0.05, budget, timeoutMs = 45e3, fetch: fetchImpl = globalThis.fetch } = {}) {
+  // The default fetch is wrapped: Cloudflare Workers reject a bare fetch
+  // called as a method of another object ("Illegal invocation").
+  constructor({ nodeUrl = DEFAULT_NODE_URL, privateKey, maxUsdPerCall = 0.05, budget, timeoutMs = 45e3, fetch: fetchImpl = (...a) => globalThis.fetch(...a) } = {}) {
     this.nodeUrl = nodeUrl.replace(/\/+$/, "");
     this.fetch = fetchImpl;
     this.timeoutMs = timeoutMs;
@@ -50360,7 +50362,7 @@ var LOCKFILES = /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-
 var GENERATED = /(^|\/)(vendor|node_modules|third_party|dist|build)\/|\.min\.(js|css)$|\.map$/;
 var BINARY = /\.(png|jpe?g|gif|ico|webp|bmp|pdf|zip|gz|tgz|bz2|xz|7z|jar|woff2?|ttf|eot|otf|mp[34]|mov|wasm|exe|dll|so|dylib|class|pyc)$/i;
 var isSensitiveFile = (path) => /(^|\/)\.env(\.(?!example$|sample$|template$)[^/]+)?$/.test(path) || /\.(pem|key|p12|pfx|jks|keystore)$/i.test(path) || /(^|\/)(id_(rsa|dsa|ecdsa|ed25519)|\.npmrc|\.pypirc|\.netrc|credentials(\.json)?)$/.test(path);
-var isDocFile = (path) => /\.(md|mdx|markdown|rst|txt|adoc)$/i.test(path) || /(^|\/)(LICENSE|LICENCE|CHANGELOG|AUTHORS|NOTICE)(\.\w+)?$/i.test(path);
+var isDocFile = (path) => /\.(md|mdx|markdown|rst|txt|adoc)$/i.test(path) || /(^|\/)(README|LICENSE|LICENCE|CHANGELOG|AUTHORS|NOTICE|CONTRIBUTING)(\.(md|txt|rst|adoc|markdown))?$/i.test(path);
 var shouldSkipFile = (path) => LOCKFILES.test(path) || GENERATED.test(path) || BINARY.test(path) || isSensitiveFile(path);
 function splitLong(header, body, maxChars) {
   const pieces = [];

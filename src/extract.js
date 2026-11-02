@@ -311,7 +311,7 @@ export const isSensitiveFile = (path) =>
   /(^|\/)(id_(rsa|dsa|ecdsa|ed25519)|\.npmrc|\.pypirc|\.netrc|credentials(\.json)?)$/.test(path);
 
 /** Prose, not code: not worth a paid code review (secrets in it are still scanned locally). */
-export const isDocFile = (path) => /\.(md|mdx|markdown|rst|txt|adoc)$/i.test(path) || /(^|\/)(LICENSE|LICENCE|CHANGELOG|AUTHORS|NOTICE)(\.\w+)?$/i.test(path);
+export const isDocFile = (path) => /\.(md|mdx|markdown|rst|txt|adoc)$/i.test(path) || /(^|\/)(README|LICENSE|LICENCE|CHANGELOG|AUTHORS|NOTICE|CONTRIBUTING)(\.(md|txt|rst|adoc|markdown))?$/i.test(path);
 
 /** Lockfiles, generated/vendored code, binaries and sensitive files aren't reviewed. */
 export const shouldSkipFile = (path) =>

@@ -3,7 +3,7 @@
 // (addresses from docs.telegraphprotocol.com, "Addresses & Parameters", Oct 30 2026).
 // Uses the burner key in .env; it needs a little Sepolia ETH for gas first.
 //
-//   node scripts/fund-testnet.js mint <usdc>                     mint test USDC to the burner
+//   node scripts/fund-testnet.js mint <usdc> [recipient]         mint test USDC (to the burner by default)
 //   node scripts/fund-testnet.js machina <usdc> <recipient>      swap burner USDC -> MACHINA, sent to recipient
 //   node scripts/fund-testnet.js eth <amount> <recipient>        send Sepolia ETH (for gas)
 //   node scripts/fund-testnet.js balance [address]
@@ -40,6 +40,12 @@ async function balances(address) {
   return `${address}: ${formatEther(eth)} ETH, ${formatUnits(usdc, 6)} USDC, ${formatUnits(machina, 18)} MACHINA`;
 }
 
+// One readable line instead of viem's full error dump.
+process.on("uncaughtException", (e) => {
+  console.error(`failed: ${e.shortMessage ?? e.message}${e.details ? ` (${e.details})` : ""}`);
+  process.exit(1);
+});
+
 const [cmd, amount, to] = process.argv.slice(2);
 if (cmd === "balance") {
   console.log(await balances(getAddress(amount ?? privateKeyToAccount(process.env.TELEGRAPH_PRIVATE_KEY).address)));
@@ -56,7 +62,9 @@ const send = async (label, req) => {
 };
 
 if (cmd === "mint") {
-  await send(`mint ${amount} USDC`, { address: USDC, abi: mintAbi, functionName: "mint", args: [account.address, parseUnits(amount, 6)] });
+  const recipient = to ? getAddress(to) : account.address;
+  await send(`mint ${amount} USDC to ${recipient}`, { address: USDC, abi: mintAbi, functionName: "mint", args: [recipient, parseUnits(amount, 6)] });
+  if (to) console.log(await balances(recipient));
 } else if (cmd === "machina") {
   const amountIn = parseUnits(amount, 6);
   await send(`approve ${amount} USDC to the router`, { address: USDC, abi: erc20Abi, functionName: "approve", args: [ROUTER, amountIn] });
@@ -70,7 +78,7 @@ if (cmd === "mint") {
   await pub.waitForTransactionReceipt({ hash });
   console.log(`sent ${amount} ETH to ${to}: ${hash}`);
 } else {
-  console.error("usage: fund-testnet.js mint <usdc> | machina <usdc> <recipient> | eth <amount> <recipient> | balance [address]");
+  console.error("usage: fund-testnet.js mint <usdc> [recipient] | machina <usdc> <recipient> | eth <amount> <recipient> | balance [address]");
   process.exit(2);
 }
 console.log(await balances(account.address));

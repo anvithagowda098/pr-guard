@@ -33,8 +33,7 @@
         "Go",
         "crates.io"
       ],
-      "enabled": false,
-      "_note": "Our own miner (disclosed). Registered Oct 31 (registrationId 4857); enable once Telegraph's node lists it."
+      "_note": "Our own miner (disclosed); rates PyPI/Go/crates.io, which deps.dev Package Review (npm-only) can't. Live since Nov 2."
     },
     {
       "minerId": "190048",
@@ -52,6 +51,21 @@
   ],
   "diff": [
     {
+      "minerId": "5530",
+      "name": "Telegraph Verity",
+      "intent": "SECURITY_REVIEW_GENERAL",
+      "method": "POST",
+      "endpoint": "/v1/intent",
+      "payload": {
+        "intent": "SECURITY_REVIEW",
+        "input": {
+          "code": "{{diff}}"
+        }
+      },
+      "normalizer": "verity-security",
+      "_note": "Independent operator, asked first. Takes the old intent name inside its payload (verified Nov 2)."
+    },
+    {
       "minerId": "731001",
       "name": "PR Guard Sentinel",
       "intent": "SECURITY_REVIEW_GENERAL",
@@ -61,8 +75,7 @@
         "diff": "{{diff}}"
       },
       "normalizer": "sentinel-review",
-      "enabled": false,
-      "_note": "Rule-based reviewer (ours, disclosed). ChainSight, the AI reviewer, did not survive the Oct 30 move; add a second reviewer when one is vetted."
+      "_note": "Our own rule-based miner (disclosed), asked to confirm a high/critical finding."
     }
   ],
   "patch": [],

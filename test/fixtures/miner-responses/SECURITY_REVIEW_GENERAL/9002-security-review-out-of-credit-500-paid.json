@@ -1,0 +1,88 @@
+{
+  "captured_at": "2026-11-02T17:43:39.132Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/9002",
+  "request": {
+    "method": "GET",
+    "endpoint": "/security-review",
+    "payload": {
+      "code": "diff --git a/src/routes/user.js b/src/routes/user.js\n@@ -10,2 +10,4 @@ router.get('/', list);\n const db = require('../db');\n+router.get('/:id', async (req, res) => {\n+  res.json(await db.query(\"SELECT * FROM users WHERE id = '\" + req.params.id + \"'\"));\n+});\ndiff --git a/src/routes/calc.js b/src/routes/calc.js\n@@ -1,1 +1,2 @@\n const express = require('express');\n+module.exports = (req, res) => res.send(String(eval(req.body.expr)));"
+    }
+  },
+  "paid": true,
+  "ok": false,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/9002\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/9002",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/9002"
+    },
+    "x402Version": 2
+  },
+  "status": 500,
+  "durationMs": 9923,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a544f1207f1c5e62-EWR",
+    "connection": "keep-alive",
+    "content-length": "695",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Mon, 02 Nov 2026 17:43:39 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHg4MDI0ZmNiOTg3OWFiMGFmM2JhMTRiMzEwNDk2MGU5OWUwZWI4MTk5ZTc1ZmMyYzRkYzZhMDI2MjlmODA2YzljIiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=2V454X0w2E4WWZmxlxtUMUihPk2arzcpJ8cLi3tlGPn02ggtV8onLDytdPOrHFFAzlv64e4f9hv%2FROWPRbwIm140r8A%2FF54UhJu91Vv64uwqO%2FjwD9KJDiglpzGCnwLJzT82EW4EzUQ7B8xe%2B3Jrbg%3D%3D\"}]}",
+    "server": "cloudflare",
+    "vary": "Origin, Origin",
+    "x-payment-outcome": "escrow_credit_pending",
+    "x-payment-tx": "0x8024fcb9879ab0af3ba14b3104960e99e0eb8199e75fc2c4dc6a02629f806c9c"
+  },
+  "bodyText": "{\"error\":\"miner error 502 [the perplexity key has no credit left]: SECURITY_REVIEW is temporarily unavailable. Retry shortly.\",\"payment\":{\"status\":\"escrow_credit_pending\",\"message\":\"Your payment settled but the request failed, so nothing was billed. The amount is being credited to your Telegraph escrow balance (on-chain, usually within a few minutes): it then pays for your next asks, or withdraw it with requestWithdraw then executeWithdraw. If your balance has not risen after a while, contact support with this transaction.\",\"transaction\":\"0x8024fcb9879ab0af3ba14b3104960e99e0eb8199e75fc2c4dc6a02629f806c9c\",\"network\":\"eip155:11155111\",\"payer\":\"0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44\"}}",
+  "body": {
+    "error": "miner error 502 [the perplexity key has no credit left]: SECURITY_REVIEW is temporarily unavailable. Retry shortly.",
+    "payment": {
+      "status": "escrow_credit_pending",
+      "message": "Your payment settled but the request failed, so nothing was billed. The amount is being credited to your Telegraph escrow balance (on-chain, usually within a few minutes): it then pays for your next asks, or withdraw it with requestWithdraw then executeWithdraw. If your balance has not risen after a while, contact support with this transaction.",
+      "transaction": "0x8024fcb9879ab0af3ba14b3104960e99e0eb8199e75fc2c4dc6a02629f806c9c",
+      "network": "eip155:11155111",
+      "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44"
+    }
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x8024fcb9879ab0af3ba14b3104960e99e0eb8199e75fc2c4dc6a02629f806c9c",
+    "network": "eip155:11155111"
+  },
+  "receipt": null,
+  "reason": "http_500",
+  "charged": true
+}

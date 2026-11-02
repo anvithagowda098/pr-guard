@@ -5,6 +5,7 @@
 // answer that doesn't match its known shape, comes back "unknown", which the
 // policy turns into CAUTION: an unreadable answer must never pass as SAFE.
 import { maxSeverity } from "./policy.js";
+import { diffLineLocation } from "./extract.js";
 
 const GITHUB_SEVERITY = { CRITICAL: "critical", HIGH: "high", MODERATE: "medium", LOW: "low" };
 const SEVERITY_WORD = /\b(critical|high|medium|moderate|low)\b/gi;
@@ -72,6 +73,26 @@ const NORMALIZERS = {
     const severity = words.length ? maxSeverity(words.map((w) => ({ severity: w }))) : "unknown";
     const key = text.match(/key finding:\s*(.+?)(?:\.\s|$)/i)?.[1] ?? text.replace(/^verdict:\s*\w+\s*[-–:]?\s*/i, "");
     return { severity, findings: [{ title: key.slice(0, 200), severity, detail: text }] };
+  },
+
+  // Telegraph Verity (#5530) POST /v1/intent {intent: "SECURITY_REVIEW", input: {code}}:
+  // static heuristics run by another operator. It still takes the pre-Oct 30
+  // intent name. verdict "likely" with findings, "uncertain" with none,
+  // "rejected" when the input is unusable. Lines count the text it was sent.
+  "verity-security": (result, vars) => {
+    const findings = result?.answer?.findings;
+    expect(Array.isArray(findings) && result.verdict !== "rejected", "rejected or no findings list");
+    const mapped = findings.map((f) => {
+      const at = vars.diff ? diffLineLocation(vars.diff, f.line) : null;
+      return {
+        title: f.message || f.rule_id,
+        severity: String(f.severity ?? "").toLowerCase(),
+        ...(at?.file && { file: at.file }),
+        line: at?.line ?? f.line,
+        detail: [f.rule_id, f.recommendation].filter(Boolean).join(" → "),
+      };
+    });
+    return { severity: overall(mapped), findings: mapped };
   },
 
   // PR Guard Sentinel (#731001): our own miner, disclosed as such. /package and

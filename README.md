@@ -12,7 +12,7 @@ Payments use **Telegraph's test USDC on Ethereum Sepolia**, Telegraph's testnet 
 | Local checks: committed secrets and keys, new install scripts | live (free, no miner) |
 | Telegraph client: discovery, paid asks, receipts, per-call cap, per-PR budget | done |
 | Verdict policy, PR comment, purchase ledger, the Action itself | done; end-to-end test replays real miner answers |
-| **Code-diff security review:** redacted diff chunks reviewed by PR Guard Sentinel (our own rule-based miner) | **built and registered; off by default** until Telegraph's node activates it (ChainSight, the AI reviewer used before, did not survive the Oct 30 move) |
+| **Code-diff security review:** redacted diff chunks reviewed by **Telegraph Verity** (#5530, an independent operator) first. A high or critical finding is then confirmed by **PR Guard Sentinel** (#731001, our own rule-based miner, disclosed). Both agreeing gives BLOCK | **live on Ethereum Sepolia** (verified with paid calls Nov 2) |
 | Patch verification, URL safety | **off by default:** no working miner on Telegraph yet (see below) |
 
 ### Which miners, and why
@@ -21,6 +21,12 @@ First vetted on 2026-10-27 on Base Sepolia; the answers are in `test/fixtures/mi
 - Both dependency miners carried over with identical answers (`test/fixtures/miner-responses/SECURITY_REVIEW_GENERAL/`).
 - ChainSight did not carry over.
 - Intent names are now family children, e.g. `SECURITY_REVIEW_GENERAL`.
+
+Nov 2: the code-diff check has new reviewers.
+- **Verity (#5530):** it still takes the old `SECURITY_REVIEW` name and code under `input.code`. It found both planted bugs (SQL injection, `eval`) and stayed quiet on a parameterized query.
+- **Sentinel (#731001):** went live on Telegraph's node and found the same two at the same file:line.
+- **TxLens (#9002):** still fails ("perplexity key has no credit left").
+- **Failed calls:** on the new network they are credited back to the caller's Telegraph escrow balance ("nothing was billed").
 
 What follows is the original Oct 27 assessment.
 

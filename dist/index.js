@@ -50297,6 +50297,36 @@ function addedLines(patch) {
   }
   return out;
 }
+function diffLineLocation(text, n) {
+  let file = null;
+  let line = 0;
+  const lines = String(text ?? "").split("\n");
+  for (let i = 0; i < lines.length && i < n; i++) {
+    const raw = lines[i];
+    const header = raw.match(/^diff --git a\/\S+ b\/(\S+)/);
+    if (header) {
+      file = header[1];
+      continue;
+    }
+    const hunk = raw.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (hunk) {
+      line = Number(hunk[1]);
+      continue;
+    }
+    const here = i === n - 1;
+    if (raw.startsWith("+++") || raw.startsWith("---")) {
+      if (here) return null;
+      continue;
+    }
+    if (raw.startsWith("-")) {
+      if (here) return null;
+      continue;
+    }
+    if (here) return file ? { file, line } : { line };
+    line++;
+  }
+  return null;
+}
 var URL_RE = /https?:\/\/[^\s"'`<>()[\]{}\\]+/g;
 var IGNORED_HOSTS = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|(.+\.)?example\.(com|org|net)|.+\.(test|local|invalid|example)|www\.w3\.org|schemas\.[^/]+)$/i;
 function extractUrls(files, { max = 10 } = {}) {
@@ -50495,7 +50525,7 @@ function combineOpinions(first, second) {
 }
 
 // src/checks.js
-var DEFAULT_CHECKS = ["deps"];
+var DEFAULT_CHECKS = ["deps", "diff"];
 var DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
 function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3 } = {}) {
   const depJob = (d) => ({
@@ -50628,6 +50658,25 @@ var NORMALIZERS = {
     const severity = words.length ? maxSeverity(words.map((w) => ({ severity: w }))) : "unknown";
     const key = text.match(/key finding:\s*(.+?)(?:\.\s|$)/i)?.[1] ?? text.replace(/^verdict:\s*\w+\s*[-–:]?\s*/i, "");
     return { severity, findings: [{ title: key.slice(0, 200), severity, detail: text }] };
+  },
+  // Telegraph Verity (#5530) POST /v1/intent {intent: "SECURITY_REVIEW", input: {code}}:
+  // static heuristics run by another operator. It still takes the pre-Oct 30
+  // intent name. verdict "likely" with findings, "uncertain" with none,
+  // "rejected" when the input is unusable. Lines count the text it was sent.
+  "verity-security": (result, vars) => {
+    const findings = result?.answer?.findings;
+    expect(Array.isArray(findings) && result.verdict !== "rejected", "rejected or no findings list");
+    const mapped = findings.map((f) => {
+      const at = vars.diff ? diffLineLocation(vars.diff, f.line) : null;
+      return {
+        title: f.message || f.rule_id,
+        severity: String(f.severity ?? "").toLowerCase(),
+        ...at?.file && { file: at.file },
+        line: at?.line ?? f.line,
+        detail: [f.rule_id, f.recommendation].filter(Boolean).join(" \u2192 ")
+      };
+    });
+    return { severity: overall(mapped), findings: mapped };
   },
   // PR Guard Sentinel (#731001): our own miner, disclosed as such. /package and
   // /review answer with the same document: verdict, severity, findings, packages.
@@ -50920,8 +50969,7 @@ var miners_default = {
         "Go",
         "crates.io"
       ],
-      enabled: false,
-      _note: "Our own miner (disclosed). Registered Oct 31 (registrationId 4857); enable once Telegraph's node lists it."
+      _note: "Our own miner (disclosed); rates PyPI/Go/crates.io, which deps.dev Package Review (npm-only) can't. Live since Nov 2."
     },
     {
       minerId: "190048",
@@ -50939,6 +50987,21 @@ var miners_default = {
   ],
   diff: [
     {
+      minerId: "5530",
+      name: "Telegraph Verity",
+      intent: "SECURITY_REVIEW_GENERAL",
+      method: "POST",
+      endpoint: "/v1/intent",
+      payload: {
+        intent: "SECURITY_REVIEW",
+        input: {
+          code: "{{diff}}"
+        }
+      },
+      normalizer: "verity-security",
+      _note: "Independent operator, asked first. Takes the old intent name inside its payload (verified Nov 2)."
+    },
+    {
       minerId: "731001",
       name: "PR Guard Sentinel",
       intent: "SECURITY_REVIEW_GENERAL",
@@ -50948,8 +51011,7 @@ var miners_default = {
         diff: "{{diff}}"
       },
       normalizer: "sentinel-review",
-      enabled: false,
-      _note: "Rule-based reviewer (ours, disclosed). ChainSight, the AI reviewer, did not survive the Oct 30 move; add a second reviewer when one is vetted."
+      _note: "Our own rule-based miner (disclosed), asked to confirm a high/critical finding."
     }
   ],
   patch: [],

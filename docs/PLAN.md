@@ -30,7 +30,8 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
   - registrationId **4857**, tx `0x845d43703f6b5d610f35600f05749d84c27c30369487dd253a07f0b0860bf2a4`;
   - intent `SECURITY_REVIEW_GENERAL`, YAML hash `0x9c0796…2bab`.
   - It was done through a one-time helper page (`miner/register-page.js`). Telegraph's console offered only the old intent names, and the Diamond rejected them ("a prefix is not an intent").
-  - **Telegraph's node had not activated it yet.** Its newest listed miner was from Oct 29, so it had ingested no registrations since the move. Recheck `GET /api/miners/4857`.
+  - **Active on Telegraph since Nov 2.** Listed among the 24 `SECURITY_REVIEW_GENERAL` miners. Paid calls through Telegraph to `/review` and `/package` both work.
+- **Diff review on the new network (Nov 2):** Verity (#5530, independent) asks first; Sentinel confirms. On the planted bugs both agree at the same file:line, giving BLOCK.
 
 ## What works today
 

@@ -13,7 +13,9 @@ import { join } from "node:path";
 import { generatePrivateKey } from "viem/accounts";
 
 const captured = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/SECURITY_REVIEW/${name}`, import.meta.url), "utf8")).body;
+const capturedNew = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/SECURITY_REVIEW_GENERAL/${name}`, import.meta.url), "utf8")).body;
 const ANSWERS = {
+  5530: capturedNew("5530-review-clean-diff-200-paid.json"),
   77010: captured("77010-npm-lodash-4.17.15-200-paid.json"),
   190048: captured("190048-npm-lodash-4.17.15-200-paid.json"),
 };
@@ -123,12 +125,16 @@ test("action: buys a dependency check, confirms it with a second miner, blocks, 
     assert.deepEqual(askedOf("77010"), { miner: "77010", method: "GET", endpoint: "/query", payload: { pkg: "lodash", ver: "4.17.15" } });
     assert.deepEqual(askedOf("190048"), { miner: "190048", method: "GET", endpoint: "/query", payload: { system: "npm", pkg: "lodash", ver: "4.17.15" } });
     assert.equal(askedOf("302"), undefined, "id 302 is no longer ChainSight and must not be called");
-    assert.doesNotMatch(comment, /\| diff \|/, "the diff check is off by default until Sentinel is live");
+    assert.equal(askedOf("5530").endpoint, "/v1/intent");
+    assert.equal(askedOf("5530").payload.intent, "SECURITY_REVIEW");
+    assert.match(askedOf("5530").payload.input.code, /^diff --git a\/package\.json/);
+    assert.equal(askedOf("731001"), undefined, "the confirming reviewer is only asked about high findings");
+    assert.match(comment, /\| diff \| package\.json, src\/app\.js \| ✅ none \|/);
 
     const ledger = (await readFile(join(dir, "pr-guard-ledger.jsonl"), "utf8")).trim().split("\n").map(JSON.parse);
-    assert.equal(ledger.length, 4, "two paid calls per run: deps and its confirmation");
+    assert.equal(ledger.length, 6, "three paid calls per run: deps, its confirmation, the diff review");
     assert.ok(ledger.every((e) => e.cost_usd === 0.01 && e.receipt.receipt_hash.startsWith("0xrec")));
-    assert.match(await readFile(join(dir, "out"), "utf8"), /cost_usd[\s\S]*0\.020000/);
+    assert.match(await readFile(join(dir, "out"), "utf8"), /cost_usd[\s\S]*0\.030000/);
   } finally {
     server.close();
   }

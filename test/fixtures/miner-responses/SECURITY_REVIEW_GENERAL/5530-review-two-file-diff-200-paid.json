@@ -1,0 +1,164 @@
+{
+  "captured_at": "2026-11-02T17:44:50.902Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/5530",
+  "request": {
+    "method": "POST",
+    "endpoint": "/v1/intent",
+    "payload": {
+      "intent": "SECURITY_REVIEW",
+      "input": {
+        "code": "diff --git a/src/routes/user.js b/src/routes/user.js\n@@ -10,2 +10,4 @@ router.get('/', list);\n const db = require('../db');\n+router.get('/:id', async (req, res) => {\n+  res.json(await db.query(\"SELECT * FROM users WHERE id = '\" + req.params.id + \"'\"));\n+});\ndiff --git a/src/routes/calc.js b/src/routes/calc.js\n@@ -1,1 +1,2 @@\n const express = require('express');\n+module.exports = (req, res) => res.send(String(eval(req.body.expr)));"
+      }
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/5530\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/5530",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/5530"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 13361,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a544f2c78c9b7611-EWR",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Mon, 02 Nov 2026 17:44:50 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHhjYWEzODY0ZmIzYjIzZjBkZjdlYWQyODFhNWM0MzRiMTM2NTM3MGZhMzU0Y2E0ZjI5NTI0OGM2MzJkYmM1MDgzIiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=VgaPNOZv7G%2FlQGBJUVSju44bm6iKQgMjevegqK5VS04j41bpxNag22INwbmKPHCIGxIC0EsZe04ARQKbitDEumXJQORgjHxgcc%2FYJqpEKir7eJpxe63VU1bBoH5vTdiOO1msOB4nm8a5AkhHv1a%2BlQ%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGE1NDVhOWFlODkzYzBkNjY0NWYwMzg0ODhiNDgyMTdhNzA4OGYwNjUzZjFkZDFkODk2YjQyYjNlNmEwYmNmZmQiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI0ODMxIiwiaW50ZW50IjoiRkFDVF9DSEVDSyIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjE5OTcsInNldHRsZW1lbnQiOiJvbmNoYWluIiwiY2hhaW4iOiJlaXAxNTU6MTExNTUxMTEiLCJ0eF9oYXNoIjoiMHhjYWEzODY0ZmIzYjIzZjBkZjdlYWQyODFhNWM0MzRiMTM2NTM3MGZhMzU0Y2E0ZjI5NTI0OGM2MzJkYmM1MDgzIiwidGltZXN0YW1wIjoxNzkzNjQxNDkwfQ=="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":305,\"miner_id\":\"5530\",\"miner_name\":\"Telegraph Verity Intelligence\",\"result\":{\"answer\":{\"dependency_scan_performed\":false,\"findings\":[{\"line\":5,\"message\":\"SQL statement may be constructed using string interpolation or concatenation.\",\"recommendation\":\"Use parameterized queries and bind user-controlled values separately.\",\"rule_id\":\"sql-injection-risk\",\"severity\":\"high\"},{\"line\":10,\"message\":\"Dynamic code execution can turn untrusted input into executable code.\",\"recommendation\":\"Replace dynamic execution with explicit parsing and allow-listed operations.\",\"rule_id\":\"dynamic-code-execution\",\"severity\":\"high\"}],\"lines_reviewed\":10,\"scope\":\"static-security-heuristics\"},\"confidence\":0.73,\"evidence\":[{\"excerpt\":\"+  res.json(await db.query(\\\"SELECT * FROM users WHERE id = '\\\" + req.params.id + \\\"'\\\"));\",\"metadata\":{\"line\":5,\"rule_id\":\"sql-injection-risk\",\"severity\":\"high\"},\"retrieved_at\":\"2026-11-02T17:44:49.898Z\",\"source_id\":\"security-review:line:5:sql-injection-risk\",\"source_type\":\"static-security-review\",\"title\":\"Line 5: sql-injection-risk\"},{\"excerpt\":\"+module.exports = (req, res) =\\u003e res.send(String(eval(req.body.expr)));\",\"metadata\":{\"line\":10,\"rule_id\":\"dynamic-code-execution\",\"severity\":\"high\"},\"retrieved_at\":\"2026-11-02T17:44:49.898Z\",\"source_id\":\"security-review:line:10:dynamic-code-execution\",\"source_type\":\"static-security-review\",\"title\":\"Line 10: dynamic-code-execution\"}],\"intent\":\"SECURITY_REVIEW\",\"retrieved_at\":\"2026-11-02T17:44:49.898Z\",\"uncertainty\":[{\"code\":\"static_security_review_only\",\"message\":\"This is a bounded static heuristic scan, not a full security audit. Findings require manual validation, and no findings do not prove the system is secure.\"},{\"code\":\"dependency_scan_not_performed\",\"message\":\"Dependency vulnerability feeds were not queried by this handler. Use CVE_LOOKUP for known CVE identifiers and a dedicated dependency scanner for package manifests.\"}],\"verdict\":\"likely\"},\"result_shape\":\"raw\",\"signal_hash\":\"0xaede7cfac6c5bd6c433e0ba4e7da715512c7e8f3be20fdfb71476177bb1ec2f8\",\"timestamp\":\"2026-11-02T17:44:50.047114258Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 305,
+    "miner_id": "5530",
+    "miner_name": "Telegraph Verity Intelligence",
+    "result": {
+      "answer": {
+        "dependency_scan_performed": false,
+        "findings": [
+          {
+            "line": 5,
+            "message": "SQL statement may be constructed using string interpolation or concatenation.",
+            "recommendation": "Use parameterized queries and bind user-controlled values separately.",
+            "rule_id": "sql-injection-risk",
+            "severity": "high"
+          },
+          {
+            "line": 10,
+            "message": "Dynamic code execution can turn untrusted input into executable code.",
+            "recommendation": "Replace dynamic execution with explicit parsing and allow-listed operations.",
+            "rule_id": "dynamic-code-execution",
+            "severity": "high"
+          }
+        ],
+        "lines_reviewed": 10,
+        "scope": "static-security-heuristics"
+      },
+      "confidence": 0.73,
+      "evidence": [
+        {
+          "excerpt": "+  res.json(await db.query(\"SELECT * FROM users WHERE id = '\" + req.params.id + \"'\"));",
+          "metadata": {
+            "line": 5,
+            "rule_id": "sql-injection-risk",
+            "severity": "high"
+          },
+          "retrieved_at": "2026-11-02T17:44:49.898Z",
+          "source_id": "security-review:line:5:sql-injection-risk",
+          "source_type": "static-security-review",
+          "title": "Line 5: sql-injection-risk"
+        },
+        {
+          "excerpt": "+module.exports = (req, res) => res.send(String(eval(req.body.expr)));",
+          "metadata": {
+            "line": 10,
+            "rule_id": "dynamic-code-execution",
+            "severity": "high"
+          },
+          "retrieved_at": "2026-11-02T17:44:49.898Z",
+          "source_id": "security-review:line:10:dynamic-code-execution",
+          "source_type": "static-security-review",
+          "title": "Line 10: dynamic-code-execution"
+        }
+      ],
+      "intent": "SECURITY_REVIEW",
+      "retrieved_at": "2026-11-02T17:44:49.898Z",
+      "uncertainty": [
+        {
+          "code": "static_security_review_only",
+          "message": "This is a bounded static heuristic scan, not a full security audit. Findings require manual validation, and no findings do not prove the system is secure."
+        },
+        {
+          "code": "dependency_scan_not_performed",
+          "message": "Dependency vulnerability feeds were not queried by this handler. Use CVE_LOOKUP for known CVE identifiers and a dedicated dependency scanner for package manifests."
+        }
+      ],
+      "verdict": "likely"
+    },
+    "result_shape": "raw",
+    "signal_hash": "0xaede7cfac6c5bd6c433e0ba4e7da715512c7e8f3be20fdfb71476177bb1ec2f8",
+    "timestamp": "2026-11-02T17:44:50.047114258Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0xcaa3864fb3b23f0df7ead281a5c434b1365370fa354ca4f295248c632dbc5083",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0xa545a9ae893c0d6645f038488b48217a7088f0653f1dd1d896b42b3e6a0bcffd",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "4831",
+    "intent": "FACT_CHECK",
+    "amount_uusdc": "10000",
+    "epoch_id": 1997,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0xcaa3864fb3b23f0df7ead281a5c434b1365370fa354ca4f295248c632dbc5083",
+    "timestamp": 1793641490
+  },
+  "charged": true
+}

@@ -1,0 +1,124 @@
+{
+  "captured_at": "2026-11-02T17:45:31.994Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/5530",
+  "request": {
+    "method": "POST",
+    "endpoint": "/v1/intent",
+    "payload": {
+      "intent": "SECURITY_REVIEW",
+      "input": {
+        "code": "diff --git a/src/routes/user.js b/src/routes/user.js\n@@ -10,2 +10,4 @@ router.get('/', list);\n const db = require('../db');\n+router.get('/:id', async (req, res) => {\n+  res.json(await db.query('SELECT * FROM users WHERE id = $1', [req.params.id]));\n+});"
+      }
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/5530\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/5530",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/5530"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 19388,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a544f39dd8693d3e-EWR",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Mon, 02 Nov 2026 17:45:30 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHg4ZDgyZmNjNTI4MzJiZGM5OWRlOGRkODM1ZTY3MzM2ZTAzZWFlZjk3OGZmOTFhMzYyMmIwNzM2MzJlYWVmMjY4IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=xdgO1bihjR6vlrMQm3TN%2FKFymapNlzsLlqnVcmlGTxdv7WtoiVk5ahJQ%2BXQEXwjn1wkiPz2dQE6d3RNlgSlpsZ6jGLzpr1WmoiBLoAcyKB1KSFO6ul6NgMP9Hmh6PrCa0obxXOVdyF8pIFHEbvMJ2Q%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGIzOGU4NzM5MDcxZDhkNmU2NWM0OTc4MzcyYzQzZDVlYzA2ZDNlM2M5NDA3NjU5NWQxNjE4YWEwYjU5YWFjYTciLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI0ODMxIiwiaW50ZW50IjoiRkFDVF9DSEVDSyIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjE5OTcsInNldHRsZW1lbnQiOiJvbmNoYWluIiwiY2hhaW4iOiJlaXAxNTU6MTExNTUxMTEiLCJ0eF9oYXNoIjoiMHg4ZDgyZmNjNTI4MzJiZGM5OWRlOGRkODM1ZTY3MzM2ZTAzZWFlZjk3OGZmOTFhMzYyMmIwNzM2MzJlYWVmMjY4IiwidGltZXN0YW1wIjoxNzkzNjQxNTMwfQ=="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":1043,\"miner_id\":\"5530\",\"miner_name\":\"Telegraph Verity Intelligence\",\"result\":{\"answer\":{\"dependency_scan_performed\":false,\"findings\":[],\"lines_reviewed\":6,\"scope\":\"static-security-heuristics\"},\"confidence\":0.55,\"evidence\":[],\"intent\":\"SECURITY_REVIEW\",\"retrieved_at\":\"2026-11-02T17:45:30.628Z\",\"uncertainty\":[{\"code\":\"static_security_review_only\",\"message\":\"This is a bounded static heuristic scan, not a full security audit. Findings require manual validation, and no findings do not prove the system is secure.\"},{\"code\":\"dependency_scan_not_performed\",\"message\":\"Dependency vulnerability feeds were not queried by this handler. Use CVE_LOOKUP for known CVE identifiers and a dedicated dependency scanner for package manifests.\"}],\"verdict\":\"uncertain\"},\"result_shape\":\"raw\",\"signal_hash\":\"0xc83ceb8364070a59b891836a9073b3538e2395fb3ad19fdb3d8f576d641007ad\",\"timestamp\":\"2026-11-02T17:45:30.801865941Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 1043,
+    "miner_id": "5530",
+    "miner_name": "Telegraph Verity Intelligence",
+    "result": {
+      "answer": {
+        "dependency_scan_performed": false,
+        "findings": [],
+        "lines_reviewed": 6,
+        "scope": "static-security-heuristics"
+      },
+      "confidence": 0.55,
+      "evidence": [],
+      "intent": "SECURITY_REVIEW",
+      "retrieved_at": "2026-11-02T17:45:30.628Z",
+      "uncertainty": [
+        {
+          "code": "static_security_review_only",
+          "message": "This is a bounded static heuristic scan, not a full security audit. Findings require manual validation, and no findings do not prove the system is secure."
+        },
+        {
+          "code": "dependency_scan_not_performed",
+          "message": "Dependency vulnerability feeds were not queried by this handler. Use CVE_LOOKUP for known CVE identifiers and a dedicated dependency scanner for package manifests."
+        }
+      ],
+      "verdict": "uncertain"
+    },
+    "result_shape": "raw",
+    "signal_hash": "0xc83ceb8364070a59b891836a9073b3538e2395fb3ad19fdb3d8f576d641007ad",
+    "timestamp": "2026-11-02T17:45:30.801865941Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x8d82fcc52832bdc99de8dd835e67336e03eaef978ff91a3622b073632eaef268",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0xb38e8739071d8d6e65c4978372c43d5ec06d3e3c94076595d1618aa0b59aaca7",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "4831",
+    "intent": "FACT_CHECK",
+    "amount_uusdc": "10000",
+    "epoch_id": 1997,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x8d82fcc52832bdc99de8dd835e67336e03eaef978ff91a3622b073632eaef268",
+    "timestamp": 1793641530
+  },
+  "charged": true
+}

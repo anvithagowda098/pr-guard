@@ -1,0 +1,136 @@
+{
+  "captured_at": "2026-11-02T17:42:53.265Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/731001",
+  "request": {
+    "method": "POST",
+    "endpoint": "/review",
+    "payload": {
+      "diff": "diff --git a/src/routes/user.js b/src/routes/user.js\n@@ -10,2 +10,4 @@ router.get('/', list);\n const db = require('../db');\n+router.get('/:id', async (req, res) => {\n+  res.json(await db.query(\"SELECT * FROM users WHERE id = '\" + req.params.id + \"'\"));\n+});\ndiff --git a/src/routes/calc.js b/src/routes/calc.js\n@@ -1,1 +1,2 @@\n const express = require('express');\n+module.exports = (req, res) => res.send(String(eval(req.body.expr)));"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/731001\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/731001",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/731001"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 20704,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a544efb878f828a7-ATL",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Mon, 02 Nov 2026 17:42:52 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHgxMzQwMDlkNjQ2YmI1NzZlNzA3OGE3ZTI2M2U3YzhiNmQ1NzJiMGE4Mjc1NzkxOGE5NzU0ZTAxMDUwOTQzOWZiIiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=uZkvJ4%2BPKlH6LJX8lrP9Iaohd1SikbcEKfXKf0uIVuINB0UvDsI72LhveB9MZbL4GL%2F7HYZcxQVhh4KUVKXqqEdh%2F3TBvsc%2FxfmN1LtbsVyCVYpeQbsChXbn2R7iEDDMKANnX%2BUajn5dxZGpVWNXrg%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGZkMzQ5YmU2N2QzNjlkOTkyODUwNjU1ZDcxMzlhMjQ5ODIwZmIyMmVmNDVhYWRlYzc2OTcwNDY3ZDczMjc2MmMiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI0ODU3IiwiaW50ZW50IjoiU0VDVVJJVFlfUkVWSUVXX0dFTkVSQUwiLCJhbW91bnRfdXVzZGMiOiIxMDAwMCIsImVwb2NoX2lkIjoxOTk3LCJzZXR0bGVtZW50Ijoib25jaGFpbiIsImNoYWluIjoiZWlwMTU1OjExMTU1MTExIiwidHhfaGFzaCI6IjB4MTM0MDA5ZDY0NmJiNTc2ZTcwNzhhN2UyNjNlN2M4YjZkNTcyYjBhODI3NTc5MThhOTc1NGUwMTA1MDk0MzlmYiIsInRpbWVzdGFtcCI6MTc5MzY0MTM3MX0="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":253,\"miner_id\":\"731001\",\"miner_name\":\"PR Guard Sentinel (code and dependency security review)\",\"result\":{\"answer\":\"Verdict: vulnerable. 2 code issues: critical: SQL built from strings (CWE-89) at src/routes/user.js:12: `res.json(await db.query(\\\"SELECT * FROM users WHERE id = '\\\" + req.params.id + \\\"'\\\"));`; fix: use a parameterized query or the driver's placeholders; critical: dynamic code evaluation (CWE-95) at src/routes/calc.js:2: `module.exports = (req, res) =\\u003e res.send(String(eval(req.body.expr)));`; fix: parse the input instead of executing it (JSON.parse, a math parser, a lookup table).\",\"checked_at\":\"2026-11-02T17:42:51.980Z\",\"confidence\":0.85,\"findings\":[{\"confidence\":0.85,\"cwe\":\"CWE-89\",\"evidence\":\"res.json(await db.query(\\\"SELECT * FROM users WHERE id = '\\\" + req.params.id + \\\"'\\\"));\",\"file\":\"src/routes/user.js\",\"fix\":\"use a parameterized query or the driver's placeholders\",\"line\":12,\"rule\":\"sql-injection\",\"severity\":\"critical\",\"title\":\"SQL built from strings\"},{\"confidence\":0.8,\"cwe\":\"CWE-95\",\"evidence\":\"module.exports = (req, res) =\\u003e res.send(String(eval(req.body.expr)));\",\"file\":\"src/routes/calc.js\",\"fix\":\"parse the input instead of executing it (JSON.parse, a math parser, a lookup table)\",\"line\":2,\"rule\":\"code-injection\",\"severity\":\"critical\",\"title\":\"dynamic code evaluation\"}],\"method\":\"deterministic-rules+osv\",\"packages\":[],\"reason\":\"Deterministic scan with 11 rule families over 4 line(s). Rule-based, not a full audit.\",\"severity\":\"critical\",\"verdict\":\"vulnerable\",\"version\":\"0.1.0\"},\"result_shape\":\"raw\",\"signal_hash\":\"0x146ee634d87c34285adf144b7f84263b744ca07784195b40022541852aa9579c\",\"timestamp\":\"2026-11-02T17:42:51.984892613Z\",\"warnings\":[\"request body is 468 bytes, exceeding the miner's declared limit of 200000 bytes: Request body must be 200,000 bytes or fewer.\"]}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 253,
+    "miner_id": "731001",
+    "miner_name": "PR Guard Sentinel (code and dependency security review)",
+    "result": {
+      "answer": "Verdict: vulnerable. 2 code issues: critical: SQL built from strings (CWE-89) at src/routes/user.js:12: `res.json(await db.query(\"SELECT * FROM users WHERE id = '\" + req.params.id + \"'\"));`; fix: use a parameterized query or the driver's placeholders; critical: dynamic code evaluation (CWE-95) at src/routes/calc.js:2: `module.exports = (req, res) => res.send(String(eval(req.body.expr)));`; fix: parse the input instead of executing it (JSON.parse, a math parser, a lookup table).",
+      "checked_at": "2026-11-02T17:42:51.980Z",
+      "confidence": 0.85,
+      "findings": [
+        {
+          "confidence": 0.85,
+          "cwe": "CWE-89",
+          "evidence": "res.json(await db.query(\"SELECT * FROM users WHERE id = '\" + req.params.id + \"'\"));",
+          "file": "src/routes/user.js",
+          "fix": "use a parameterized query or the driver's placeholders",
+          "line": 12,
+          "rule": "sql-injection",
+          "severity": "critical",
+          "title": "SQL built from strings"
+        },
+        {
+          "confidence": 0.8,
+          "cwe": "CWE-95",
+          "evidence": "module.exports = (req, res) => res.send(String(eval(req.body.expr)));",
+          "file": "src/routes/calc.js",
+          "fix": "parse the input instead of executing it (JSON.parse, a math parser, a lookup table)",
+          "line": 2,
+          "rule": "code-injection",
+          "severity": "critical",
+          "title": "dynamic code evaluation"
+        }
+      ],
+      "method": "deterministic-rules+osv",
+      "packages": [],
+      "reason": "Deterministic scan with 11 rule families over 4 line(s). Rule-based, not a full audit.",
+      "severity": "critical",
+      "verdict": "vulnerable",
+      "version": "0.1.0"
+    },
+    "result_shape": "raw",
+    "signal_hash": "0x146ee634d87c34285adf144b7f84263b744ca07784195b40022541852aa9579c",
+    "timestamp": "2026-11-02T17:42:51.984892613Z",
+    "warnings": [
+      "request body is 468 bytes, exceeding the miner's declared limit of 200000 bytes: Request body must be 200,000 bytes or fewer."
+    ]
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x134009d646bb576e7078a7e263e7c8b6d572b0a82757918a9754e010509439fb",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0xfd349be67d369d992850655d7139a249820fb22ef45aadec76970467d732762c",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "4857",
+    "intent": "SECURITY_REVIEW_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 1997,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x134009d646bb576e7078a7e263e7c8b6d572b0a82757918a9754e010509439fb",
+    "timestamp": 1793641371
+  },
+  "charged": true
+}

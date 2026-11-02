@@ -6,9 +6,8 @@ import { maxSeverity } from "./policy.js";
 
 export const ALL_CHECKS = ["deps", "diff", "patch", "urls"];
 
-// Paid checks with a vetted, routable miner today; the others stay opt-in.
-// "diff" returns once the Sentinel miner is live on Telegraph's new network.
-export const DEFAULT_CHECKS = ["deps"];
+// Paid checks with vetted, routable miners today; the others stay opt-in.
+export const DEFAULT_CHECKS = ["deps", "diff"];
 
 // deps.dev's names for our ecosystems.
 const DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };

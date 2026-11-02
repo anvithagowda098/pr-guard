@@ -131,3 +131,37 @@ test("Sentinel /review: findings keep file and line; clean code is none", async 
   assert.deepEqual(normalize("sentinel-review", await ask("diff --git a/a.js b/a.js\n@@ -1,1 +1,2 @@\n x\n+const y = 2;")), { severity: "none", findings: [] });
   assert.equal(normalize("sentinel-review", { answer: "no structure" }).severity, "unknown");
 });
+
+const newNet = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/SECURITY_REVIEW_GENERAL/${name}`, import.meta.url), "utf8"));
+
+test("Verity (independent): both planted bugs, mapped to the real file and line", () => {
+  const cap = newNet("5530-review-two-file-diff-200-paid.json");
+  const n = normalize("verity-security", cap.body.result, { diff: cap.request.payload.input.code });
+  assert.equal(n.severity, "high");
+  assert.deepEqual(n.findings.map((f) => `${f.file}:${f.line}`), ["src/routes/user.js:12", "src/routes/calc.js:2"]);
+  assert.match(n.findings[0].detail, /^sql-injection-risk → Use parameterized queries/);
+});
+
+test("Verity: clean diff is none ('uncertain', no findings); unusable input is unknown", () => {
+  const clean = newNet("5530-review-clean-diff-200-paid.json");
+  assert.deepEqual(normalize("verity-security", clean.body.result, { diff: clean.request.payload.input.code }), { severity: "none", findings: [] });
+  assert.equal(normalize("verity-security", newNet("5530-input-as-string-rejected-200-paid.json").body.result, {}).severity, "unknown");
+});
+
+test("two independent reviewers agree on the planted bugs -> BLOCK", () => {
+  const v = newNet("5530-review-two-file-diff-200-paid.json");
+  const s = newNet("731001-review-two-file-diff-200-paid.json");
+  const first = normalize("verity-security", v.body.result, { diff: v.request.payload.input.code });
+  const second = normalize("sentinel-review", s.body.result);
+  assert.deepEqual(second.findings.map((f) => `${f.file}:${f.line}`), ["src/routes/user.js:12", "src/routes/calc.js:2"], "same locations from both");
+  const c = combineOpinions(first, second);
+  assert.deepEqual([c.confirmed, c.disagreement, c.severity], [true, false, "critical"]);
+  assert.equal(decide([{ check: "diff", target: "src/routes", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("Sentinel /package on the new network rates PyPI with upgrade advice", () => {
+  const n = normalize("sentinel-package", newNet("731001-package-pypi-django-3.2.0-200-paid.json").body.result, { name: "django", version: "3.2.0" });
+  assert.equal(n.severity, "critical");
+  assert.equal(n.findings.length, 38);
+  assert.equal(n.advice, "upgrade to 5.2.17");
+});

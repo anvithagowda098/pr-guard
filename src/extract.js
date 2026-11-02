@@ -253,6 +253,30 @@ export function addedLines(patch) {
   return out;
 }
 
+/**
+ * Where line `n` (1-based) of a unified-diff text sits in the new files:
+ * { file, line } for added and context lines, null for headers and removals.
+ * Lets a miner that counts lines of the text it was sent point at real code.
+ */
+export function diffLineLocation(text, n) {
+  let file = null;
+  let line = 0;
+  const lines = String(text ?? "").split("\n");
+  for (let i = 0; i < lines.length && i < n; i++) {
+    const raw = lines[i];
+    const header = raw.match(/^diff --git a\/\S+ b\/(\S+)/);
+    if (header) { file = header[1]; continue; }
+    const hunk = raw.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (hunk) { line = Number(hunk[1]); continue; }
+    const here = i === n - 1;
+    if (raw.startsWith("+++") || raw.startsWith("---")) { if (here) return null; continue; }
+    if (raw.startsWith("-")) { if (here) return null; continue; }
+    if (here) return file ? { file, line } : { line };
+    line++;
+  }
+  return null;
+}
+
 const URL_RE = /https?:\/\/[^\s"'`<>()[\]{}\\]+/g;
 const IGNORED_HOSTS = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|(.+\.)?example\.(com|org|net)|.+\.(test|local|invalid|example)|www\.w3\.org|schemas\.[^/]+)$/i;
 

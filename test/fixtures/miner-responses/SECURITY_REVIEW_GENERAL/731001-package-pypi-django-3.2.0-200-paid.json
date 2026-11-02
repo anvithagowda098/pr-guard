@@ -1,0 +1,763 @@
+{
+  "captured_at": "2026-11-02T17:43:04.213Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/731001",
+  "request": {
+    "method": "POST",
+    "endpoint": "/package",
+    "payload": {
+      "ecosystem": "PyPI",
+      "name": "django",
+      "version": "3.2.0"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/731001\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/731001",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/731001"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 9844,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a544f0420ce1c431-EWR",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Mon, 02 Nov 2026 17:43:03 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHgyMmE5Nzg3YWQ0YTliZDIzYWE0N2MxMTcwMGMzNTA0N2QwOTMzMWJmZTJkNjdiMTIyYjhmMTA4NWE3ZTgzOTM1IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=KvG7xLlS7PwsRs%2FsuvdNiuqq7QcXr5FVqnYDfvV4PJ2O8ZUaR9GLiQJrcJVigdH22ZyJApoVYaqMbq3kHCdKolJXQEoI6X38d9V11DUXQhL10M6kYctlC%2F1S9GVyHuSFcgFh6KruyOhUMLWgGimaDg%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDU5ZmU1ZTYyOGY4N2Y3NDZjNzBhODQwYzEwZTg3MDYxZTM4NDllYTU4NjEwYmFmN2ZmYzIzZDZkZTg0N2Q0ZGUiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI0ODU3IiwiaW50ZW50IjoiU0VDVVJJVFlfUkVWSUVXX0dFTkVSQUwiLCJhbW91bnRfdXVzZGMiOiIxMDAwMCIsImVwb2NoX2lkIjoxOTk3LCJzZXR0bGVtZW50Ijoib25jaGFpbiIsImNoYWluIjoiZWlwMTU1OjExMTU1MTExIiwidHhfaGFzaCI6IjB4MjJhOTc4N2FkNGE5YmQyM2FhNDdjMTE3MDBjMzUwNDdkMDkzMzFiZmUyZDY3YjEyMmI4ZjEwODVhN2U4MzkzNSIsInRpbWVzdGFtcCI6MTc5MzY0MTM4M30="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":1914,\"miner_id\":\"731001\",\"miner_name\":\"PR Guard Sentinel (code and dependency security review)\",\"result\":{\"answer\":\"Verdict: vulnerable. django 3.2.0 (PyPI) has 38 known vulnerabilities (6 critical, 16 high, 12 medium, 4 low), worst: Django vulnerable to SQL injection via _connector keyword argument in QuerySet and Q objects. [GHSA-frmv-pr5f-9mcr, BIT-django-2025-64459]; upgrade to 5.2.17 or later to fix all of them.\",\"checked_at\":\"2026-11-02T17:43:03.117Z\",\"confidence\":0.95,\"findings\":[],\"method\":\"deterministic-rules+osv\",\"packages\":[{\"ecosystem\":\"PyPI\",\"name\":\"django\",\"severity\":\"critical\",\"unfixed\":0,\"upgrade_to\":\"5.2.17\",\"version\":\"3.2.0\",\"vulnerabilities\":[{\"aliases\":[\"BIT-django-2026-48588\",\"CVE-2026-48588\",\"PYSEC-2026-2090\"],\"cvss\":3.1,\"fixed_in\":[\"5.2.16\",\"6.0.7\"],\"id\":\"GHSA-3h9f-r86x-qvjx\",\"severity\":\"low\",\"summary\":\"Django: cache middleware may expose private responses when unrelated request cookies are present\",\"url\":\"https://osv.dev/vulnerability/GHSA-3h9f-r86x-qvjx\"},{\"aliases\":[\"BIT-django-2025-57833\",\"CVE-2025-57833\",\"PYSEC-2025-105\"],\"cvss\":7.1,\"fixed_in\":[\"4.2.24\",\"5.1.12\",\"5.2.6\"],\"id\":\"GHSA-6w2r-r2m5-xq5w\",\"severity\":\"high\",\"summary\":\"Django is subject to SQL injection through its column aliases\",\"url\":\"https://osv.dev/vulnerability/GHSA-6w2r-r2m5-xq5w\"},{\"aliases\":[\"BIT-django-2025-48432\",\"CVE-2025-48432\",\"PYSEC-2025-47\"],\"cvss\":4,\"fixed_in\":[\"4.2.22\",\"5.1.10\",\"5.2.2\"],\"id\":\"GHSA-7xr5-9hcq-chf9\",\"severity\":\"medium\",\"summary\":\"Django Improper Output Neutralization for Logs vulnerability\",\"url\":\"https://osv.dev/vulnerability/GHSA-7xr5-9hcq-chf9\"},{\"aliases\":[\"BIT-django-2026-8404\",\"CVE-2026-8404\",\"PYSEC-2026-201\"],\"cvss\":3.1,\"fixed_in\":[\"5.2.15\",\"6.0.6\"],\"id\":\"GHSA-8cjm-8mp7-r2xf\",\"severity\":\"low\",\"summary\":\"Django: UpdateCacheMiddleware may disclose cached responses due to case-sensitive Cache-Control handling\",\"url\":\"https://osv.dev/vulnerability/GHSA-8cjm-8mp7-r2xf\"},{\"aliases\":[\"BIT-django-2026-53878\",\"CVE-2026-53878\",\"PYSEC-2026-2092\"],\"cvss\":6.1,\"fixed_in\":[\"5.2.16\",\"6.0.7\"],\"id\":\"GHSA-8qcx-xf44-272x\",\"severity\":\"medium\",\"summary\":\"Django: DomainNameValidator permits newline characters that may enable HTTP header injection\",\"url\":\"https://osv.dev/vulnerability/GHSA-8qcx-xf44-272x\"},{\"aliases\":[\"BIT-django-2026-48587\",\"CVE-2026-48587\",\"PYSEC-2026-198\"],\"cvss\":3.1,\"fixed_in\":[\"5.2.15\",\"6.0.6\"],\"id\":\"GHSA-923m-gv2p-w5qp\",\"severity\":\"low\",\"summary\":\"Django: has_vary_header may expose cached responses when Vary values contain whitespace\",\"url\":\"https://osv.dev/vulnerability/GHSA-923m-gv2p-w5qp\"},{\"aliases\":[\"BIT-django-2026-53877\",\"CVE-2026-53877\",\"PYSEC-2026-2091\"],\"cvss\":4.8,\"fixed_in\":[\"5.2.16\",\"6.0.7\"],\"id\":\"GHSA-crhf-3pfg-w68w\",\"severity\":\"medium\",\"summary\":\" Django: GDALRaster may over-read heap memory when constructed from bytes\",\"url\":\"https://osv.dev/vulnerability/GHSA-crhf-3pfg-w68w\"},{\"aliases\":[\"BIT-django-2025-64459\",\"CVE-2025-64459\",\"PYSEC-2025-108\"],\"cvss\":9.1,\"fixed_in\":[\"4.2.26\",\"5.1.14\",\"5.2.8\"],\"id\":\"GHSA-frmv-pr5f-9mcr\",\"severity\":\"critical\",\"summary\":\"Django vulnerable to SQL injection via _connector keyword argument in QuerySet and Q objects.\",\"url\":\"https://osv.dev/vulnerability/GHSA-frmv-pr5f-9mcr\"},{\"aliases\":[\"BIT-django-2026-6873\",\"CVE-2026-6873\",\"PYSEC-2026-199\"],\"cvss\":3.1,\"fixed_in\":[\"5.2.15\",\"6.0.6\"],\"id\":\"GHSA-h7pc-vwp9-298g\",\"severity\":\"low\",\"summary\":\"Django: signed cookies are vulnerable to salt namespace collisions\",\"url\":\"https://osv.dev/vulnerability/GHSA-h7pc-vwp9-298g\"},{\"aliases\":[\"BIT-django-2025-64458\",\"CVE-2025-64458\",\"PYSEC-2025-107\"],\"cvss\":7.5,\"fixed_in\":[\"4.2.26\",\"5.1.14\",\"5.2.8\"],\"id\":\"GHSA-qw25-v68c-qjf3\",\"severity\":\"high\",\"summary\":\"Django has a denial-of-service vulnerability in HttpResponseRedirect and HttpResponsePermanentRedirect on Windows\",\"url\":\"https://osv.dev/vulnerability/GHSA-qw25-v68c-qjf3\"},{\"aliases\":[\"BIT-django-2021-35042\",\"CVE-2021-35042\",\"PYSEC-2021-109\"],\"cvss\":9.8,\"fixed_in\":[\"3.1.13\",\"3.2.5\"],\"id\":\"GHSA-xpfp-f569-q3p2\",\"severity\":\"critical\",\"summary\":\"SQL Injection in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-xpfp-f569-q3p2\"},{\"aliases\":[\"BIT-django-2021-44420\",\"CVE-2021-44420\",\"PYSEC-2021-439\"],\"cvss\":7.3,\"fixed_in\":[\"2.2.25\",\"3.1.14\",\"3.2.10\"],\"id\":\"GHSA-v6rh-hp5x-86rv\",\"severity\":\"medium\",\"summary\":\"Potential bypass of an upstream access control based on URL paths in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-v6rh-hp5x-86rv\"},{\"aliases\":[\"BIT-django-2021-31542\",\"CVE-2021-31542\",\"PYSEC-2021-7\"],\"cvss\":7.5,\"fixed_in\":[\"2.2.21\",\"3.1.9\",\"3.2.1\"],\"id\":\"GHSA-rxjp-mfm9-w4wr\",\"severity\":\"high\",\"summary\":\"Path Traversal in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-rxjp-mfm9-w4wr\"},{\"aliases\":[\"BIT-django-2021-32052\",\"CVE-2021-32052\",\"PYSEC-2021-8\"],\"cvss\":6.1,\"fixed_in\":[\"2.2.22\",\"3.1.10\",\"3.2.2\"],\"id\":\"GHSA-qm57-vhq3-3fwf\",\"severity\":\"medium\",\"summary\":\"Header injection possible in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-qm57-vhq3-3fwf\"},{\"aliases\":[\"BIT-django-2021-33203\",\"CVE-2021-33203\",\"PYSEC-2021-98\"],\"cvss\":4.9,\"fixed_in\":[\"2.2.24\",\"3.1.12\",\"3.2.4\"],\"id\":\"GHSA-68w8-qjq3-2gfm\",\"severity\":\"medium\",\"summary\":\"Path Traversal in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-68w8-qjq3-2gfm\"},{\"aliases\":[\"BIT-django-2021-33571\",\"CVE-2021-33571\",\"PYSEC-2021-99\"],\"cvss\":7.5,\"fixed_in\":[\"2.2.24\",\"3.1.12\",\"3.2.4\"],\"id\":\"GHSA-p99v-5w3c-jqq9\",\"severity\":\"high\",\"summary\":\"Django Access Control Bypass possibly leading to SSRF, RFI, and LFI attacks \",\"url\":\"https://osv.dev/vulnerability/GHSA-p99v-5w3c-jqq9\"},{\"aliases\":[\"BIT-django-2021-45115\",\"CVE-2021-45115\",\"PYSEC-2022-1\"],\"cvss\":7.5,\"fixed_in\":[\"2.2.26\",\"3.2.11\",\"4.0.1\"],\"id\":\"GHSA-53qw-q765-4fww\",\"severity\":\"high\",\"summary\":\"Denial-of-service in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-53qw-q765-4fww\"},{\"aliases\":[\"BIT-django-2022-22818\",\"CVE-2022-22818\",\"PYSEC-2022-19\"],\"cvss\":6.1,\"fixed_in\":[\"2.2.27\",\"3.2.12\",\"4.0.2\"],\"id\":\"GHSA-95rw-fx8r-36v6\",\"severity\":\"medium\",\"summary\":\"Cross-site Scripting in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-95rw-fx8r-36v6\"},{\"aliases\":[\"BIT-django-2022-28346\",\"CVE-2022-28346\",\"PYSEC-2022-190\"],\"cvss\":9.8,\"fixed_in\":[\"2.2.28\",\"3.2.13\",\"4.0.4\"],\"id\":\"GHSA-2gwj-7jmv-h26r\",\"severity\":\"critical\",\"summary\":\"SQL Injection in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-2gwj-7jmv-h26r\"},{\"aliases\":[\"BIT-django-2022-28347\",\"CVE-2022-28347\",\"PYSEC-2022-191\"],\"cvss\":9.8,\"fixed_in\":[\"2.2.28\",\"3.2.13\",\"4.0.4\"],\"id\":\"GHSA-w24h-v9qh-8gxj\",\"severity\":\"critical\",\"summary\":\"SQL Injection in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-w24h-v9qh-8gxj\"},{\"aliases\":[\"BIT-django-2021-45116\",\"CVE-2021-45116\",\"PYSEC-2022-2\"],\"cvss\":7.5,\"fixed_in\":[\"2.2.26\",\"3.2.11\",\"4.0.1\"],\"id\":\"GHSA-8c5j-9r9f-c6w8\",\"severity\":\"high\",\"summary\":\"Information disclosure in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-8c5j-9r9f-c6w8\"},{\"aliases\":[\"BIT-django-2022-23833\",\"CVE-2022-23833\",\"PYSEC-2022-20\"],\"cvss\":7.5,\"fixed_in\":[\"2.2.27\",\"3.2.12\",\"4.0.2\"],\"id\":\"GHSA-6cw3-g6wv-c2xv\",\"severity\":\"high\",\"summary\":\"Infinite Loop in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-6cw3-g6wv-c2xv\"},{\"aliases\":[\"BIT-django-2022-34265\",\"CVE-2022-34265\",\"PYSEC-2022-213\"],\"cvss\":9.8,\"fixed_in\":[\"3.2.14\",\"4.0.6\"],\"id\":\"GHSA-p64x-8rxx-wf6q\",\"severity\":\"critical\",\"summary\":\"Django `Trunc()` and `Extract()` database functions vulnerable to SQL Injection\",\"url\":\"https://osv.dev/vulnerability/GHSA-p64x-8rxx-wf6q\"},{\"aliases\":[\"BIT-django-2022-36359\",\"CVE-2022-36359\",\"PYSEC-2022-245\"],\"cvss\":8.8,\"fixed_in\":[\"3.2.15\",\"4.0.7\"],\"id\":\"GHSA-8x94-hmjh-97hq\",\"severity\":\"high\",\"summary\":\"Django vulnerable to Reflected File Download attack\",\"url\":\"https://osv.dev/vulnerability/GHSA-8x94-hmjh-97hq\"},{\"aliases\":[\"BIT-django-2021-45452\",\"CVE-2021-45452\",\"PYSEC-2022-3\"],\"cvss\":5.3,\"fixed_in\":[\"2.2.26\",\"3.2.11\",\"4.0.1\"],\"id\":\"GHSA-jrh2-hc4r-7jwx\",\"severity\":\"medium\",\"summary\":\"Directory-traversal in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-jrh2-hc4r-7jwx\"},{\"aliases\":[\"BIT-django-2022-41323\",\"CVE-2022-41323\",\"PYSEC-2022-304\"],\"cvss\":7.5,\"fixed_in\":[\"3.2.16\",\"4.0.8\",\"4.1.2\",\"5b6b257fa7ec37ff27965358800c67e2dd11c924\"],\"id\":\"GHSA-qrw5-5h28-6cmg\",\"severity\":\"high\",\"summary\":\"Django denial-of-service vulnerability in internationalized URLs\",\"url\":\"https://osv.dev/vulnerability/GHSA-qrw5-5h28-6cmg\"},{\"aliases\":[\"BIT-django-2023-36053\",\"CVE-2023-36053\",\"PYSEC-2023-100\"],\"cvss\":7.5,\"fixed_in\":[\"3.2.20\",\"4.1.10\",\"4.2.3\"],\"id\":\"GHSA-jh3w-4vvf-mjgr\",\"severity\":\"high\",\"summary\":\"Django has regular expression denial of service vulnerability in EmailValidator/URLValidator\",\"url\":\"https://osv.dev/vulnerability/GHSA-jh3w-4vvf-mjgr\"},{\"aliases\":[\"BIT-django-2023-23969\",\"CVE-2023-23969\",\"PYSEC-2023-12\"],\"cvss\":7.5,\"fixed_in\":[\"3.2.17\",\"4.0.9\",\"4.1.6\"],\"id\":\"GHSA-q2jf-h9jm-m7p4\",\"severity\":\"high\",\"summary\":\"Django contains Uncontrolled Resource Consumption via cached header\",\"url\":\"https://osv.dev/vulnerability/GHSA-q2jf-h9jm-m7p4\"},{\"aliases\":[\"BIT-django-2023-24580\",\"CVE-2023-24580\",\"PYSEC-2023-13\"],\"cvss\":7.5,\"fixed_in\":[\"3.2.18\",\"4.0.10\",\"4.1.7\"],\"id\":\"GHSA-2hrw-hx67-34x6\",\"severity\":\"high\",\"summary\":\"Resource exhaustion in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-2hrw-hx67-34x6\"},{\"aliases\":[\"BIT-django-2023-46695\",\"CVE-2023-46695\",\"PYSEC-2023-222\"],\"cvss\":7.5,\"fixed_in\":[\"3.2.23\",\"4.1.13\",\"4.2.7\"],\"id\":\"GHSA-qmf9-6jqf-j8fq\",\"severity\":\"high\",\"summary\":\"Django potential denial of service vulnerability in UsernameField on Windows\",\"url\":\"https://osv.dev/vulnerability/GHSA-qmf9-6jqf-j8fq\"},{\"aliases\":[\"BIT-django-2023-41164\",\"CVE-2023-41164\",\"PYSEC-2023-225\"],\"cvss\":5.3,\"fixed_in\":[\"3.2.21\",\"4.1.11\",\"4.2.5\"],\"id\":\"GHSA-7h4p-27mh-hmrw\",\"severity\":\"medium\",\"summary\":\"Django Denial of service vulnerability in django.utils.encoding.uri_to_iri\",\"url\":\"https://osv.dev/vulnerability/GHSA-7h4p-27mh-hmrw\"},{\"aliases\":[\"BIT-django-2023-43665\",\"CVE-2023-43665\",\"PYSEC-2023-226\"],\"cvss\":5.9,\"fixed_in\":[\"3.2.22\",\"4.1.12\",\"4.2.6\"],\"id\":\"GHSA-h8gc-pgj2-vjm3\",\"severity\":\"high\",\"summary\":\"Django Denial-of-service in django.utils.text.Truncator\",\"url\":\"https://osv.dev/vulnerability/GHSA-h8gc-pgj2-vjm3\"},{\"aliases\":[\"BIT-django-2023-31047\",\"CVE-2023-31047\",\"PYSEC-2023-61\"],\"cvss\":9.8,\"fixed_in\":[\"3.2.19\",\"4.1.9\",\"4.2.1\"],\"id\":\"GHSA-r3xc-prgr-mg9p\",\"severity\":\"critical\",\"summary\":\"Django bypasses validation when using one form field to upload multiple files\",\"url\":\"https://osv.dev/vulnerability/GHSA-r3xc-prgr-mg9p\"},{\"aliases\":[\"BIT-django-2024-24680\",\"CVE-2024-24680\",\"PYSEC-2024-28\"],\"cvss\":5.9,\"fixed_in\":[\"3.2.24\",\"4.2.10\",\"5.0.2\"],\"id\":\"GHSA-xxj9-f6rv-m3x4\",\"severity\":\"high\",\"summary\":\"Django denial-of-service attack in the intcomma template filter\",\"url\":\"https://osv.dev/vulnerability/GHSA-xxj9-f6rv-m3x4\"},{\"aliases\":[\"BIT-django-2024-27351\",\"CVE-2024-27351\",\"PYSEC-2024-47\"],\"cvss\":5.3,\"fixed_in\":[\"3.2.25\",\"4.2.11\",\"5.0.3\"],\"id\":\"GHSA-vm8q-m57g-pff3\",\"severity\":\"medium\",\"summary\":\"Regular expression denial-of-service in Django\",\"url\":\"https://osv.dev/vulnerability/GHSA-vm8q-m57g-pff3\"},{\"aliases\":[\"BIT-django-2024-45231\",\"CVE-2024-45231\",\"PYSEC-2026-1297\"],\"cvss\":3.7,\"fixed_in\":[\"4.2.16\",\"5.0.9\",\"5.1.1\"],\"id\":\"GHSA-rrqc-c2jx-6jgv\",\"severity\":\"medium\",\"summary\":\"Django allows enumeration of user e-mail addresses\",\"url\":\"https://osv.dev/vulnerability/GHSA-rrqc-c2jx-6jgv\"},{\"aliases\":[\"BIT-django-2026-15830\",\"CVE-2026-15830\",\"PYSEC-2026-3717\"],\"cvss\":5.3,\"fixed_in\":[\"5.2.17\",\"6.0.8\",\"6.1.1\"],\"id\":\"GHSA-q238-5cxm-5c9h\",\"severity\":\"medium\",\"summary\":\"Django GeoDjango vulnerable to denial of service through deeply nested geometry collections\",\"url\":\"https://osv.dev/vulnerability/GHSA-q238-5cxm-5c9h\"},{\"aliases\":[\"BIT-django-2026-15307\",\"CVE-2026-15307\",\"GHSA-wvqv-fj8w-qmhm\"],\"cvss\":8.8,\"fixed_in\":[\"5.2.17\",\"6.0.8\"],\"id\":\"PYSEC-2026-4035\",\"severity\":\"high\",\"summary\":\"Django GeoDjango spatial lookups allow file writes and outbound requests through GDAL raster parsing\",\"url\":\"https://osv.dev/vulnerability/PYSEC-2026-4035\"}]}],\"reason\":\"Deterministic scan with 11 rule families over 0 line(s) and 1 OSV package lookup(s). Rule-based, not a full audit.\",\"severity\":\"critical\",\"verdict\":\"vulnerable\",\"version\":\"0.1.0\"},\"result_shape\":\"raw\",\"signal_hash\":\"0xf5846c62ae23fe161ebfed9770ca6b54ba7e4028e4aaf82ea4404a45376dc968\",\"timestamp\":\"2026-11-02T17:43:03.126404813Z\",\"warnings\":[\"request body is 54 bytes, exceeding the miner's declared limit of 200000 bytes: Request body must be 200,000 bytes or fewer.\"]}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 1914,
+    "miner_id": "731001",
+    "miner_name": "PR Guard Sentinel (code and dependency security review)",
+    "result": {
+      "answer": "Verdict: vulnerable. django 3.2.0 (PyPI) has 38 known vulnerabilities (6 critical, 16 high, 12 medium, 4 low), worst: Django vulnerable to SQL injection via _connector keyword argument in QuerySet and Q objects. [GHSA-frmv-pr5f-9mcr, BIT-django-2025-64459]; upgrade to 5.2.17 or later to fix all of them.",
+      "checked_at": "2026-11-02T17:43:03.117Z",
+      "confidence": 0.95,
+      "findings": [],
+      "method": "deterministic-rules+osv",
+      "packages": [
+        {
+          "ecosystem": "PyPI",
+          "name": "django",
+          "severity": "critical",
+          "unfixed": 0,
+          "upgrade_to": "5.2.17",
+          "version": "3.2.0",
+          "vulnerabilities": [
+            {
+              "aliases": [
+                "BIT-django-2026-48588",
+                "CVE-2026-48588",
+                "PYSEC-2026-2090"
+              ],
+              "cvss": 3.1,
+              "fixed_in": [
+                "5.2.16",
+                "6.0.7"
+              ],
+              "id": "GHSA-3h9f-r86x-qvjx",
+              "severity": "low",
+              "summary": "Django: cache middleware may expose private responses when unrelated request cookies are present",
+              "url": "https://osv.dev/vulnerability/GHSA-3h9f-r86x-qvjx"
+            },
+            {
+              "aliases": [
+                "BIT-django-2025-57833",
+                "CVE-2025-57833",
+                "PYSEC-2025-105"
+              ],
+              "cvss": 7.1,
+              "fixed_in": [
+                "4.2.24",
+                "5.1.12",
+                "5.2.6"
+              ],
+              "id": "GHSA-6w2r-r2m5-xq5w",
+              "severity": "high",
+              "summary": "Django is subject to SQL injection through its column aliases",
+              "url": "https://osv.dev/vulnerability/GHSA-6w2r-r2m5-xq5w"
+            },
+            {
+              "aliases": [
+                "BIT-django-2025-48432",
+                "CVE-2025-48432",
+                "PYSEC-2025-47"
+              ],
+              "cvss": 4,
+              "fixed_in": [
+                "4.2.22",
+                "5.1.10",
+                "5.2.2"
+              ],
+              "id": "GHSA-7xr5-9hcq-chf9",
+              "severity": "medium",
+              "summary": "Django Improper Output Neutralization for Logs vulnerability",
+              "url": "https://osv.dev/vulnerability/GHSA-7xr5-9hcq-chf9"
+            },
+            {
+              "aliases": [
+                "BIT-django-2026-8404",
+                "CVE-2026-8404",
+                "PYSEC-2026-201"
+              ],
+              "cvss": 3.1,
+              "fixed_in": [
+                "5.2.15",
+                "6.0.6"
+              ],
+              "id": "GHSA-8cjm-8mp7-r2xf",
+              "severity": "low",
+              "summary": "Django: UpdateCacheMiddleware may disclose cached responses due to case-sensitive Cache-Control handling",
+              "url": "https://osv.dev/vulnerability/GHSA-8cjm-8mp7-r2xf"
+            },
+            {
+              "aliases": [
+                "BIT-django-2026-53878",
+                "CVE-2026-53878",
+                "PYSEC-2026-2092"
+              ],
+              "cvss": 6.1,
+              "fixed_in": [
+                "5.2.16",
+                "6.0.7"
+              ],
+              "id": "GHSA-8qcx-xf44-272x",
+              "severity": "medium",
+              "summary": "Django: DomainNameValidator permits newline characters that may enable HTTP header injection",
+              "url": "https://osv.dev/vulnerability/GHSA-8qcx-xf44-272x"
+            },
+            {
+              "aliases": [
+                "BIT-django-2026-48587",
+                "CVE-2026-48587",
+                "PYSEC-2026-198"
+              ],
+              "cvss": 3.1,
+              "fixed_in": [
+                "5.2.15",
+                "6.0.6"
+              ],
+              "id": "GHSA-923m-gv2p-w5qp",
+              "severity": "low",
+              "summary": "Django: has_vary_header may expose cached responses when Vary values contain whitespace",
+              "url": "https://osv.dev/vulnerability/GHSA-923m-gv2p-w5qp"
+            },
+            {
+              "aliases": [
+                "BIT-django-2026-53877",
+                "CVE-2026-53877",
+                "PYSEC-2026-2091"
+              ],
+              "cvss": 4.8,
+              "fixed_in": [
+                "5.2.16",
+                "6.0.7"
+              ],
+              "id": "GHSA-crhf-3pfg-w68w",
+              "severity": "medium",
+              "summary": " Django: GDALRaster may over-read heap memory when constructed from bytes",
+              "url": "https://osv.dev/vulnerability/GHSA-crhf-3pfg-w68w"
+            },
+            {
+              "aliases": [
+                "BIT-django-2025-64459",
+                "CVE-2025-64459",
+                "PYSEC-2025-108"
+              ],
+              "cvss": 9.1,
+              "fixed_in": [
+                "4.2.26",
+                "5.1.14",
+                "5.2.8"
+              ],
+              "id": "GHSA-frmv-pr5f-9mcr",
+              "severity": "critical",
+              "summary": "Django vulnerable to SQL injection via _connector keyword argument in QuerySet and Q objects.",
+              "url": "https://osv.dev/vulnerability/GHSA-frmv-pr5f-9mcr"
+            },
+            {
+              "aliases": [
+                "BIT-django-2026-6873",
+                "CVE-2026-6873",
+                "PYSEC-2026-199"
+              ],
+              "cvss": 3.1,
+              "fixed_in": [
+                "5.2.15",
+                "6.0.6"
+              ],
+              "id": "GHSA-h7pc-vwp9-298g",
+              "severity": "low",
+              "summary": "Django: signed cookies are vulnerable to salt namespace collisions",
+              "url": "https://osv.dev/vulnerability/GHSA-h7pc-vwp9-298g"
+            },
+            {
+              "aliases": [
+                "BIT-django-2025-64458",
+                "CVE-2025-64458",
+                "PYSEC-2025-107"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "4.2.26",
+                "5.1.14",
+                "5.2.8"
+              ],
+              "id": "GHSA-qw25-v68c-qjf3",
+              "severity": "high",
+              "summary": "Django has a denial-of-service vulnerability in HttpResponseRedirect and HttpResponsePermanentRedirect on Windows",
+              "url": "https://osv.dev/vulnerability/GHSA-qw25-v68c-qjf3"
+            },
+            {
+              "aliases": [
+                "BIT-django-2021-35042",
+                "CVE-2021-35042",
+                "PYSEC-2021-109"
+              ],
+              "cvss": 9.8,
+              "fixed_in": [
+                "3.1.13",
+                "3.2.5"
+              ],
+              "id": "GHSA-xpfp-f569-q3p2",
+              "severity": "critical",
+              "summary": "SQL Injection in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-xpfp-f569-q3p2"
+            },
+            {
+              "aliases": [
+                "BIT-django-2021-44420",
+                "CVE-2021-44420",
+                "PYSEC-2021-439"
+              ],
+              "cvss": 7.3,
+              "fixed_in": [
+                "2.2.25",
+                "3.1.14",
+                "3.2.10"
+              ],
+              "id": "GHSA-v6rh-hp5x-86rv",
+              "severity": "medium",
+              "summary": "Potential bypass of an upstream access control based on URL paths in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-v6rh-hp5x-86rv"
+            },
+            {
+              "aliases": [
+                "BIT-django-2021-31542",
+                "CVE-2021-31542",
+                "PYSEC-2021-7"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "2.2.21",
+                "3.1.9",
+                "3.2.1"
+              ],
+              "id": "GHSA-rxjp-mfm9-w4wr",
+              "severity": "high",
+              "summary": "Path Traversal in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-rxjp-mfm9-w4wr"
+            },
+            {
+              "aliases": [
+                "BIT-django-2021-32052",
+                "CVE-2021-32052",
+                "PYSEC-2021-8"
+              ],
+              "cvss": 6.1,
+              "fixed_in": [
+                "2.2.22",
+                "3.1.10",
+                "3.2.2"
+              ],
+              "id": "GHSA-qm57-vhq3-3fwf",
+              "severity": "medium",
+              "summary": "Header injection possible in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-qm57-vhq3-3fwf"
+            },
+            {
+              "aliases": [
+                "BIT-django-2021-33203",
+                "CVE-2021-33203",
+                "PYSEC-2021-98"
+              ],
+              "cvss": 4.9,
+              "fixed_in": [
+                "2.2.24",
+                "3.1.12",
+                "3.2.4"
+              ],
+              "id": "GHSA-68w8-qjq3-2gfm",
+              "severity": "medium",
+              "summary": "Path Traversal in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-68w8-qjq3-2gfm"
+            },
+            {
+              "aliases": [
+                "BIT-django-2021-33571",
+                "CVE-2021-33571",
+                "PYSEC-2021-99"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "2.2.24",
+                "3.1.12",
+                "3.2.4"
+              ],
+              "id": "GHSA-p99v-5w3c-jqq9",
+              "severity": "high",
+              "summary": "Django Access Control Bypass possibly leading to SSRF, RFI, and LFI attacks ",
+              "url": "https://osv.dev/vulnerability/GHSA-p99v-5w3c-jqq9"
+            },
+            {
+              "aliases": [
+                "BIT-django-2021-45115",
+                "CVE-2021-45115",
+                "PYSEC-2022-1"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "2.2.26",
+                "3.2.11",
+                "4.0.1"
+              ],
+              "id": "GHSA-53qw-q765-4fww",
+              "severity": "high",
+              "summary": "Denial-of-service in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-53qw-q765-4fww"
+            },
+            {
+              "aliases": [
+                "BIT-django-2022-22818",
+                "CVE-2022-22818",
+                "PYSEC-2022-19"
+              ],
+              "cvss": 6.1,
+              "fixed_in": [
+                "2.2.27",
+                "3.2.12",
+                "4.0.2"
+              ],
+              "id": "GHSA-95rw-fx8r-36v6",
+              "severity": "medium",
+              "summary": "Cross-site Scripting in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-95rw-fx8r-36v6"
+            },
+            {
+              "aliases": [
+                "BIT-django-2022-28346",
+                "CVE-2022-28346",
+                "PYSEC-2022-190"
+              ],
+              "cvss": 9.8,
+              "fixed_in": [
+                "2.2.28",
+                "3.2.13",
+                "4.0.4"
+              ],
+              "id": "GHSA-2gwj-7jmv-h26r",
+              "severity": "critical",
+              "summary": "SQL Injection in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-2gwj-7jmv-h26r"
+            },
+            {
+              "aliases": [
+                "BIT-django-2022-28347",
+                "CVE-2022-28347",
+                "PYSEC-2022-191"
+              ],
+              "cvss": 9.8,
+              "fixed_in": [
+                "2.2.28",
+                "3.2.13",
+                "4.0.4"
+              ],
+              "id": "GHSA-w24h-v9qh-8gxj",
+              "severity": "critical",
+              "summary": "SQL Injection in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-w24h-v9qh-8gxj"
+            },
+            {
+              "aliases": [
+                "BIT-django-2021-45116",
+                "CVE-2021-45116",
+                "PYSEC-2022-2"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "2.2.26",
+                "3.2.11",
+                "4.0.1"
+              ],
+              "id": "GHSA-8c5j-9r9f-c6w8",
+              "severity": "high",
+              "summary": "Information disclosure in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-8c5j-9r9f-c6w8"
+            },
+            {
+              "aliases": [
+                "BIT-django-2022-23833",
+                "CVE-2022-23833",
+                "PYSEC-2022-20"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "2.2.27",
+                "3.2.12",
+                "4.0.2"
+              ],
+              "id": "GHSA-6cw3-g6wv-c2xv",
+              "severity": "high",
+              "summary": "Infinite Loop in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-6cw3-g6wv-c2xv"
+            },
+            {
+              "aliases": [
+                "BIT-django-2022-34265",
+                "CVE-2022-34265",
+                "PYSEC-2022-213"
+              ],
+              "cvss": 9.8,
+              "fixed_in": [
+                "3.2.14",
+                "4.0.6"
+              ],
+              "id": "GHSA-p64x-8rxx-wf6q",
+              "severity": "critical",
+              "summary": "Django `Trunc()` and `Extract()` database functions vulnerable to SQL Injection",
+              "url": "https://osv.dev/vulnerability/GHSA-p64x-8rxx-wf6q"
+            },
+            {
+              "aliases": [
+                "BIT-django-2022-36359",
+                "CVE-2022-36359",
+                "PYSEC-2022-245"
+              ],
+              "cvss": 8.8,
+              "fixed_in": [
+                "3.2.15",
+                "4.0.7"
+              ],
+              "id": "GHSA-8x94-hmjh-97hq",
+              "severity": "high",
+              "summary": "Django vulnerable to Reflected File Download attack",
+              "url": "https://osv.dev/vulnerability/GHSA-8x94-hmjh-97hq"
+            },
+            {
+              "aliases": [
+                "BIT-django-2021-45452",
+                "CVE-2021-45452",
+                "PYSEC-2022-3"
+              ],
+              "cvss": 5.3,
+              "fixed_in": [
+                "2.2.26",
+                "3.2.11",
+                "4.0.1"
+              ],
+              "id": "GHSA-jrh2-hc4r-7jwx",
+              "severity": "medium",
+              "summary": "Directory-traversal in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-jrh2-hc4r-7jwx"
+            },
+            {
+              "aliases": [
+                "BIT-django-2022-41323",
+                "CVE-2022-41323",
+                "PYSEC-2022-304"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "3.2.16",
+                "4.0.8",
+                "4.1.2",
+                "5b6b257fa7ec37ff27965358800c67e2dd11c924"
+              ],
+              "id": "GHSA-qrw5-5h28-6cmg",
+              "severity": "high",
+              "summary": "Django denial-of-service vulnerability in internationalized URLs",
+              "url": "https://osv.dev/vulnerability/GHSA-qrw5-5h28-6cmg"
+            },
+            {
+              "aliases": [
+                "BIT-django-2023-36053",
+                "CVE-2023-36053",
+                "PYSEC-2023-100"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "3.2.20",
+                "4.1.10",
+                "4.2.3"
+              ],
+              "id": "GHSA-jh3w-4vvf-mjgr",
+              "severity": "high",
+              "summary": "Django has regular expression denial of service vulnerability in EmailValidator/URLValidator",
+              "url": "https://osv.dev/vulnerability/GHSA-jh3w-4vvf-mjgr"
+            },
+            {
+              "aliases": [
+                "BIT-django-2023-23969",
+                "CVE-2023-23969",
+                "PYSEC-2023-12"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "3.2.17",
+                "4.0.9",
+                "4.1.6"
+              ],
+              "id": "GHSA-q2jf-h9jm-m7p4",
+              "severity": "high",
+              "summary": "Django contains Uncontrolled Resource Consumption via cached header",
+              "url": "https://osv.dev/vulnerability/GHSA-q2jf-h9jm-m7p4"
+            },
+            {
+              "aliases": [
+                "BIT-django-2023-24580",
+                "CVE-2023-24580",
+                "PYSEC-2023-13"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "3.2.18",
+                "4.0.10",
+                "4.1.7"
+              ],
+              "id": "GHSA-2hrw-hx67-34x6",
+              "severity": "high",
+              "summary": "Resource exhaustion in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-2hrw-hx67-34x6"
+            },
+            {
+              "aliases": [
+                "BIT-django-2023-46695",
+                "CVE-2023-46695",
+                "PYSEC-2023-222"
+              ],
+              "cvss": 7.5,
+              "fixed_in": [
+                "3.2.23",
+                "4.1.13",
+                "4.2.7"
+              ],
+              "id": "GHSA-qmf9-6jqf-j8fq",
+              "severity": "high",
+              "summary": "Django potential denial of service vulnerability in UsernameField on Windows",
+              "url": "https://osv.dev/vulnerability/GHSA-qmf9-6jqf-j8fq"
+            },
+            {
+              "aliases": [
+                "BIT-django-2023-41164",
+                "CVE-2023-41164",
+                "PYSEC-2023-225"
+              ],
+              "cvss": 5.3,
+              "fixed_in": [
+                "3.2.21",
+                "4.1.11",
+                "4.2.5"
+              ],
+              "id": "GHSA-7h4p-27mh-hmrw",
+              "severity": "medium",
+              "summary": "Django Denial of service vulnerability in django.utils.encoding.uri_to_iri",
+              "url": "https://osv.dev/vulnerability/GHSA-7h4p-27mh-hmrw"
+            },
+            {
+              "aliases": [
+                "BIT-django-2023-43665",
+                "CVE-2023-43665",
+                "PYSEC-2023-226"
+              ],
+              "cvss": 5.9,
+              "fixed_in": [
+                "3.2.22",
+                "4.1.12",
+                "4.2.6"
+              ],
+              "id": "GHSA-h8gc-pgj2-vjm3",
+              "severity": "high",
+              "summary": "Django Denial-of-service in django.utils.text.Truncator",
+              "url": "https://osv.dev/vulnerability/GHSA-h8gc-pgj2-vjm3"
+            },
+            {
+              "aliases": [
+                "BIT-django-2023-31047",
+                "CVE-2023-31047",
+                "PYSEC-2023-61"
+              ],
+              "cvss": 9.8,
+              "fixed_in": [
+                "3.2.19",
+                "4.1.9",
+                "4.2.1"
+              ],
+              "id": "GHSA-r3xc-prgr-mg9p",
+              "severity": "critical",
+              "summary": "Django bypasses validation when using one form field to upload multiple files",
+              "url": "https://osv.dev/vulnerability/GHSA-r3xc-prgr-mg9p"
+            },
+            {
+              "aliases": [
+                "BIT-django-2024-24680",
+                "CVE-2024-24680",
+                "PYSEC-2024-28"
+              ],
+              "cvss": 5.9,
+              "fixed_in": [
+                "3.2.24",
+                "4.2.10",
+                "5.0.2"
+              ],
+              "id": "GHSA-xxj9-f6rv-m3x4",
+              "severity": "high",
+              "summary": "Django denial-of-service attack in the intcomma template filter",
+              "url": "https://osv.dev/vulnerability/GHSA-xxj9-f6rv-m3x4"
+            },
+            {
+              "aliases": [
+                "BIT-django-2024-27351",
+                "CVE-2024-27351",
+                "PYSEC-2024-47"
+              ],
+              "cvss": 5.3,
+              "fixed_in": [
+                "3.2.25",
+                "4.2.11",
+                "5.0.3"
+              ],
+              "id": "GHSA-vm8q-m57g-pff3",
+              "severity": "medium",
+              "summary": "Regular expression denial-of-service in Django",
+              "url": "https://osv.dev/vulnerability/GHSA-vm8q-m57g-pff3"
+            },
+            {
+              "aliases": [
+                "BIT-django-2024-45231",
+                "CVE-2024-45231",
+                "PYSEC-2026-1297"
+              ],
+              "cvss": 3.7,
+              "fixed_in": [
+                "4.2.16",
+                "5.0.9",
+                "5.1.1"
+              ],
+              "id": "GHSA-rrqc-c2jx-6jgv",
+              "severity": "medium",
+              "summary": "Django allows enumeration of user e-mail addresses",
+              "url": "https://osv.dev/vulnerability/GHSA-rrqc-c2jx-6jgv"
+            },
+            {
+              "aliases": [
+                "BIT-django-2026-15830",
+                "CVE-2026-15830",
+                "PYSEC-2026-3717"
+              ],
+              "cvss": 5.3,
+              "fixed_in": [
+                "5.2.17",
+                "6.0.8",
+                "6.1.1"
+              ],
+              "id": "GHSA-q238-5cxm-5c9h",
+              "severity": "medium",
+              "summary": "Django GeoDjango vulnerable to denial of service through deeply nested geometry collections",
+              "url": "https://osv.dev/vulnerability/GHSA-q238-5cxm-5c9h"
+            },
+            {
+              "aliases": [
+                "BIT-django-2026-15307",
+                "CVE-2026-15307",
+                "GHSA-wvqv-fj8w-qmhm"
+              ],
+              "cvss": 8.8,
+              "fixed_in": [
+                "5.2.17",
+                "6.0.8"
+              ],
+              "id": "PYSEC-2026-4035",
+              "severity": "high",
+              "summary": "Django GeoDjango spatial lookups allow file writes and outbound requests through GDAL raster parsing",
+              "url": "https://osv.dev/vulnerability/PYSEC-2026-4035"
+            }
+          ]
+        }
+      ],
+      "reason": "Deterministic scan with 11 rule families over 0 line(s) and 1 OSV package lookup(s). Rule-based, not a full audit.",
+      "severity": "critical",
+      "verdict": "vulnerable",
+      "version": "0.1.0"
+    },
+    "result_shape": "raw",
+    "signal_hash": "0xf5846c62ae23fe161ebfed9770ca6b54ba7e4028e4aaf82ea4404a45376dc968",
+    "timestamp": "2026-11-02T17:43:03.126404813Z",
+    "warnings": [
+      "request body is 54 bytes, exceeding the miner's declared limit of 200000 bytes: Request body must be 200,000 bytes or fewer."
+    ]
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x22a9787ad4a9bd23aa47c11700c35047d09331bfe2d67b122b8f1085a7e83935",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x59fe5e628f87f746c70a840c10e87061e3849ea58610baf7ffc23d6de847d4de",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "4857",
+    "intent": "SECURITY_REVIEW_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 1997,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x22a9787ad4a9bd23aa47c11700c35047d09331bfe2d67b122b8f1085a7e83935",
+    "timestamp": 1793641383
+  },
+  "charged": true
+}

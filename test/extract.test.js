@@ -10,6 +10,7 @@ import {
   chunkDiff,
   shouldSkipFile,
   isSensitiveFile,
+  diffLineLocation,
 } from "../src/extract.js";
 
 const pick = (deps) => deps.map(({ name, from, to, exact }) => ({ name, from, to, exact }));
@@ -184,4 +185,13 @@ test("chunkDiff packs small files together and splits large ones under the limit
   assert.ok(chunks.length > 2, "big file split across chunks");
   assert.ok(!chunks.some((c) => c.files.includes("yarn.lock")));
   assert.ok(chunks.filter((c) => c.files.includes("big.js")).every((c) => c.text.includes("diff --git a/big.js")), "each piece keeps the file header");
+});
+
+test("diffLineLocation maps a line of diff text to its file and new-file line", () => {
+  const d = ["diff --git a/a.js b/a.js", "@@ -10,2 +10,3 @@", " ctx", "-old", "+new", "diff --git a/b.py b/b.py", "@@ -1 +1 @@", "+x = 1"].join("\n");
+  assert.deepEqual(diffLineLocation(d, 3), { file: "a.js", line: 10 });
+  assert.equal(diffLineLocation(d, 4), null, "removed lines have no new location");
+  assert.deepEqual(diffLineLocation(d, 5), { file: "a.js", line: 11 });
+  assert.deepEqual(diffLineLocation(d, 8), { file: "b.py", line: 1 });
+  assert.equal(diffLineLocation(d, 1), null);
 });

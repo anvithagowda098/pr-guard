@@ -24,7 +24,7 @@ const DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo
  * @param {string} pr.body
  * @param {Set<string>} enabled check names
  */
-export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12_000 } = {}) {
+export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12_000, maxChunks = Infinity } = {}) {
   // Package-version vulnerability lookups live under SECURITY_REVIEW_GENERAL on
   // Telegraph; CVE_LOOKUP_CVSS miners only take a CVE id (see data/miners-summary.json).
   const depJob = (d) => ({
@@ -37,7 +37,7 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
   const direct = resolvable.filter((d) => d.direct).map(depJob);
   const transitive = resolvable.filter((d) => !d.direct).map(depJob);
 
-  const chunks = chunkDiff(files, { maxChars });
+  const chunks = chunkDiff(files, { maxChars }).slice(0, maxChunks);
   const diff = chunks.map((c, i) => ({
     check: "diff",
     intent: "SECURITY_REVIEW_GENERAL",

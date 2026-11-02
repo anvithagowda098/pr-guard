@@ -1,0 +1,13 @@
+# PR Guard web page: scan any public PR from the browser, paid from a sponsor wallet.
+# Deploy: npx wrangler deploy -c web/wrangler.toml
+# Secrets (set once, never in this file): SPONSOR_KEY (burner key holding test USDC),
+# GITHUB_TOKEN (optional, a token with no scopes; only raises GitHub's rate limit).
+name = "pr-guard-app"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "SCANS"
+id = "4a1f9f999d714f04adf4219ebabb62dd"

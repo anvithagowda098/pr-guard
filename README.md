@@ -67,6 +67,14 @@ What follows is the original Oct 27 assessment.
 - `.env`, `*.pem`, `id_rsa` and similar files are never sent, even redacted.
 - Lockfiles, vendored and minified code, and binaries are skipped.
 
+## Try it in the browser
+
+**https://pr-guard-app.pr-guard.workers.dev**: paste any public pull request link.
+- **Cost to visitors:** none. Checks are paid from a sponsor wallet in test USDC.
+- **Limits:** 5 scans per visitor per day, a daily cap across all visitors, and $0.10 at most per scan.
+- **Links:** every report gets a permanent link, and the home page lists recent scans.
+- **How it runs:** `web/` is a Cloudflare Worker sharing PR Guard's engine (`src/plan.js`, `src/runner.js`). It runs one paid check per request, so each request stays inside the Workers free plan's CPU limit.
+
 ## Use it
 
 Copy `examples/pr-guard.yml` into `.github/workflows/`. Then add a `TELEGRAPH_PRIVATE_KEY` repository secret holding a funded burner key (see step 2 below).

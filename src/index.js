@@ -4,9 +4,8 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { readFile } from "node:fs/promises";
 import { Telegraph, Budget, DEFAULT_NODE_URL } from "./telegraph.js";
-import { manifestEcosystem, diffManifest, mergeDependencyChanges, diffInstallScripts } from "./extract.js";
-import { redact } from "./redact.js";
-import { DEFAULT_CHECKS, buildJobs, localOutcomes, unresolvableDepOutcomes } from "./checks.js";
+import { DEFAULT_CHECKS } from "./checks.js";
+import { planScan } from "./plan.js";
 import { runCheck, runAll } from "./runner.js";
 import { decide, shouldFail } from "./policy.js";
 import { renderComment } from "./report.js";
@@ -37,26 +36,6 @@ function inputs() {
   };
 }
 
-async function collectDependencies(octokit, repoRef, files, baseSha, headSha) {
-  const deps = [];
-  const installScripts = [];
-  const errors = [];
-  for (const f of files) {
-    if (!manifestEcosystem(f.filename)) continue;
-    const basePath = f.previous_filename ?? f.filename;
-    try {
-      const [baseText, headText] = await Promise.all([
-        f.status === "added" ? null : getText(octokit, { ...repoRef, path: basePath, ref: baseSha }),
-        f.status === "removed" ? null : getText(octokit, { ...repoRef, path: f.filename, ref: headSha }),
-      ]);
-      deps.push(...diffManifest(f.filename, baseText, headText));
-      installScripts.push(...diffInstallScripts(f.filename, baseText, headText));
-    } catch (err) {
-      errors.push({ file: f.filename, error: err.message });
-    }
-  }
-  return { deps: mergeDependencyChanges(deps), installScripts, errors };
-}
 
 async function run() {
   const cfg = inputs();
@@ -102,19 +81,16 @@ async function run() {
 
   const rawFiles = await listPrFiles(octokit, { ...repoRef, pull_number: pr.number });
   const base = await mergeBase(octokit, { ...repoRef, base: pr.base.sha, head: pr.head.sha });
-  const { deps, installScripts, errors } = await collectDependencies(octokit, repoRef, rawFiles, base, pr.head.sha);
+  const getFileText = ({ path, ref }) => getText(octokit, { ...repoRef, path, ref });
+  const { jobs, local, errors } = await planScan({ pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks });
   for (const e of errors) core.warning(`could not read ${e.file}: ${e.error}`);
-
-  // Only redacted text ever leaves the runner.
-  const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
-  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, cfg.checks);
 
   const budget = new Budget(cfg.maxUsdPerPr);
   const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 45_000 });
   const onCall = (entry) => appendLedger(LEDGER_PATH, { pr: pr.number, ...entry });
 
   const paid = await runAll(jobs, (job) => runCheck({ tg, miners, job, deadline, onCall }));
-  const outcomes = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps), ...paid];
+  const outcomes = [...local, ...paid];
   const { verdict, reasons } = decide(outcomes);
   const spentUsd = Number(budget.spent) / 1e6;
 

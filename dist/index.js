@@ -50360,6 +50360,7 @@ var LOCKFILES = /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-
 var GENERATED = /(^|\/)(vendor|node_modules|third_party|dist|build)\/|\.min\.(js|css)$|\.map$/;
 var BINARY = /\.(png|jpe?g|gif|ico|webp|bmp|pdf|zip|gz|tgz|bz2|xz|7z|jar|woff2?|ttf|eot|otf|mp[34]|mov|wasm|exe|dll|so|dylib|class|pyc)$/i;
 var isSensitiveFile = (path) => /(^|\/)\.env(\.(?!example$|sample$|template$)[^/]+)?$/.test(path) || /\.(pem|key|p12|pfx|jks|keystore)$/i.test(path) || /(^|\/)(id_(rsa|dsa|ecdsa|ed25519)|\.npmrc|\.pypirc|\.netrc|credentials(\.json)?)$/.test(path);
+var isDocFile = (path) => /\.(md|mdx|markdown|rst|txt|adoc)$/i.test(path) || /(^|\/)(LICENSE|LICENCE|CHANGELOG|AUTHORS|NOTICE)(\.\w+)?$/i.test(path);
 var shouldSkipFile = (path) => LOCKFILES.test(path) || GENERATED.test(path) || BINARY.test(path) || isSensitiveFile(path);
 function splitLong(header, body, maxChars) {
   const pieces = [];
@@ -50392,7 +50393,7 @@ function splitLong(header, body, maxChars) {
 function chunkDiff(files, { maxChars = 12e3 } = {}) {
   const sections = [];
   for (const f of files) {
-    if (!f.patch || shouldSkipFile(f.filename)) continue;
+    if (!f.patch || shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
     const header = `diff --git a/${f.filename} b/${f.filename}
 `;
     const text = header + f.patch + "\n";
@@ -50534,7 +50535,7 @@ function combineOpinions(first, second) {
 // src/checks.js
 var DEFAULT_CHECKS = ["deps", "diff"];
 var DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
-function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3 } = {}) {
+function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3, maxChunks = Infinity } = {}) {
   const depJob = (d) => ({
     check: "deps",
     intent: "SECURITY_REVIEW_GENERAL",
@@ -50544,7 +50545,7 @@ function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrl
   const resolvable = deps.filter((d) => d.to).slice(0, maxDeps);
   const direct = resolvable.filter((d) => d.direct).map(depJob);
   const transitive = resolvable.filter((d) => !d.direct).map(depJob);
-  const chunks = chunkDiff(files, { maxChars });
+  const chunks = chunkDiff(files, { maxChars }).slice(0, maxChunks);
   const diff = chunks.map((c, i) => ({
     check: "diff",
     intent: "SECURITY_REVIEW_GENERAL",
@@ -50606,6 +50607,35 @@ function localOutcomes(rawFiles, installScripts) {
     }))));
   }
   return out;
+}
+
+// src/plan.js
+async function collectDependencies(getText2, files, baseSha, headSha) {
+  const deps = [];
+  const installScripts = [];
+  const errors = [];
+  for (const f of files) {
+    if (!manifestEcosystem(f.filename)) continue;
+    const basePath = f.previous_filename ?? f.filename;
+    try {
+      const [baseText, headText] = await Promise.all([
+        f.status === "added" ? null : getText2({ path: basePath, ref: baseSha }),
+        f.status === "removed" ? null : getText2({ path: f.filename, ref: headSha })
+      ]);
+      deps.push(...diffManifest(f.filename, baseText, headText));
+      installScripts.push(...diffInstallScripts(f.filename, baseText, headText));
+    } catch (err) {
+      errors.push({ file: f.filename, error: err.message });
+    }
+  }
+  return { deps: mergeDependencyChanges(deps), installScripts, errors };
+}
+async function planScan({ pr, rawFiles, baseSha, headSha, getText: getText2, checks, limits }) {
+  const { deps, installScripts, errors } = await collectDependencies(getText2, rawFiles, baseSha, headSha);
+  const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
+  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, checks, limits);
+  const local2 = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps)];
+  return { jobs, local: local2, errors };
 }
 
 // src/normalize.js
@@ -51047,26 +51077,6 @@ function inputs() {
     token: getInput("github-token")
   };
 }
-async function collectDependencies(octokit, repoRef, files, baseSha, headSha) {
-  const deps = [];
-  const installScripts = [];
-  const errors = [];
-  for (const f of files) {
-    if (!manifestEcosystem(f.filename)) continue;
-    const basePath = f.previous_filename ?? f.filename;
-    try {
-      const [baseText, headText] = await Promise.all([
-        f.status === "added" ? null : getText(octokit, { ...repoRef, path: basePath, ref: baseSha }),
-        f.status === "removed" ? null : getText(octokit, { ...repoRef, path: f.filename, ref: headSha })
-      ]);
-      deps.push(...diffManifest(f.filename, baseText, headText));
-      installScripts.push(...diffInstallScripts(f.filename, baseText, headText));
-    } catch (err) {
-      errors.push({ file: f.filename, error: err.message });
-    }
-  }
-  return { deps: mergeDependencyChanges(deps), installScripts, errors };
-}
 async function run() {
   const cfg = inputs();
   const { context: context3 } = github_exports;
@@ -51104,15 +51114,14 @@ async function run() {
   const miners = cfg.minersConfig ? JSON.parse(await readFile(cfg.minersConfig, "utf8")) : miners_default;
   const rawFiles = await listPrFiles(octokit, { ...repoRef, pull_number: pr.number });
   const base = await mergeBase(octokit, { ...repoRef, base: pr.base.sha, head: pr.head.sha });
-  const { deps, installScripts, errors } = await collectDependencies(octokit, repoRef, rawFiles, base, pr.head.sha);
+  const getFileText = ({ path, ref }) => getText(octokit, { ...repoRef, path, ref });
+  const { jobs, local: local2, errors } = await planScan({ pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks });
   for (const e of errors) warning(`could not read ${e.file}: ${e.error}`);
-  const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
-  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, cfg.checks);
   const budget = new Budget(cfg.maxUsdPerPr);
   const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 45e3 });
   const onCall = (entry) => appendLedger(LEDGER_PATH, { pr: pr.number, ...entry });
   const paid = await runAll(jobs, (job) => runCheck({ tg, miners, job, deadline, onCall }));
-  const outcomes = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps), ...paid];
+  const outcomes = [...local2, ...paid];
   const { verdict, reasons } = decide(outcomes);
   const spentUsd = Number(budget.spent) / 1e6;
   await post(renderComment({ verdict, reasons, outcomes, spentUsd, budgetUsd: cfg.maxUsdPerPr, nodeUrl: cfg.nodeUrl, runUrl }));

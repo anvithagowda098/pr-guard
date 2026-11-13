@@ -13,6 +13,8 @@ Every check is first bought through Telegraph's routing: a canonical ask by inte
 | deps | #190048 Secrev Depsdev | independent | any ecosystem, advisory ids only: unrated, so it can only give CAUTION |
 | diff | #5530 Telegraph Verity | independent | code, when the routed review is unusable or a part of the diff is over 2,000 characters |
 | diff | #731001 PR Guard Sentinel | **this project** | code, only if Verity fails |
+| diff | #1900999007 CodeWire Smart Contract Audit | independent | Solidity: first fallback for diffs that touch `.sol` files |
+| addresses | #200001 GoPlus Security | independent | risk flags for each new on-chain address (honeypot, owner powers, verified source, proxy, taxes) |
 
 The list lives in `config/miners.json`, keyed by check, best first. No miner is asked to second-guess another. A BLOCK needs deterministic evidence: registry data about the exact package and version, PR Guard's local rules (the same rule set as Sentinel, run inside PR Guard for free) finding the same issue in the diff, or a local check such as a committed key.
 
@@ -21,6 +23,14 @@ PR Guard Sentinel is our own miner (`miner/`). Its use is disclosed wherever it 
 ## Vetting history
 
 Every miner was tested with paid calls before it was added. The raw answers are kept as test fixtures in `test/fixtures/miner-responses/`, and every normalizer is tested against them. Newest first.
+
+### Nov 13, 2026: smart contracts and addresses (mission 14)
+
+- **`SMART_CONTRACT_AUDIT_GENERAL` has no input schema**, so only plain-language asks reach it. Two routed asks (a Solidity diff, an address) both went to miner 20260828 (PREFLIGHT), which answered "unavailable": its language model timed out.
+- **Routed `CODE_REVIEW_GENERAL` handles Solidity.** Miner 302 named the reentrancy and the open `setOwner` in the demo vault. Once it called them "low" with an Approve verdict, and once it answered in prose the node couldn't read. PR Guard's own Solidity rules settle the first case, and the fallback the second.
+- **CodeWire Smart Contract Audit (#1900999007)**, `GET /contract-audit {contract}`: on the vulnerable vault it found reentrancy (critical) and missing access control (high); on a fixed vault, only low issues. Its answers are structured prose ("Finding 1: …, affects …, severity …").
+- **GoPlus Security (#200001)**, `GET /token-security {chain_id, contract_addresses}`: GoPlus's full token risk profile. USDT is on its trusted list, with known admin powers (owner can change balances, pausable, blacklist).
+- **Sourcify Verified Contracts (#200002)**, `GET /contract`: unusable. It passes every parameter through as a query string, and Sourcify rejects them (`chainId`, then `chain`). Both calls were credited back to escrow.
 
 ### Nov 13, 2026: routing first
 

@@ -2,6 +2,15 @@
 
 Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) plus the Miners track. The event runs Nov 1 to Dec 1, 2026 (23:59 UTC). Submit by Nov 29.
 
+## Mission 14 added, Nov 13
+
+PR Guard now also serves Mission 14 (Web3 Native & DeFi; "buy bytecode and drainer analysis before committing capital"):
+- **Solidity review:** routed code review, CodeWire Smart Contract Audit as the `.sol` fallback, and Solidity rules for confirmation.
+- **New on-chain addresses:** a paid GoPlus risk check for each address a PR adds, plus a local flag when a PR swaps one address for another.
+- **Demos:** PR #4 address swap (CAUTION), PR #5 reentrant vault (BLOCK).
+
+In the submission, list both missions (10 and 14).
+
 ## Design change, Nov 13: routing first
 
 The Discord digest says the team advised builders not to call several miners directly just to cross-check them: that "defeats Telegraph's purpose" and won't meet mainnet readiness. PR Guard now:

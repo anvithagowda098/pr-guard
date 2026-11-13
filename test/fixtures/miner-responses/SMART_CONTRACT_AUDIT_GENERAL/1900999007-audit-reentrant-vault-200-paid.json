@@ -1,0 +1,147 @@
+{
+  "captured_at": "2026-11-13T06:23:22.310Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/1900999007",
+  "request": {
+    "method": "GET",
+    "endpoint": "/contract-audit",
+    "payload": {
+      "contract": "diff --git a/demo/contracts/Vault.sol b/demo/contracts/Vault.sol\nnew file mode 100644\nindex 0000000..9409a3f\n--- /dev/null\n+++ b/demo/contracts/Vault.sol\n@@ -0,0 +1,28 @@\n+// SPDX-License-Identifier: MIT\n+pragma solidity ^0.8.20;\n+\n+/// Demo only: a vault with two planted bugs, a reentrant withdraw and an\n+/// owner anyone can replace. Never deploy this.\n+contract Vault {\n+    mapping(address => uint256) public balances;\n+    address public owner;\n+\n+    constructor() {\n+        owner = msg.sender;\n+    }\n+\n+    function deposit() external payable {\n+        balances[msg.sender] += msg.value;\n+    }\n+\n+    function withdraw() external {\n+        uint256 amount = balances[msg.sender];\n+        (bool ok, ) = msg.sender.call{value: amount}(\"\");\n+        require(ok, \"send failed\");\n+        balances[msg.sender] = 0;\n+    }\n+\n+    function setOwner(address newOwner) external {\n+        owner = newOwner;\n+    }\n+}\n"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/1900999007\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/1900999007",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/1900999007"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 25028,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a59baf5a1b6bc5c3-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Fri, 13 Nov 2026 06:23:21 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHg5YTMyODc1NDcwZjk5OWZmYTQ0YzAzMzI4MTczZTIwNzhlYTI5NTcwODViMTMzNmNlZDZkNDU5ZmRlYWRjNzIyIiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=jGkWFf4gGfWphNPeDddoCTiADNAg28meEekYSqmtxwIm3rEMEgHWTL4il%2FHt0SMkNRXo4pNA7ygJTeVbVsASoyVS0%2BZk%2F5zmu%2Bmh4fvNTpq7dlMl2hf8ldS3J1%2BCFws64uvjSq6%2FUsXR0Qf%2BU37fag%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGRlODUwZWYxNjM5ODQ0YTk1NzFlZTBmZWRhYzc2YjA4NDMyODI2MGI2NTNkZGMzNDBkNzE3NjkyNzdkMTdmYWUiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI0OTgzIiwiaW50ZW50IjoiU01BUlRfQ09OVFJBQ1RfQVVESVRfR0VORVJBTCIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjIwNzksInNldHRsZW1lbnQiOiJvbmNoYWluIiwiY2hhaW4iOiJlaXAxNTU6MTExNTUxMTEiLCJ0eF9oYXNoIjoiMHg5YTMyODc1NDcwZjk5OWZmYTQ0YzAzMzI4MTczZTIwNzhlYTI5NTcwODViMTMzNmNlZDZkNDU5ZmRlYWRjNzIyIiwidGltZXN0YW1wIjoxNzk0NTUxMDAxfQ=="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":6325,\"miner_id\":\"1900999007\",\"miner_name\":\"CodeWire Smart Contract Audit\",\"result\":{\"as_of\":\"2026-11-13T06:23:21.058Z\",\"attribution\":\"Answer produced with MiniMax (MiniMax-M2.5-highspeed) under a commercial MiniMax plan held by zkasuran.\",\"audit_input\":{\"encoding\":\"UTF-8\",\"line_segments\":35,\"sha256\":\"ec2f5a5ca259a0fe91435edb2169106a3df0e4876887abab8ce87f5a826815a9\",\"source_preserved\":true,\"unicode_characters\":922},\"confidence\":0.95,\"finding_attribution\":\"not_validated\",\"headline\":\"Overall risk verdict: The vault is unsafe for deployment because arbitrary users can replace the owner and depositors can reenter withdrawal to drain more ETH t\",\"intent\":\"SMART_CONTRACT_AUDIT_GENERAL\",\"model\":\"MiniMax-M2.5-highspeed\",\"source\":\"MiniMax language model\",\"source_verification\":{\"catalog_sha256\":\"d548396376f2ff28a61951a34017fa6e7db9f15d3ef9d9800ca1638a143be914\",\"finding_validation\":\"not_performed\",\"status\":\"not_in_pinned_catalog\"},\"summary\":\"Overall risk verdict: The vault is unsafe for deployment because arbitrary users can replace the owner and depositors can reenter withdrawal to drain more ETH than their recorded balance.\\n\\nFinding 1: Reentrancy, affects `withdraw()`, severity critical. The function reads `balances[msg.sender]`, transfers ETH with `msg.sender.call{value: amount}(\\\"\\\")`, and only afterward clears the balance. A malicious depositor can receive ETH, call `withdraw()` again during the external call, and repeatedly withdraw funds before the balance is reset. The required return-value check prevents silent failed transfers but does not prevent reentrant execution. Fix by applying checks-effects-interactions: set `balances[msg.sender] = 0` before transferring ETH, preferably using a local amount captured before the state change, and optionally add a reentrancy guard.\\n\\nFinding 2: Missing access control, affects `setOwner(address)`, severity high. Any account can replace `owner` because the function does not restrict the caller to the current owner or another authorized role. Although `owner` is not used by any other function in this contract, the unrestricted ownership state creates an arbitrary ownership takeover and would expose privileged functionality if added later. Fix by requiring `msg.sender == owner`, preferably with a two-step ownership transfer process involving nomination and acceptance, and emit an event for ownership changes.\\n\\nThe arithmetic in `deposit()` is protected against overflow and underflow by Solidity 0.8.20 checked arithmetic, and `msg.value` is correctly credited to the depositor under the current deposit accounting model. The external call uses the safe `call` pattern and checks its success result. No `delegatecall` or `selfdestruct` is present, and no randomness, oracle, or price-dependent logic exists.\"},\"result_shape\":\"raw\",\"signal_hash\":\"0xccc291a05150be4aca62431c024ff36788615382a8ce906bfb75e0f8a6675893\",\"timestamp\":\"2026-11-13T06:23:21.062115207Z\",\"warnings\":[\"parameter \\\"contract\\\" length 0 violates the miner's declared limit (lte 20000): contract is the input to work on. A single request, not a batch.\"]}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 6325,
+    "miner_id": "1900999007",
+    "miner_name": "CodeWire Smart Contract Audit",
+    "result": {
+      "as_of": "2026-11-13T06:23:21.058Z",
+      "attribution": "Answer produced with MiniMax (MiniMax-M2.5-highspeed) under a commercial MiniMax plan held by zkasuran.",
+      "audit_input": {
+        "encoding": "UTF-8",
+        "line_segments": 35,
+        "sha256": "ec2f5a5ca259a0fe91435edb2169106a3df0e4876887abab8ce87f5a826815a9",
+        "source_preserved": true,
+        "unicode_characters": 922
+      },
+      "confidence": 0.95,
+      "finding_attribution": "not_validated",
+      "headline": "Overall risk verdict: The vault is unsafe for deployment because arbitrary users can replace the owner and depositors can reenter withdrawal to drain more ETH t",
+      "intent": "SMART_CONTRACT_AUDIT_GENERAL",
+      "model": "MiniMax-M2.5-highspeed",
+      "source": "MiniMax language model",
+      "source_verification": {
+        "catalog_sha256": "d548396376f2ff28a61951a34017fa6e7db9f15d3ef9d9800ca1638a143be914",
+        "finding_validation": "not_performed",
+        "status": "not_in_pinned_catalog"
+      },
+      "summary": "Overall risk verdict: The vault is unsafe for deployment because arbitrary users can replace the owner and depositors can reenter withdrawal to drain more ETH than their recorded balance.\n\nFinding 1: Reentrancy, affects `withdraw()`, severity critical. The function reads `balances[msg.sender]`, transfers ETH with `msg.sender.call{value: amount}(\"\")`, and only afterward clears the balance. A malicious depositor can receive ETH, call `withdraw()` again during the external call, and repeatedly withdraw funds before the balance is reset. The required return-value check prevents silent failed transfers but does not prevent reentrant execution. Fix by applying checks-effects-interactions: set `balances[msg.sender] = 0` before transferring ETH, preferably using a local amount captured before the state change, and optionally add a reentrancy guard.\n\nFinding 2: Missing access control, affects `setOwner(address)`, severity high. Any account can replace `owner` because the function does not restrict the caller to the current owner or another authorized role. Although `owner` is not used by any other function in this contract, the unrestricted ownership state creates an arbitrary ownership takeover and would expose privileged functionality if added later. Fix by requiring `msg.sender == owner`, preferably with a two-step ownership transfer process involving nomination and acceptance, and emit an event for ownership changes.\n\nThe arithmetic in `deposit()` is protected against overflow and underflow by Solidity 0.8.20 checked arithmetic, and `msg.value` is correctly credited to the depositor under the current deposit accounting model. The external call uses the safe `call` pattern and checks its success result. No `delegatecall` or `selfdestruct` is present, and no randomness, oracle, or price-dependent logic exists."
+    },
+    "result_shape": "raw",
+    "signal_hash": "0xccc291a05150be4aca62431c024ff36788615382a8ce906bfb75e0f8a6675893",
+    "timestamp": "2026-11-13T06:23:21.062115207Z",
+    "warnings": [
+      "parameter \"contract\" length 0 violates the miner's declared limit (lte 20000): contract is the input to work on. A single request, not a batch."
+    ]
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x9a32875470f999ffa44c03328173e2078ea2957085b1336ced6d459fdeadc722",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0xde850ef1639844a9571ee0fedac76b084328260b653ddc340d71769277d17fae",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "4983",
+    "intent": "SMART_CONTRACT_AUDIT_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2079,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x9a32875470f999ffa44c03328173e2078ea2957085b1336ced6d459fdeadc722",
+    "timestamp": 1794551001
+  },
+  "charged": true
+}

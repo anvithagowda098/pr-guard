@@ -144,7 +144,7 @@ test("Verity's high findings are confirmed by PR Guard's local rules at the same
   const v = newNet("5530-review-two-file-diff-200-paid.json");
   const diff = v.request.payload.input.code;
   const c = confirmFindings("diff", normalize("verity-security", v.body.result, { diff }), { diff });
-  assert.deepEqual([c.confirmed, c.disagreement, c.severity], [true, false, "high"]);
+  assert.deepEqual([c.confirmed, c.disagreement, c.severity], [true, false, "critical"], "the higher of the two: PR Guard's rule rates SQL on user input critical");
   assert.ok(c.findings.every((f) => f.corroborated));
   assert.equal(decide([{ check: "diff", target: "src/routes", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
 });
@@ -243,4 +243,42 @@ test("GoPlus: a honeypot outside the trusted list is high and confirmed -> BLOCK
   assert.equal(normalize("goplus-token-security", { code: 1, message: "OK", result: {} }, usdt).severity, "low");
   assert.equal(normalize("goplus-token-security", { code: 2, message: "error" }, usdt).severity, "unknown");
   assert.equal(normalize("goplus-token-security", cap, { address: "0x2222222222222222222222222222222222222222" }).severity, "low", "an answer without this address has no data about it");
+});
+
+test("live, Nov 13: a reviewer that names a reentrancy but rates it low is overruled by PR Guard's rules -> BLOCK", () => {
+  const diff = routed("code-review-solidity-reentrancy-302-intent.json").request.params.code;
+  // The shape miner 302 returned for demo PR #5: the issues named, the verdict "Approve".
+  const n = normalize("code-review-format", { verdict: "Approve", findings: ["Reentrancy: withdraw sends ETH before zeroing the balance.", "Unrestricted ownership change: setOwner has no modifier."] });
+  assert.equal(n.severity, "low");
+  const c = confirmFindings("diff", n, { diff });
+  assert.deepEqual([c.severity, c.confirmed], ["high", true]);
+  assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("a hard-coded token address is not a hard-coded secret", () => {
+  const n = normalize("code-review-format", { verdict: "Request changes", findings: ["Hard‑coded token address (USDT) assumes the token exists on the target chain.", "Hard-coded API key in config."] });
+  assert.deepEqual(n.findings.map((f) => f.category ?? null), [null, "hardcoded-secret"]);
+});
+
+// ---- CodeWire Smart Contract Audit (#1900999007), captured Nov 13 -----------
+const codewire = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/SMART_CONTRACT_AUDIT_GENERAL/${name}`, import.meta.url), "utf8"));
+
+test("CodeWire on the demo vault: reentrancy critical, missing access control high, confirmed by PR Guard's rules -> BLOCK", () => {
+  const cap = codewire("1900999007-audit-reentrant-vault-200-paid.json");
+  const n = normalize("codewire-audit", cap.body.result);
+  assert.deepEqual(n.findings.slice(0, 2).map((f) => [f.category, f.severity]), [["reentrancy", "critical"], ["access-control", "high"]]);
+  const diff = cap.request.payload.contract;
+  const c = confirmFindings("diff", n, { diff });
+  assert.equal(c.confirmed, true);
+  assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("CodeWire on the fixed vault: only low findings -> SAFE; no verdict -> unknown", () => {
+  const cap = codewire("1900999007-audit-fixed-vault-200-paid.json");
+  const n = normalize("codewire-audit", cap.body.result);
+  assert.equal(n.severity, "low");
+  assert.ok(n.findings.length >= 2 && n.findings.every((f) => f.severity === "low"));
+  const c = confirmFindings("diff", n, { diff: cap.request.payload.contract });
+  assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "SAFE");
+  assert.equal(normalize("codewire-audit", { summary: "no structure" }).severity, "unknown");
 });

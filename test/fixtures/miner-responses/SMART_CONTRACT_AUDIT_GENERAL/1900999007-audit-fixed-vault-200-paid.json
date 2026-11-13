@@ -1,0 +1,147 @@
+{
+  "captured_at": "2026-11-13T06:24:10.489Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/1900999007",
+  "request": {
+    "method": "GET",
+    "endpoint": "/contract-audit",
+    "payload": {
+      "contract": "diff --git a/contracts/Vault.sol b/contracts/Vault.sol\n@@ -0,0 +1,25 @@\n+// SPDX-License-Identifier: MIT\n+pragma solidity ^0.8.20;\n+\n+contract Vault {\n+    mapping(address => uint256) public balances;\n+    address public owner;\n+\n+    constructor() {\n+        owner = msg.sender;\n+    }\n+\n+    function deposit() external payable {\n+        balances[msg.sender] += msg.value;\n+    }\n+\n+    function withdraw() external {\n+        uint256 amount = balances[msg.sender];\n+        balances[msg.sender] = 0;\n+        (bool ok, ) = msg.sender.call{value: amount}(\"\");\n+        require(ok, \"send failed\");\n+    }\n+\n+    function setOwner(address newOwner) external {\n+        require(msg.sender == owner, \"not owner\");\n+        owner = newOwner;\n+    }\n+}"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/1900999007\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/1900999007",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/1900999007"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 31536,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a59bb05eea4933e1-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Fri, 13 Nov 2026 06:24:09 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHhmYWQwYWJmOGI1OGMwYWFlODYwOGU5MTg4ZDdkNGRiMDA1NWJhMGUzM2RlMTcxOTJkYmRmZDliZGJhZGZjY2M5IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=fYokHK86WMte9%2BfC93wdO1En1Ga8Kh2nfnXuUVv3%2BuDd5a7kqpkCtc633WvDwGhXGC%2BqVSzfsifrcvKXTDVYvVylZKQk%2F1qrXpwzZBhOep4bXzNwl%2FtwC5UrGJa10rMK3gTsa3lTlmek%2B3w7Ykx8kw%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDJlNDllNzAxMGI1N2U0ZjdlNGNlZDAwOWRjMjI4MGIyY2JhOWVhOWM2NzJlYjMxMzYyMWM1YTQ1OGRhYTBmZTgiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI0OTgzIiwiaW50ZW50IjoiU01BUlRfQ09OVFJBQ1RfQVVESVRfR0VORVJBTCIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjIwNzksInNldHRsZW1lbnQiOiJvbmNoYWluIiwiY2hhaW4iOiJlaXAxNTU6MTExNTUxMTEiLCJ0eF9oYXNoIjoiMHhmYWQwYWJmOGI1OGMwYWFlODYwOGU5MTg4ZDdkNGRiMDA1NWJhMGUzM2RlMTcxOTJkYmRmZDliZGJhZGZjY2M5IiwidGltZXN0YW1wIjoxNzk0NTUxMDQ5fQ=="
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":18053,\"miner_id\":\"1900999007\",\"miner_name\":\"CodeWire Smart Contract Audit\",\"result\":{\"as_of\":\"2026-11-13T06:24:09.009Z\",\"attribution\":\"Answer produced with MiniMax (MiniMax-M2.5-highspeed) under a commercial MiniMax plan held by zkasuran.\",\"audit_input\":{\"encoding\":\"UTF-8\",\"line_segments\":29,\"sha256\":\"ce17fe850193d7d09e1ebdff8e24df3df727bd2ce610c7598142ea6815352d6a\",\"source_preserved\":true,\"unicode_characters\":749},\"confidence\":0.95,\"finding_attribution\":\"not_validated\",\"headline\":\"Overall risk verdict: The vault has no critical or high severity vulnerabilities and appears safe for ordinary deposits and withdrawals, but it has low severity\",\"intent\":\"SMART_CONTRACT_AUDIT_GENERAL\",\"model\":\"MiniMax-M2.5-highspeed\",\"source\":\"MiniMax language model\",\"source_verification\":{\"catalog_sha256\":\"d548396376f2ff28a61951a34017fa6e7db9f15d3ef9d9800ca1638a143be914\",\"finding_validation\":\"not_performed\",\"status\":\"not_in_pinned_catalog\"},\"summary\":\"Overall risk verdict: The vault has no critical or high severity vulnerabilities and appears safe for ordinary deposits and withdrawals, but it has low severity fund-lock and ownership-management issues and lacks operational event logging.\\n\\nFinding 1, denial of service and accounting invariant violation, affects the contract’s ETH balance and `withdraw`, severity low. The contract records liabilities only through `deposit`, but ETH can be forcibly sent to the contract through `selfdestruct` or an equivalent forced-transfer mechanism. This ETH is not reflected in `balances` and cannot be withdrawn by any depositor or recovered by the owner, so it is permanently trapped. This does not allow theft of depositor funds, but it violates the otherwise straightforward assumption that all contract ETH is accounted for. The recommended fix is to add an access-controlled surplus recovery function, or explicitly account for unsolicited ETH and define a safe mechanism for recovering only assets exceeding the sum of user balances.\\n\\nFinding 2, incorrect input validation and administrative lockout, affects `setOwner`, severity low. `setOwner` permits `newOwner` to be `address(0)`. If the owner is set to the zero address, no account can call `setOwner` again because the zero address cannot originate a transaction, permanently disabling ownership administration. The current owner cannot steal user funds through this role because `setOwner` does not grant withdrawal authority, but the administrative state can still be bricked. The recommended fix is to reject the zero address with `require(newOwner != address(0), \\\"zero owner\\\")` and preferably use a two-step ownership transfer in which the new owner must accept ownership.\\n\\nFinding 3, missing operational events and monitoring gap, affects `deposit`, `withdraw`, and `setOwner`, severity informational. None of these state-changing functions emits an event. This impairs accounting, wallet monitoring, incident response, and verification of deposits, withdrawals, and ownership changes, although it does not independently permit unauthorized asset movement. The recommended fix is to emit events such as `Deposited`, `Withdrawn`, and `OwnershipTransferred`, including the relevant account, amount, and previous and new owner values.\\n\\nThe access-control model is otherwise appropriate. `deposit` and `withdraw` operate on `msg.sender`’s own balance, and `setOwner` correctly restricts administrative changes to the current owner. The owner cannot directly withdraw another user’s funds, so compromise of the owner account would allow ownership takeover but not direct theft of vault balances.\\n\\nThe external-call pattern in `withdraw` is safe against reentrancy. The user balance is zeroed before `msg.sender.call{value: amount}(\\\"\\\")` executes, and a callback cannot withdraw the same balance again. A malicious recipient can cause its own withdrawal to fail by reverting, but the revert also rolls back the balance update, and this cannot block other users from withdrawing. The low-level call result is explicitly checked with `require(ok, \\\"send failed\\\")`, so it is not an unchecked external call.\\n\\nArithmetic is protected by Solidity 0.8.20 checked arithmetic. The addition in `deposit` cannot silently overflow, and `withdraw` subtracts no user-controlled balance because it reads the stored amount and resets it to zero. The contract has no yield, fee, rebasing-asset, token-transfer, or oracle-dependent logic, so its primary economic assumption is a one-to-one relationship between deposited ETH and recorded user liabilities, subject to the forced-ETH issue above.\\n\\nThe contract also has no `receive` or `fallback` function, so ordinary direct ETH transfers revert while `deposit` remains the intended deposit path. Public visibility of `balances` and `owner` is appropriate, and there is no incorrect visibility or delegatecall exposure.\"},\"result_shape\":\"raw\",\"signal_hash\":\"0x9b79a5160def9557d2f6f59426142a024696adfeb57fb2d290d77c9caadbd9fc\",\"timestamp\":\"2026-11-13T06:24:09.014948925Z\",\"warnings\":[\"parameter \\\"contract\\\" length 0 violates the miner's declared limit (lte 20000): contract is the input to work on. A single request, not a batch.\"]}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 18053,
+    "miner_id": "1900999007",
+    "miner_name": "CodeWire Smart Contract Audit",
+    "result": {
+      "as_of": "2026-11-13T06:24:09.009Z",
+      "attribution": "Answer produced with MiniMax (MiniMax-M2.5-highspeed) under a commercial MiniMax plan held by zkasuran.",
+      "audit_input": {
+        "encoding": "UTF-8",
+        "line_segments": 29,
+        "sha256": "ce17fe850193d7d09e1ebdff8e24df3df727bd2ce610c7598142ea6815352d6a",
+        "source_preserved": true,
+        "unicode_characters": 749
+      },
+      "confidence": 0.95,
+      "finding_attribution": "not_validated",
+      "headline": "Overall risk verdict: The vault has no critical or high severity vulnerabilities and appears safe for ordinary deposits and withdrawals, but it has low severity",
+      "intent": "SMART_CONTRACT_AUDIT_GENERAL",
+      "model": "MiniMax-M2.5-highspeed",
+      "source": "MiniMax language model",
+      "source_verification": {
+        "catalog_sha256": "d548396376f2ff28a61951a34017fa6e7db9f15d3ef9d9800ca1638a143be914",
+        "finding_validation": "not_performed",
+        "status": "not_in_pinned_catalog"
+      },
+      "summary": "Overall risk verdict: The vault has no critical or high severity vulnerabilities and appears safe for ordinary deposits and withdrawals, but it has low severity fund-lock and ownership-management issues and lacks operational event logging.\n\nFinding 1, denial of service and accounting invariant violation, affects the contract’s ETH balance and `withdraw`, severity low. The contract records liabilities only through `deposit`, but ETH can be forcibly sent to the contract through `selfdestruct` or an equivalent forced-transfer mechanism. This ETH is not reflected in `balances` and cannot be withdrawn by any depositor or recovered by the owner, so it is permanently trapped. This does not allow theft of depositor funds, but it violates the otherwise straightforward assumption that all contract ETH is accounted for. The recommended fix is to add an access-controlled surplus recovery function, or explicitly account for unsolicited ETH and define a safe mechanism for recovering only assets exceeding the sum of user balances.\n\nFinding 2, incorrect input validation and administrative lockout, affects `setOwner`, severity low. `setOwner` permits `newOwner` to be `address(0)`. If the owner is set to the zero address, no account can call `setOwner` again because the zero address cannot originate a transaction, permanently disabling ownership administration. The current owner cannot steal user funds through this role because `setOwner` does not grant withdrawal authority, but the administrative state can still be bricked. The recommended fix is to reject the zero address with `require(newOwner != address(0), \"zero owner\")` and preferably use a two-step ownership transfer in which the new owner must accept ownership.\n\nFinding 3, missing operational events and monitoring gap, affects `deposit`, `withdraw`, and `setOwner`, severity informational. None of these state-changing functions emits an event. This impairs accounting, wallet monitoring, incident response, and verification of deposits, withdrawals, and ownership changes, although it does not independently permit unauthorized asset movement. The recommended fix is to emit events such as `Deposited`, `Withdrawn`, and `OwnershipTransferred`, including the relevant account, amount, and previous and new owner values.\n\nThe access-control model is otherwise appropriate. `deposit` and `withdraw` operate on `msg.sender`’s own balance, and `setOwner` correctly restricts administrative changes to the current owner. The owner cannot directly withdraw another user’s funds, so compromise of the owner account would allow ownership takeover but not direct theft of vault balances.\n\nThe external-call pattern in `withdraw` is safe against reentrancy. The user balance is zeroed before `msg.sender.call{value: amount}(\"\")` executes, and a callback cannot withdraw the same balance again. A malicious recipient can cause its own withdrawal to fail by reverting, but the revert also rolls back the balance update, and this cannot block other users from withdrawing. The low-level call result is explicitly checked with `require(ok, \"send failed\")`, so it is not an unchecked external call.\n\nArithmetic is protected by Solidity 0.8.20 checked arithmetic. The addition in `deposit` cannot silently overflow, and `withdraw` subtracts no user-controlled balance because it reads the stored amount and resets it to zero. The contract has no yield, fee, rebasing-asset, token-transfer, or oracle-dependent logic, so its primary economic assumption is a one-to-one relationship between deposited ETH and recorded user liabilities, subject to the forced-ETH issue above.\n\nThe contract also has no `receive` or `fallback` function, so ordinary direct ETH transfers revert while `deposit` remains the intended deposit path. Public visibility of `balances` and `owner` is appropriate, and there is no incorrect visibility or delegatecall exposure."
+    },
+    "result_shape": "raw",
+    "signal_hash": "0x9b79a5160def9557d2f6f59426142a024696adfeb57fb2d290d77c9caadbd9fc",
+    "timestamp": "2026-11-13T06:24:09.014948925Z",
+    "warnings": [
+      "parameter \"contract\" length 0 violates the miner's declared limit (lte 20000): contract is the input to work on. A single request, not a batch."
+    ]
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0xfad0abf8b58c0aae8608e9188d7d4db0055ba0e33de17192dbdfd9bdbadfccc9",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x2e49e7010b57e4f7e4ced009dc2280b2cba9ea9c672eb313621c5a458daa0fe8",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "4983",
+    "intent": "SMART_CONTRACT_AUDIT_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2079,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0xfad0abf8b58c0aae8608e9188d7d4db0055ba0e33de17192dbdfd9bdbadfccc9",
+    "timestamp": 1794551049
+  },
+  "charged": true
+}

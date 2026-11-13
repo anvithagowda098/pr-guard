@@ -1,12 +1,14 @@
 # PR Guard demo
 
-`demo/app` is a tiny Express API. Three open pull requests change it, one per outcome. Each has a live report from PR Guard's public page (scanned Nov 13, 2026, on Telegraph's testnet):
+`demo/app` is a tiny Express API with a payments module, and `demo/contracts` holds a small vault. Five open pull requests change them, one per outcome. Each has a live report from PR Guard's public page (scanned Nov 13, 2026, on Telegraph's testnet):
 
 | Pull request | What it changes | Verdict | Report |
 |---|---|---|---|
 | [#1](https://github.com/anvithagowda098/pr-guard/pull/1) `demo/clean-change` | adds a parameterized search endpoint | 🟢 SAFE | [report](https://pr-guard-app.pr-guard.workers.dev/r/91f1fd167b70) |
 | [#2](https://github.com/anvithagowda098/pr-guard/pull/2) `demo/vulnerable-dependency` | downgrades lodash to 4.17.15 | 🔴 BLOCK: known high-severity advisories for that exact version | [report](https://pr-guard-app.pr-guard.workers.dev/r/d6c6983b423b) |
 | [#3](https://github.com/anvithagowda098/pr-guard/pull/3) `demo/leaked-key-and-injection` | hardcodes a (fake) AWS key, builds SQL from strings, `eval`s input | 🔴 BLOCK: committed key, plus injection the reviewer found and PR Guard's own rules confirm | [report](https://pr-guard-app.pr-guard.workers.dev/r/bc66dc5c844e) |
+| [#4](https://github.com/anvithagowda098/pr-guard/pull/4) `demo/address-swap` | replaces the payout address, accepts USDT | 🟡 CAUTION: the payout address changed (the address-swap attack shape); each new address gets a paid GoPlus risk check | [report](https://pr-guard-app.pr-guard.workers.dev/r/b22eec6747c4) |
+| [#5](https://github.com/anvithagowda098/pr-guard/pull/5) `demo/reentrant-vault` | adds a Solidity vault with a reentrant `withdraw` and an open `setOwner` | 🔴 BLOCK: the reviewer names both, and PR Guard's Solidity rules confirm them | [report](https://pr-guard-app.pr-guard.workers.dev/r/695b58066331) |
 
 Each report lists every paid check, the miner that answered (routed by Telegraph, or a vetted fallback and why), what it cost, and a link to its receipt on the Telegraph node.
 

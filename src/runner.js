@@ -6,6 +6,7 @@
 // exact package match from registry-backed data, or PR Guard's local rules
 // finding the same issue in the same diff.
 import { normalize } from "./normalize.js";
+import { maxSeverity, SEVERITIES } from "./policy.js";
 import { ledgerEntry } from "./ledger.js";
 import { scan } from "../miner/rules.js";
 
@@ -39,6 +40,7 @@ const callSummary = (r, { via, entry, note } = {}) => ({
 });
 
 const isHigh = (s) => s === "high" || s === "critical";
+const rankOf = (s) => SEVERITIES.indexOf(s);
 const isEmpty = (n) => n.severity === "unknown" && !n.findings.length;
 
 // Seen from both deps.dev proxies for an unknown package: HTTP 500 with
@@ -78,16 +80,26 @@ export function confirmFindings(check, answer, vars) {
   if (check !== "diff" || !vars.diff) return { ...answer, confirmed: false, disagreement: false };
   const local = scan(vars.diff).findings.filter((f) => f.rule !== "hardcoded-secret"); // secrets: the local secret scan reports those
   const matches = (f, l) => (f.category && f.category === l.rule) || (f.file && f.line && f.file === l.file && f.line === l.line);
-  const findings = answer.findings.map((f) => (isHigh(f.severity) && local.some((l) => matches(f, l)) ? { ...f, corroborated: true } : f));
+  // The reviewer and the local rules naming the same issue confirms it, at the
+  // higher of the two severities: a reviewer that names a reentrancy but rates
+  // it low doesn't make it low.
+  const findings = answer.findings.map((f) => {
+    const hit = local.find((l) => isHigh(l.severity) && matches(f, l));
+    if (!hit) return f;
+    const severity = isHigh(f.severity) && rankOf(f.severity) >= rankOf(hit.severity) ? f.severity : hit.severity;
+    return { ...f, severity, corroborated: true };
+  });
   const missed = local.filter((l) => isHigh(l.severity) && !answer.findings.some((f) => matches(f, l)));
+  const corroborated = findings.some((f) => f.corroborated);
   return {
     ...answer,
+    ...(corroborated && { severity: maxSeverity(findings) }),
     findings: [
       ...findings,
       ...missed.map((l) => ({ title: `${l.title} (PR Guard local rule)`, severity: "medium", ...(l.file && { file: l.file }), line: l.line, detail: `${l.evidence} → ${l.fix}` })),
     ],
-    severity: missed.length && answer.severity === "none" ? "medium" : answer.severity,
-    confirmed: findings.some((f) => f.corroborated),
+    ...(!corroborated && { severity: missed.length && !isHigh(answer.severity) && answer.severity !== "medium" ? "medium" : answer.severity }),
+    confirmed: corroborated,
     disagreement: missed.length > 0,
   };
 }
@@ -105,7 +117,11 @@ export function confirmFindings(check, answer, vars) {
 export async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "auto", health: {} }, priorCalls = [], priorNotes = [] }) {
   const { check, intent, target, vars, route } = job;
   // Fallback miners are configured per check; an entry may limit itself to some ecosystems.
-  const entries = (miners[check] ?? []).filter((e) => e.enabled !== false && (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)));
+  // `files` limits an entry to diffs touching matching files (a Solidity auditor for .sol).
+  const entries = (miners[check] ?? []).filter((e) =>
+    e.enabled !== false &&
+    (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)) &&
+    (!e.files || (vars.files ?? []).some((f) => new RegExp(e.files, "i").test(f))));
   const calls = [...priorCalls];
   const notes = [...priorNotes];
   const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls, notes };

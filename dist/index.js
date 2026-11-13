@@ -50729,7 +50729,8 @@ var SECURITY_CATEGORIES = [
   { id: "path-traversal", severity: "high", re: /(path|directory)[\s-]*traversal/i },
   { id: "ssrf", severity: "high", re: /\bssrf\b|server[\s-]*side request forgery/i },
   { id: "xss", severity: "high", re: /\bxss\b|cross[\s-]*site scripting/i },
-  { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b/i },
+  // "Hard-coded token address" is a contract address, not a secret.
+  { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)/i },
   { id: "tls-verification-disabled", severity: "medium", re: /(tls|ssl|certificate) (verification|validation)|rejectunauthorized/i },
   { id: "weak-hash", severity: "medium", re: /\bmd5\b|\bsha-?1\b|weak hash/i }
 ];
@@ -50784,6 +50785,20 @@ var NORMALIZERS = {
     return { severity: maxSeverity(findings), findings };
   },
   // ---- Vetted miners, called directly as the fallback ----------------------
+  // CodeWire Smart Contract Audit (#1900999007) GET /contract-audit {contract}:
+  // a language-model audit as prose: "Overall risk verdict: ...", then
+  // "Finding 1: Reentrancy, affects `withdraw()`, severity critical. ..."
+  // (or "Finding 1, ..."). Captured Nov 13 for a vulnerable and a fixed vault.
+  "codewire-audit": (result) => {
+    const text = String(result?.summary ?? "");
+    expect(/overall risk verdict/i.test(text), "no overall verdict");
+    const SEV = { critical: "critical", high: "high", medium: "medium", moderate: "medium", low: "low", informational: "low", info: "low", none: "none" };
+    const findings = [...text.matchAll(/Finding\s+\d+\s*[:,]\s*(.+?),\s*affects\s+(.+?),\s*severity\s+(critical|high|medium|moderate|low|informational|info|none)\b/gi)].map((m) => {
+      const cat = securityCategory(m[1]);
+      return { title: `${m[1].trim()} (affects ${m[2].trim()})`.slice(0, 200), severity: SEV[m[3].toLowerCase()], ...cat && { category: cat.id } };
+    });
+    return { severity: maxSeverity(findings), findings };
+  },
   // GoPlus Security (#200001) GET /token-security {chain_id, contract_addresses}:
   // GoPlus's token risk flags ("1" / "0" strings), keyed by the lower-cased
   // address. Captured Nov 13 for USDT. An address GoPlus has no token data on
@@ -51172,6 +51187,7 @@ var callSummary = (r, { via, entry, note } = {}) => ({
   ...note && { note }
 });
 var isHigh2 = (s) => s === "high" || s === "critical";
+var rankOf = (s) => SEVERITIES.indexOf(s);
 var isEmpty = (n) => n.severity === "unknown" && !n.findings.length;
 var isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(r.bodyText ?? "");
 function judgeRouted(r, route, entries, vars) {
@@ -51194,22 +51210,29 @@ function confirmFindings(check, answer, vars) {
   if (check !== "diff" || !vars.diff) return { ...answer, confirmed: false, disagreement: false };
   const local2 = scan(vars.diff).findings.filter((f) => f.rule !== "hardcoded-secret");
   const matches2 = (f, l) => f.category && f.category === l.rule || f.file && f.line && f.file === l.file && f.line === l.line;
-  const findings = answer.findings.map((f) => isHigh2(f.severity) && local2.some((l) => matches2(f, l)) ? { ...f, corroborated: true } : f);
+  const findings = answer.findings.map((f) => {
+    const hit = local2.find((l) => isHigh2(l.severity) && matches2(f, l));
+    if (!hit) return f;
+    const severity = isHigh2(f.severity) && rankOf(f.severity) >= rankOf(hit.severity) ? f.severity : hit.severity;
+    return { ...f, severity, corroborated: true };
+  });
   const missed = local2.filter((l) => isHigh2(l.severity) && !answer.findings.some((f) => matches2(f, l)));
+  const corroborated = findings.some((f) => f.corroborated);
   return {
     ...answer,
+    ...corroborated && { severity: maxSeverity(findings) },
     findings: [
       ...findings,
       ...missed.map((l) => ({ title: `${l.title} (PR Guard local rule)`, severity: "medium", ...l.file && { file: l.file }, line: l.line, detail: `${l.evidence} \u2192 ${l.fix}` }))
     ],
-    severity: missed.length && answer.severity === "none" ? "medium" : answer.severity,
-    confirmed: findings.some((f) => f.corroborated),
+    ...!corroborated && { severity: missed.length && !isHigh2(answer.severity) && answer.severity !== "medium" ? "medium" : answer.severity },
+    confirmed: corroborated,
     disagreement: missed.length > 0
   };
 }
 async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "auto", health: {} }, priorCalls = [], priorNotes = [] }) {
   const { check, intent, target, vars, route } = job;
-  const entries = (miners[check] ?? []).filter((e) => e.enabled !== false && (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)));
+  const entries = (miners[check] ?? []).filter((e) => e.enabled !== false && (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)) && (!e.files || (vars.files ?? []).some((f) => new RegExp(e.files, "i").test(f))));
   const calls = [...priorCalls];
   const notes = [...priorNotes];
   const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls, notes };
@@ -51456,7 +51479,7 @@ function timedOut(scan2) {
 
 // config/miners.json
 var miners_default = {
-  _comment: "Vetted fallback miners per PR Guard check, best first. Every check is first asked through Telegraph's routing (a canonical intent + params ask; see src/checks.js); a miner here is called directly only when the routed answer is unusable, and the next one only if that call fails. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional enabled:false. A routed answer from a miner listed here is read with its normalizer.",
+  _comment: "Vetted fallback miners per PR Guard check, best first. Every check is first asked through Telegraph's routing (a canonical intent + params ask; see src/checks.js); a miner here is called directly only when the routed answer is unusable, and the next one only if that call fails. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional files filter (a regex any changed file must match), optional enabled:false. A routed answer from a miner listed here is read with its normalizer.",
   deps: [
     {
       minerId: "77010",
@@ -51508,6 +51531,19 @@ var miners_default = {
     }
   ],
   diff: [
+    {
+      minerId: "1900999007",
+      name: "CodeWire Smart Contract Audit",
+      intent: "SMART_CONTRACT_AUDIT_GENERAL",
+      method: "GET",
+      endpoint: "/contract-audit",
+      payload: {
+        contract: "{{diff}}"
+      },
+      normalizer: "codewire-audit",
+      files: "\\.sol$",
+      _note: "Independent operator; a language-model audit of Solidity. Only for diffs that touch .sol files. Vetted Nov 13: found the reentrancy (critical) and open setOwner (high) in the demo vault, and only low issues in the fixed one."
+    },
     {
       minerId: "5530",
       name: "Telegraph Verity",

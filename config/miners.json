@@ -1,5 +1,5 @@
 {
-  "_comment": "Vetted fallback miners per PR Guard check, best first. Every check is first asked through Telegraph's routing (a canonical intent + params ask; see src/checks.js); a miner here is called directly only when the routed answer is unusable, and the next one only if that call fails. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional enabled:false. A routed answer from a miner listed here is read with its normalizer.",
+  "_comment": "Vetted fallback miners per PR Guard check, best first. Every check is first asked through Telegraph's routing (a canonical intent + params ask; see src/checks.js); a miner here is called directly only when the routed answer is unusable, and the next one only if that call fails. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional files filter (a regex any changed file must match), optional enabled:false. A routed answer from a miner listed here is read with its normalizer.",
   "deps": [
     {
       "minerId": "77010",
@@ -51,6 +51,19 @@
     }
   ],
   "diff": [
+    {
+      "minerId": "1900999007",
+      "name": "CodeWire Smart Contract Audit",
+      "intent": "SMART_CONTRACT_AUDIT_GENERAL",
+      "method": "GET",
+      "endpoint": "/contract-audit",
+      "payload": {
+        "contract": "{{diff}}"
+      },
+      "normalizer": "codewire-audit",
+      "files": "\\.sol$",
+      "_note": "Independent operator; a language-model audit of Solidity. Only for diffs that touch .sol files. Vetted Nov 13: found the reentrancy (critical) and open setOwner (high) in the demo vault, and only low issues in the fixed one."
+    },
     {
       "minerId": "5530",
       "name": "Telegraph Verity",

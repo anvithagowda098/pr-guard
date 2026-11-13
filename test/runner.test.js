@@ -281,3 +281,12 @@ test("new addresses: a plain-language routed ask, then GoPlus when the routed an
   assert.match(swap.findings[0].title, /address changed: 0x1111.* → 0x2222/);
   assert.equal(decide(local).verdict, "CAUTION");
 });
+
+test("a fallback limited to .sol files is used only for diffs that touch Solidity", async () => {
+  const miners = { diff: [{ minerId: "1900999007", files: "\\.sol$", endpoint: "/contract-audit", payload: {} }, { minerId: "5530", endpoint: "/v1/intent", payload: {} }] };
+  const job = (files) => ({ check: "diff", intent: "SECURITY_REVIEW_GENERAL", target: files.join(", "), vars: { diff: "x", files }, route: null });
+  const sol = await runCheck({ tg: fakeTg([okResponse("1900999007")]), miners, job: job(["contracts/V.sol", "README.md"]), deadline: FAR });
+  assert.deepEqual(sol.calls.map((c) => c.minerId), ["1900999007"]);
+  const js = await runCheck({ tg: fakeTg([okResponse("5530")]), miners, job: job(["src/a.js"]), deadline: FAR });
+  assert.deepEqual(js.calls.map((c) => c.minerId), ["5530"]);
+});

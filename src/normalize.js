@@ -37,7 +37,8 @@ export const SECURITY_CATEGORIES = [
   { id: "path-traversal", severity: "high", re: /(path|directory)[\s-]*traversal/i },
   { id: "ssrf", severity: "high", re: /\bssrf\b|server[\s-]*side request forgery/i },
   { id: "xss", severity: "high", re: /\bxss\b|cross[\s-]*site scripting/i },
-  { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b/i },
+  // "Hard-coded token address" is a contract address, not a secret.
+  { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)/i },
   { id: "tls-verification-disabled", severity: "medium", re: /(tls|ssl|certificate) (verification|validation)|rejectunauthorized/i },
   { id: "weak-hash", severity: "medium", re: /\bmd5\b|\bsha-?1\b|weak hash/i },
 ];
@@ -107,6 +108,21 @@ const NORMALIZERS = {
   },
 
   // ---- Vetted miners, called directly as the fallback ----------------------
+
+  // CodeWire Smart Contract Audit (#1900999007) GET /contract-audit {contract}:
+  // a language-model audit as prose: "Overall risk verdict: ...", then
+  // "Finding 1: Reentrancy, affects `withdraw()`, severity critical. ..."
+  // (or "Finding 1, ..."). Captured Nov 13 for a vulnerable and a fixed vault.
+  "codewire-audit": (result) => {
+    const text = String(result?.summary ?? "");
+    expect(/overall risk verdict/i.test(text), "no overall verdict");
+    const SEV = { critical: "critical", high: "high", medium: "medium", moderate: "medium", low: "low", informational: "low", info: "low", none: "none" };
+    const findings = [...text.matchAll(/Finding\s+\d+\s*[:,]\s*(.+?),\s*affects\s+(.+?),\s*severity\s+(critical|high|medium|moderate|low|informational|info|none)\b/gi)].map((m) => {
+      const cat = securityCategory(m[1]);
+      return { title: `${m[1].trim()} (affects ${m[2].trim()})`.slice(0, 200), severity: SEV[m[3].toLowerCase()], ...(cat && { category: cat.id }) };
+    });
+    return { severity: maxSeverity(findings), findings };
+  },
 
   // GoPlus Security (#200001) GET /token-security {chain_id, contract_addresses}:
   // GoPlus's token risk flags ("1" / "0" strings), keyed by the lower-cased

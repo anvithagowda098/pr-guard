@@ -2,13 +2,29 @@
 
 Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) plus the Miners track. The event runs Nov 1 to Dec 1, 2026 (23:59 UTC). Submit by Nov 29.
 
-## The rules that matter (hackathon.telegraphprotocol.com/rules, read Oct 27)
+## Rule changes found Nov 13 (re-read hackathon.telegraphprotocol.com/rules)
+
+- **New Apps & Agents rubric:** technical 35 (minimum 24), commercial 25, independent adoption and retention 10, integration 5, reproducibility and proof 5, and a new **organic growth, education and developer activation: 20**. This replaces 35/30/15/10/10.
+- **The 20 growth points:**
+  - **Content (5):** a public explanation (2), a tutorial on Telegraph's role (2), honest limits and lessons (1).
+  - **Ease of adoption (5):** steps with an example (2), something another developer can test (2), troubleshooting, costs and next steps (1).
+  - **Distribution (5):** at least 3 original updates on separate dates (2), shared beyond our own Discord thread (2), real replies to feedback (1).
+  - **Activation (5):** an invitation with a concrete next step (1), an independent developer acting on it (2), a further verified contribution or repeat use (2).
+  - **Not evidence on their own:** stars, follows, likes, Discord joins. Strong evidence: GitHub issues, accepted PRs, reproduction reports, external integrations.
+- **New requirement for every track:** star github.com/telegraphprotocol/bounties. The submission asks for the GitHub username that starred it.
+- **Posts:** tag @Telegraphprotoc on X and disclose hackathon participation and the prize incentive. The tag alone isn't disclosure.
+- **Nov 14 First Integration Milestone (Apps & Agents):** show a first working Telegraph request or purchase, or what's blocking you. It's a progress check, not a deadline.
+- **Other dates:** community showcase Nov 20; an Anjoman hands-on session in the final week; judging Dec 2–8; results from Dec 9.
+- **December challenges ($3,000 reserved):** 4 × $500 for new missions or technical results, and 2 × $500 for adoption. They need their own submission.
+- **Mission coverage:** delivery awards favour covering distinct missions. `SECURITY_REVIEW` also maps to missions 01 Exchange and 14 Web3 Native & DeFi, and `SMART_CONTRACT_AUDIT_GENERAL` has 18 miners. A Solidity check could cover mission 14 honestly.
+
+## The rules that matter (hackathon.telegraphprotocol.com/rules, read Oct 27; see the changes above)
 
 - **Apps & Agents prizes:**
   - 8 delivery awards of $225. Judges pick the set of entries covering the most distinct missions, then the most distinct working apps.
   - Excellence awards: $700 / $350 / $150, ranked by score.
 - **Miners prizes:** 4 delivery awards of $300 (favours unblocking missing, mission-critical intents), plus excellence $500 / $300.
-- **To win:** at least 70/100, with technical quality at least 24/35. The rubric: technical 35, commercial 30, adoption 15, integration 10, proof 10.
+- **To win:** at least 70/100, with technical quality at least 24/35. (Rubric changed; see above.)
 - **Multiple tracks and earlier work:** entering more than one track is allowed if each entry is a distinct contribution. Code written before Nov 1 is allowed (disclose reused parts). **Transaction evidence must come from Nov 1–Dec 1:** the October test payments don't count.
 - **Disqualifying:** fake receipts, manufactured adoption, collusive requests. PR Guard buying from our own miner must be disclosed. The miner's case rests on independent tests, not self-purchases.
 - **Reviewers check each mission in five steps:** run with new input, check the result, inspect the Telegraph request, break it, reproduce it.

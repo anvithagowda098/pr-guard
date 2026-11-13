@@ -139,6 +139,25 @@ npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)
 | `test/` | Unit and end-to-end tests. They replay real captured miner answers against a fake payment-gated node |
 | `demo/` | A small app and three demo pull requests (SAFE, dependency BLOCK, code BLOCK) |
 
+## Troubleshooting
+
+| What you see | Why | What to do |
+|---|---|---|
+| ⚪ SKIPPED: "this repository is private" | Free hosted scans read the PR through GitHub's public API, so they cover public repositories only. | Use your own wallet: [option 3](#3-with-your-own-wallet-private-repositories-your-own-budget). |
+| ⚪ SKIPPED: "used its 20 free hosted scans for today" | Each repository gets 20 hosted scans a day. They reset at 00:00 UTC. | Wait for the reset, or use your own wallet. |
+| ⚪ SKIPPED: "Today's free scans are used up" | The sponsor wallet's daily cap across all users has been reached. | Try again after 00:00 UTC, or use your own wallet. |
+| No comment on a pull request from a fork | GitHub gives fork workflows a read-only token. | The result is in the run's job summary. |
+| "telegraph-private-key must be a private key" | The secret isn't a 64-character hex key. | Paste the key itself, with or without `0x`, not an address or a seed phrase. |
+| ⚠️ failed (`payment_required`) or (`payment_failed`) | The wallet can't pay: usually no test USDC left. | Run `node scripts/wallet.js balance`, then `node scripts/fund-testnet.js mint 20`. |
+| ⏭️ skipped (`budget exhausted`) | The run hit `max-usd-per-pr`. | Raise `max-usd-per-pr`. The verdict says CAUTION rather than SAFE when a required check is skipped. |
+| ⚠️ failed (`timeout`) or (`network_error`) | A miner or the Telegraph node didn't answer in time. Failed calls are credited back on Telegraph's current network. | Re-run the job. A failed check gives CAUTION, never SAFE. |
+
+Still stuck? [Open an issue](https://github.com/anvithagowda098/pr-guard/issues/new) with the link to your workflow run. The link is all we need: never paste a private key into an issue.
+
+## Contributing
+
+You can try it on your own repository, report a wrong verdict, or add a miner. [CONTRIBUTING.md](CONTRIBUTING.md) lists good first contributions.
+
 ## Known limitations
 
 - **Testnet only:** Telegraph's mainnet isn't live yet.

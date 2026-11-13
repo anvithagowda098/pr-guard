@@ -1,13 +1,13 @@
 // What to check on a PR: paid jobs for miners, plus local checks that need no
 // miner (secrets on added lines, new install scripts).
-import { chunkDiff, extractUrls } from "./extract.js";
+import { chunkDiff, extractUrls, extractAddresses, addressChanges } from "./extract.js";
 import { scanSecrets } from "./redact.js";
 import { maxSeverity } from "./policy.js";
 
-export const ALL_CHECKS = ["deps", "diff", "patch", "urls"];
+export const ALL_CHECKS = ["deps", "diff", "addresses", "patch", "urls"];
 
 // Paid checks with vetted, routable miners today; the others stay opt-in.
-export const DEFAULT_CHECKS = ["deps", "diff"];
+export const DEFAULT_CHECKS = ["deps", "diff", "addresses"];
 
 // Canonical params are at most 2,000 characters a string (refused above that).
 export const ROUTE_MAX_CHARS = 2000;
@@ -28,8 +28,8 @@ export function rankDeps(deps, title = "") {
 }
 
 /**
- * Paid jobs in priority order: direct dependencies, the diff, transitive
- * dependencies, the patch-vs-description check, then URLs. The budget is
+ * Paid jobs in priority order: direct dependencies, the diff, new on-chain
+ * addresses, transitive dependencies, the patch-vs-description check, then URLs. The budget is
  * spent front to back, so low-value checks are the ones that get skipped.
  *
  * @param {object} pr
@@ -39,7 +39,7 @@ export function rankDeps(deps, title = "") {
  * @param {string} pr.body
  * @param {Set<string>} enabled check names
  */
-export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12_000, maxChunks = Infinity } = {}) {
+export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxAddresses = 5, maxChars = 12_000, maxChunks = Infinity } = {}) {
   // Package-version vulnerability lookups live under SECURITY_REVIEW_GENERAL on
   // Telegraph; CVE_LOOKUP_CVSS miners only take a CVE id (see data/miners-summary.json).
   // Each job carries the canonical ask Telegraph routes by ranking (`route`);
@@ -68,6 +68,21 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
     };
   });
 
+  // On-chain addresses the PR adds: buy the contract's risk profile before the
+  // code starts sending funds there. SMART_CONTRACT_AUDIT_GENERAL has no input
+  // schema, so the routed ask is a plain-language query.
+  const addresses = extractAddresses(files, { max: maxAddresses }).map((a) => ({
+    check: "addresses",
+    intent: "SMART_CONTRACT_AUDIT_GENERAL",
+    target: `${a.address} on ${a.chain}${a.assumed ? " (assumed)" : ""}`,
+    vars: { address: a.address, chain_id: a.chainId, chain: a.chain, file: a.file, line: a.line },
+    route: {
+      intent: "SMART_CONTRACT_AUDIT_GENERAL",
+      body: { query: `Token and contract security risk (honeypot, owner and proxy flags, verified source) of the contract at ${a.address} on ${a.chain} (chain id ${a.chainId})` },
+      normalizer: null,
+    },
+  }));
+
   const patch = chunks.length
     ? [{
         check: "patch",
@@ -87,6 +102,7 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
   const jobs = [];
   if (enabled.has("deps")) jobs.push(...direct);
   if (enabled.has("diff")) jobs.push(...diff);
+  if (enabled.has("addresses")) jobs.push(...addresses);
   if (enabled.has("deps")) jobs.push(...transitive);
   if (enabled.has("patch")) jobs.push(...patch);
   if (enabled.has("urls")) jobs.push(...urls);
@@ -128,6 +144,17 @@ const local = (check, target, findings) => ({
 export function localOutcomes(rawFiles, installScripts) {
   const secrets = scanSecrets(rawFiles);
   const out = [local("secrets", secrets.length ? `${secrets.length} on added lines` : "added lines", secrets)];
+  const swapped = addressChanges(rawFiles);
+  if (swapped.length) {
+    // Not a finding about either address: a prompt to confirm the new one is intended.
+    out.push({ ...local("address-changes", swapped.map((c) => `${c.file}:${c.line}`).join(", "), swapped.map((c) => ({
+      title: `address changed: ${c.from} → ${c.to}`,
+      severity: "medium",
+      file: c.file,
+      line: c.line,
+      detail: "confirm the new address is intended; swapping a payment or contract address is a known supply-chain attack",
+    }))), confirmed: false });
+  }
   if (installScripts.length) {
     out.push(local("install-scripts", installScripts.map((s) => `${s.file}#${s.script}`).join(", "), installScripts.map((s) => ({
       title: `${s.change} ${s.script} script: ${s.command}`,

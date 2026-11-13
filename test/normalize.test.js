@@ -219,3 +219,28 @@ test("Solidity through routed code review (miner 302, captured): reentrancy and 
   assert.deepEqual([c.confirmed, c.disagreement], [true, false]);
   assert.equal(decide([{ check: "diff", target: "contracts/Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
 });
+
+// ---- GoPlus (#200001), captured Nov 13 -----------------------------------
+const goplus = () => JSON.parse(readFileSync(new URL("./fixtures/miner-responses/SMART_CONTRACT_AUDIT_GENERAL/200001-token-security-usdt-200-paid.json", import.meta.url), "utf8"));
+const usdt = { address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", chain_id: "1" };
+
+test("GoPlus on USDT: an established token's admin powers are known, so nothing above low", () => {
+  const n = normalize("goplus-token-security", goplus().body.result, usdt);
+  assert.deepEqual([n.severity, n.verified], ["low", true]);
+  assert.equal(n.findings[0].title, "Tether USD (USDT), on GoPlus's trusted list");
+  assert.ok(n.findings.some((f) => f.title === "the owner can change balances" && f.severity === "low"));
+  assert.equal(decide([{ check: "addresses", target: "USDT", status: "ok", calls: [], ...confirmFindings("addresses", n, usdt) }]).verdict, "SAFE");
+});
+
+test("GoPlus: a honeypot outside the trusted list is high and confirmed -> BLOCK; no token data is low", () => {
+  const cap = goplus().body.result;
+  const t = cap.result[usdt.address.toLowerCase()];
+  const honeypot = { ...cap, result: { [usdt.address.toLowerCase()]: { ...t, trust_list: "0", is_honeypot: "1", is_open_source: "0" } } };
+  const c = confirmFindings("addresses", normalize("goplus-token-security", honeypot, usdt), usdt);
+  assert.deepEqual([c.severity, c.confirmed], ["high", true]);
+  assert.ok(c.findings.some((f) => f.title === "source code not verified" && f.severity === "medium"));
+  assert.equal(decide([{ check: "addresses", target: "x", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+  assert.equal(normalize("goplus-token-security", { code: 1, message: "OK", result: {} }, usdt).severity, "low");
+  assert.equal(normalize("goplus-token-security", { code: 2, message: "error" }, usdt).severity, "unknown");
+  assert.equal(normalize("goplus-token-security", cap, { address: "0x2222222222222222222222222222222222222222" }).severity, "low", "an answer without this address has no data about it");
+});

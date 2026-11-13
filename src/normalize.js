@@ -108,6 +108,41 @@ const NORMALIZERS = {
 
   // ---- Vetted miners, called directly as the fallback ----------------------
 
+  // GoPlus Security (#200001) GET /token-security {chain_id, contract_addresses}:
+  // GoPlus's token risk flags ("1" / "0" strings), keyed by the lower-cased
+  // address. Captured Nov 13 for USDT. An address GoPlus has no token data on
+  // (a wallet, or a non-token contract) comes back without a key.
+  "goplus-token-security": (result, vars) => {
+    expect(result?.code === 1 && result.result && typeof result.result === "object", "no result");
+    const t = result.result[String(vars.address ?? "").toLowerCase()];
+    if (!t || !Object.keys(t).length) {
+      return { severity: "low", findings: [{ title: "no token data: a wallet, or a contract GoPlus doesn't track as a token", severity: "low" }], verified: true };
+    }
+    const on = (k) => t[k] === "1";
+    const pct = (k) => Number(t[k] || 0);
+    const trusted = on("trust_list"); // GoPlus's list of established tokens: its admin powers are known
+    const findings = [];
+    const add = (cond, severity, title) => {
+      if (cond) findings.push({ title, severity: trusted && severity !== "high" ? "low" : severity, ref: `https://gopluslabs.io/token-security/${vars.chain_id}/${vars.address}` });
+    };
+    add(on("is_honeypot"), "high", "honeypot: holders can't sell");
+    add(on("honeypot_with_same_creator"), "high", "its creator has deployed honeypots before");
+    add(on("hidden_owner"), "high", "hidden owner");
+    add(on("can_take_back_ownership"), "high", "ownership can be taken back after it's renounced");
+    add(on("selfdestruct"), "high", "the contract can self-destruct");
+    add(on("cannot_sell_all") || pct("sell_tax") >= 0.5, "high", `selling is blocked or taxed heavily (sell tax ${t.sell_tax || "?"})`);
+    add(t.is_open_source === "0", "medium", "source code not verified");
+    add(on("owner_change_balance"), "medium", "the owner can change balances");
+    add(on("is_proxy"), "medium", "upgradeable proxy: its code can change");
+    add(pct("sell_tax") < 0.5 && (pct("buy_tax") >= 0.1 || pct("sell_tax") >= 0.1), "medium", `buy/sell tax ${t.buy_tax}/${t.sell_tax}`);
+    add(on("transfer_pausable"), "low", "transfers can be paused");
+    add(on("is_blacklisted"), "low", "has a blacklist");
+    add(on("is_mintable"), "low", "mintable");
+    const name = t.token_name ? `${t.token_name}${t.token_symbol ? ` (${t.token_symbol})` : ""}` : "token";
+    findings.unshift({ title: `${name}${trusted ? ", on GoPlus's trusted list" : ""}`, severity: "none" });
+    return { severity: maxSeverity(findings), findings, verified: true };
+  },
+
   // deps.dev Package Review (#77010): GET /query {pkg, ver}, npm only.
   // result.version.advisories[] carries GitHub's severity and a CVSS score.
   "depsdev-version": (result, vars) => {

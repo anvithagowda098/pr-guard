@@ -50358,6 +50358,52 @@ function extractUrls(files, { max = 10 } = {}) {
   }
   return [...found.values()].slice(0, max);
 }
+var EVM_ADDRESS = /(?<![0-9a-fA-Fx])0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g;
+var PLACEHOLDER_ADDRESS = /^0x(0{40}|0{36}dead|0{4}dead0{32}|e{40}|f{40})$/i;
+var named = (words) => new RegExp(`(?<![a-z0-9])(${words})(?![a-z0-9])`, "i");
+var CHAINS = [
+  [/\bbase\b/i, "8453", "Base"],
+  [named("polygon|matic"), "137", "Polygon"],
+  [named("bsc|bnb"), "56", "BNB Chain"],
+  [named("arbitrum"), "42161", "Arbitrum"],
+  [named("optimism"), "10", "Optimism"],
+  [named("avalanche|avax"), "43114", "Avalanche"]
+];
+function chainOf(path, text) {
+  for (const [re, chainId, chain] of CHAINS) if (re.test(text) || re.test(path)) return { chainId, chain, assumed: false };
+  return { chainId: "1", chain: "Ethereum", assumed: !named("mainnet|ethereum").test(`${path} ${text}`) };
+}
+function removedLines(patch) {
+  return (patch ?? "").split("\n").filter((l) => l.startsWith("-") && !l.startsWith("---")).map((l) => l.slice(1));
+}
+var addressesIn = (text) => [...text.matchAll(EVM_ADDRESS)].map((m) => m[0]).filter((a) => !PLACEHOLDER_ADDRESS.test(a));
+function extractAddresses(files, { max = 5 } = {}) {
+  const found = /* @__PURE__ */ new Map();
+  for (const f of files) {
+    if (shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
+    const before = new Set(removedLines(f.patch).flatMap(addressesIn).map((a) => a.toLowerCase()));
+    for (const { line, text } of addedLines(f.patch)) {
+      for (const address of addressesIn(text)) {
+        const key = address.toLowerCase();
+        if (before.has(key) || found.has(key)) continue;
+        found.set(key, { address, file: f.filename, line, ...chainOf(f.filename, text) });
+      }
+    }
+  }
+  return [...found.values()].slice(0, max);
+}
+function addressChanges(files) {
+  const out = [];
+  for (const f of files) {
+    if (shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
+    const removed = [...new Set(removedLines(f.patch).flatMap(addressesIn))];
+    const added = addedLines(f.patch).flatMap(({ line, text }) => addressesIn(text).map((address) => ({ address, line })));
+    const gone = removed.filter((a) => !added.some((x) => x.address.toLowerCase() === a.toLowerCase()));
+    const fresh = added.filter((x) => !removed.some((a) => a.toLowerCase() === x.address.toLowerCase()));
+    for (let i = 0; i < Math.min(gone.length, fresh.length); i++) out.push({ file: f.filename, line: fresh[i].line, from: gone[i], to: fresh[i].address });
+  }
+  return out;
+}
 var LOCKFILES = /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|poetry\.lock|Pipfile\.lock|uv\.lock|Cargo\.lock|go\.sum|composer\.lock|Gemfile\.lock)$/;
 var GENERATED = /(^|\/)(vendor|node_modules|third_party|dist|build)\/|\.min\.(js|css)$|\.map$/;
 var BINARY = /\.(png|jpe?g|gif|ico|webp|bmp|pdf|zip|gz|tgz|bz2|xz|7z|jar|woff2?|ttf|eot|otf|mp[34]|mov|wasm|exe|dll|so|dylib|class|pyc)$/i;
@@ -50512,15 +50558,15 @@ function maxSeverity(findings) {
 }
 
 // src/checks.js
-var DEFAULT_CHECKS = ["deps", "diff"];
+var DEFAULT_CHECKS = ["deps", "diff", "addresses"];
 var ROUTE_MAX_CHARS = 2e3;
 var DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
 function rankDeps(deps, title = "") {
-  const named = new Set(String(title).toLowerCase().match(/[@\w./-]+/g) ?? []);
-  const rank2 = (d) => d.direct ? 0 : named.has(d.name.toLowerCase()) ? 1 : d.from ? 2 : 3;
+  const named2 = new Set(String(title).toLowerCase().match(/[@\w./-]+/g) ?? []);
+  const rank2 = (d) => d.direct ? 0 : named2.has(d.name.toLowerCase()) ? 1 : d.from ? 2 : 3;
   return deps.map((d, i) => [d, i]).sort((a, b) => rank2(a[0]) - rank2(b[0]) || a[1] - b[1]).map(([d]) => d);
 }
-function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3, maxChunks = Infinity } = {}) {
+function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxAddresses = 5, maxChars = 12e3, maxChunks = Infinity } = {}) {
   const depJob = (d) => ({
     check: "deps",
     intent: "SECURITY_REVIEW_GENERAL",
@@ -50543,6 +50589,17 @@ function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrl
       ...!routable && { routeSkipped: `over the ${ROUTE_MAX_CHARS.toLocaleString("en-US")}-character limit for canonical asks` }
     };
   });
+  const addresses = extractAddresses(files, { max: maxAddresses }).map((a) => ({
+    check: "addresses",
+    intent: "SMART_CONTRACT_AUDIT_GENERAL",
+    target: `${a.address} on ${a.chain}${a.assumed ? " (assumed)" : ""}`,
+    vars: { address: a.address, chain_id: a.chainId, chain: a.chain, file: a.file, line: a.line },
+    route: {
+      intent: "SMART_CONTRACT_AUDIT_GENERAL",
+      body: { query: `Token and contract security risk (honeypot, owner and proxy flags, verified source) of the contract at ${a.address} on ${a.chain} (chain id ${a.chainId})` },
+      normalizer: null
+    }
+  }));
   const patch = chunks.length ? [{
     check: "patch",
     intent: "CODE_PATCH_VERIFY_GENERAL",
@@ -50558,6 +50615,7 @@ function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrl
   const jobs = [];
   if (enabled.has("deps")) jobs.push(...direct);
   if (enabled.has("diff")) jobs.push(...diff);
+  if (enabled.has("addresses")) jobs.push(...addresses);
   if (enabled.has("deps")) jobs.push(...transitive);
   if (enabled.has("patch")) jobs.push(...patch);
   if (enabled.has("urls")) jobs.push(...urls);
@@ -50590,6 +50648,16 @@ var local = (check, target, findings) => ({
 function localOutcomes(rawFiles, installScripts) {
   const secrets = scanSecrets(rawFiles);
   const out = [local("secrets", secrets.length ? `${secrets.length} on added lines` : "added lines", secrets)];
+  const swapped = addressChanges(rawFiles);
+  if (swapped.length) {
+    out.push({ ...local("address-changes", swapped.map((c) => `${c.file}:${c.line}`).join(", "), swapped.map((c) => ({
+      title: `address changed: ${c.from} \u2192 ${c.to}`,
+      severity: "medium",
+      file: c.file,
+      line: c.line,
+      detail: "confirm the new address is intended; swapping a payment or contract address is a known supply-chain attack"
+    }))), confirmed: false });
+  }
   if (installScripts.length) {
     out.push(local("install-scripts", installScripts.map((s) => `${s.file}#${s.script}`).join(", "), installScripts.map((s) => ({
       title: `${s.change} ${s.script} script: ${s.command}`,
@@ -50716,6 +50784,40 @@ var NORMALIZERS = {
     return { severity: maxSeverity(findings), findings };
   },
   // ---- Vetted miners, called directly as the fallback ----------------------
+  // GoPlus Security (#200001) GET /token-security {chain_id, contract_addresses}:
+  // GoPlus's token risk flags ("1" / "0" strings), keyed by the lower-cased
+  // address. Captured Nov 13 for USDT. An address GoPlus has no token data on
+  // (a wallet, or a non-token contract) comes back without a key.
+  "goplus-token-security": (result, vars) => {
+    expect(result?.code === 1 && result.result && typeof result.result === "object", "no result");
+    const t = result.result[String(vars.address ?? "").toLowerCase()];
+    if (!t || !Object.keys(t).length) {
+      return { severity: "low", findings: [{ title: "no token data: a wallet, or a contract GoPlus doesn't track as a token", severity: "low" }], verified: true };
+    }
+    const on = (k) => t[k] === "1";
+    const pct = (k) => Number(t[k] || 0);
+    const trusted = on("trust_list");
+    const findings = [];
+    const add = (cond, severity, title) => {
+      if (cond) findings.push({ title, severity: trusted && severity !== "high" ? "low" : severity, ref: `https://gopluslabs.io/token-security/${vars.chain_id}/${vars.address}` });
+    };
+    add(on("is_honeypot"), "high", "honeypot: holders can't sell");
+    add(on("honeypot_with_same_creator"), "high", "its creator has deployed honeypots before");
+    add(on("hidden_owner"), "high", "hidden owner");
+    add(on("can_take_back_ownership"), "high", "ownership can be taken back after it's renounced");
+    add(on("selfdestruct"), "high", "the contract can self-destruct");
+    add(on("cannot_sell_all") || pct("sell_tax") >= 0.5, "high", `selling is blocked or taxed heavily (sell tax ${t.sell_tax || "?"})`);
+    add(t.is_open_source === "0", "medium", "source code not verified");
+    add(on("owner_change_balance"), "medium", "the owner can change balances");
+    add(on("is_proxy"), "medium", "upgradeable proxy: its code can change");
+    add(pct("sell_tax") < 0.5 && (pct("buy_tax") >= 0.1 || pct("sell_tax") >= 0.1), "medium", `buy/sell tax ${t.buy_tax}/${t.sell_tax}`);
+    add(on("transfer_pausable"), "low", "transfers can be paused");
+    add(on("is_blacklisted"), "low", "has a blacklist");
+    add(on("is_mintable"), "low", "mintable");
+    const name = t.token_name ? `${t.token_name}${t.token_symbol ? ` (${t.token_symbol})` : ""}` : "token";
+    findings.unshift({ title: `${name}${trusted ? ", on GoPlus's trusted list" : ""}`, severity: "none" });
+    return { severity: maxSeverity(findings), findings, verified: true };
+  },
   // deps.dev Package Review (#77010): GET /query {pkg, ver}, npm only.
   // result.version.advisories[] carries GitHub's severity and a CVSS score.
   "depsdev-version": (result, vars) => {
@@ -51088,7 +51190,7 @@ function judgeRouted(r, route, entries, vars) {
   return text ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false } : { reject: `miner ${id} answered in its own format, and not about this target`, systematic: true };
 }
 function confirmFindings(check, answer, vars) {
-  if (check === "deps") return { ...answer, confirmed: isHigh2(answer.severity) && answer.verified === true, disagreement: false };
+  if (check === "deps" || check === "addresses") return { ...answer, confirmed: isHigh2(answer.severity) && answer.verified === true, disagreement: false };
   if (check !== "diff" || !vars.diff) return { ...answer, confirmed: false, disagreement: false };
   const local2 = scan(vars.diff).findings.filter((f) => f.rule !== "hardcoded-secret");
   const matches2 = (f, l) => f.category && f.category === l.rule || f.file && f.line && f.file === l.file && f.line === l.line;
@@ -51118,7 +51220,7 @@ async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "
   const tryRoute = route && routing.mode !== "off" && health[route.intent] !== false && !priorCalls.length;
   if (tryRoute) {
     if (Date.now() > deadline) return { ...base, status: "skipped", severity: "none", reason: "time limit" };
-    const r = await tg.ask({ intent: route.intent, params: route.params });
+    const r = await tg.ask(route.body ?? { intent: route.intent, params: route.params });
     const judged2 = judgeRouted(r, route, entries, vars);
     calls.push(callSummary(r, { via: "routed", note: judged2.reject && `not used: ${judged2.reject}` }));
     await ledger(r, r.body?.miner_id ?? "routed", route.intent);
@@ -51432,6 +51534,21 @@ var miners_default = {
       },
       normalizer: "sentinel-review",
       _note: "Our own rule-based miner (disclosed), used only if Verity fails."
+    }
+  ],
+  addresses: [
+    {
+      minerId: "200001",
+      name: "GoPlus Security",
+      intent: "SMART_CONTRACT_AUDIT_GENERAL",
+      method: "GET",
+      endpoint: "/token-security",
+      payload: {
+        chain_id: "{{chain_id}}",
+        contract_addresses: "{{address}}"
+      },
+      normalizer: "goplus-token-security",
+      _note: "Independent operator, proxying GoPlus. Token risk flags for an address (honeypot, owner powers, proxy, verified source). Vetted Nov 13 with USDT. Sourcify Verified Contracts (#200002) was tried for source verification, but its /contract endpoint passes every parameter through as a query string and Sourcify rejects them."
     }
   ],
   patch: [],

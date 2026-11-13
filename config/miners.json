@@ -79,6 +79,21 @@
       "_note": "Our own rule-based miner (disclosed), used only if Verity fails."
     }
   ],
+  "addresses": [
+    {
+      "minerId": "200001",
+      "name": "GoPlus Security",
+      "intent": "SMART_CONTRACT_AUDIT_GENERAL",
+      "method": "GET",
+      "endpoint": "/token-security",
+      "payload": {
+        "chain_id": "{{chain_id}}",
+        "contract_addresses": "{{address}}"
+      },
+      "normalizer": "goplus-token-security",
+      "_note": "Independent operator, proxying GoPlus. Token risk flags for an address (honeypot, owner powers, proxy, verified source). Vetted Nov 13 with USDT. Sourcify Verified Contracts (#200002) was tried for source verification, but its /contract endpoint passes every parameter through as a query string and Sourcify rejects them."
+    }
+  ],
   "patch": [],
   "urls": []
 }

@@ -202,3 +202,32 @@ test("documentation is not sent for a paid code review", async () => {
   for (const p of ["src/app.js", "readme.js", "docs/build.py", "Dockerfile"]) assert.ok(!isDocFile(p), p);
   assert.deepEqual(chunkDiff([{ filename: "README.md", patch: "@@ -1 +1 @@\n+x" }, { filename: "a.js", patch: "@@ -1 +1 @@\n+y" }]).map((c) => c.files), [["a.js"]]);
 });
+
+// ---- on-chain addresses ------------------------------------------------------
+import { extractAddresses, addressChanges } from "../src/extract.js";
+
+const cfg = (patch, filename = "src/config.ts") => [{ filename, patch }];
+
+test("extractAddresses: new addresses on added lines, with the chain named nearby or Ethereum assumed", () => {
+  const files = cfg('@@ -1,1 +1,4 @@\n x\n+export const VAULT = "0x2222222222222222222222222222222222222222";\n+export const USDC_POLYGON = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"; // polygon\n+const MAINNET_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";');
+  assert.deepEqual(extractAddresses(files).map((a) => [a.address.slice(0, 6), a.chain, a.assumed, a.line]), [
+    ["0x2222", "Ethereum", true, 2],
+    ["0x3c49", "Polygon", false, 3],
+    ["0x7a25", "Ethereum", false, 4],
+  ]);
+});
+
+test("extractAddresses skips placeholders, transaction hashes, moved addresses, docs and lockfiles", () => {
+  const files = [
+    ...cfg('@@ -1,1 +1,4 @@\n-const A = "0x1111111111111111111111111111111111111111";\n+const A2 = "0x1111111111111111111111111111111111111111";\n+const ZERO = "0x0000000000000000000000000000000000000000";\n+const TX = "0x0c6b9b4a5e8d21ef0ce9b9e6240e46f403683255b76976c2d39103d7f202cd85";\n+const NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";'),
+    { filename: "README.md", patch: "@@ -1 +1 @@\n+Send to 0x3333333333333333333333333333333333333333" },
+    { filename: "package-lock.json", patch: "@@ -1 +1 @@\n+\"0x4444444444444444444444444444444444444444\"" },
+  ];
+  assert.deepEqual(extractAddresses(files), []);
+});
+
+test("addressChanges: a file that swaps one address for another, the address-swap attack shape", () => {
+  const files = cfg('@@ -1,1 +1,1 @@\n-export const PAYOUT = "0x1111111111111111111111111111111111111111";\n+export const PAYOUT = "0x2222222222222222222222222222222222222222";');
+  assert.deepEqual(addressChanges(files), [{ file: "src/config.ts", line: 1, from: "0x1111111111111111111111111111111111111111", to: "0x2222222222222222222222222222222222222222" }]);
+  assert.deepEqual(addressChanges(cfg('@@ -1,1 +1,2 @@\n x\n+const NEW = "0x2222222222222222222222222222222222222222";')), [], "an added address with none removed isn't a swap");
+});

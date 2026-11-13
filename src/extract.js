@@ -298,6 +298,71 @@ export function extractUrls(files, { max = 10 } = {}) {
   return [...found.values()].slice(0, max);
 }
 
+// ---- on-chain addresses ----------------------------------------------------
+
+// An EVM address: 0x and exactly 40 hex digits (not part of a longer hash).
+const EVM_ADDRESS = /(?<![0-9a-fA-Fx])0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g;
+// The zero address, burn addresses and the "native token" placeholder.
+const PLACEHOLDER_ADDRESS = /^0x(0{40}|0{36}dead|0{4}dead0{32}|e{40}|f{40})$/i;
+// Chain named on the same line or in the file path; otherwise Ethereum is assumed.
+// Names count inside identifiers too (USDC_POLYGON), except "base", which
+// would match BASE_URL.
+const named = (words) => new RegExp(`(?<![a-z0-9])(${words})(?![a-z0-9])`, "i");
+const CHAINS = [
+  [/\bbase\b/i, "8453", "Base"],
+  [named("polygon|matic"), "137", "Polygon"],
+  [named("bsc|bnb"), "56", "BNB Chain"],
+  [named("arbitrum"), "42161", "Arbitrum"],
+  [named("optimism"), "10", "Optimism"],
+  [named("avalanche|avax"), "43114", "Avalanche"],
+];
+function chainOf(path, text) {
+  for (const [re, chainId, chain] of CHAINS) if (re.test(text) || re.test(path)) return { chainId, chain, assumed: false };
+  return { chainId: "1", chain: "Ethereum", assumed: !named("mainnet|ethereum").test(`${path} ${text}`) };
+}
+
+function removedLines(patch) {
+  return (patch ?? "").split("\n").filter((l) => l.startsWith("-") && !l.startsWith("---")).map((l) => l.slice(1));
+}
+const addressesIn = (text) => [...text.matchAll(EVM_ADDRESS)].map((m) => m[0]).filter((a) => !PLACEHOLDER_ADDRESS.test(a));
+
+/**
+ * On-chain addresses that a PR adds: on added lines, not just moved (an address
+ * also on a removed line of the same file is skipped), placeholders ignored.
+ */
+export function extractAddresses(files, { max = 5 } = {}) {
+  const found = new Map();
+  for (const f of files) {
+    if (shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
+    const before = new Set(removedLines(f.patch).flatMap(addressesIn).map((a) => a.toLowerCase()));
+    for (const { line, text } of addedLines(f.patch)) {
+      for (const address of addressesIn(text)) {
+        const key = address.toLowerCase();
+        if (before.has(key) || found.has(key)) continue;
+        found.set(key, { address, file: f.filename, line, ...chainOf(f.filename, text) });
+      }
+    }
+  }
+  return [...found.values()].slice(0, max);
+}
+
+/**
+ * Addresses a PR replaces: a file loses one address and gains another, the
+ * shape of an address-swap attack. Paired in order of appearance.
+ */
+export function addressChanges(files) {
+  const out = [];
+  for (const f of files) {
+    if (shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
+    const removed = [...new Set(removedLines(f.patch).flatMap(addressesIn))];
+    const added = addedLines(f.patch).flatMap(({ line, text }) => addressesIn(text).map((address) => ({ address, line })));
+    const gone = removed.filter((a) => !added.some((x) => x.address.toLowerCase() === a.toLowerCase()));
+    const fresh = added.filter((x) => !removed.some((a) => a.toLowerCase() === x.address.toLowerCase()));
+    for (let i = 0; i < Math.min(gone.length, fresh.length); i++) out.push({ file: f.filename, line: fresh[i].line, from: gone[i], to: fresh[i].address });
+  }
+  return out;
+}
+
 // ---- diff chunks -----------------------------------------------------------
 
 const LOCKFILES = /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|poetry\.lock|Pipfile\.lock|uv\.lock|Cargo\.lock|go\.sum|composer\.lock|Gemfile\.lock)$/;

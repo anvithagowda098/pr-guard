@@ -1,0 +1,112 @@
+{
+  "captured_at": "2026-11-13T06:12:06.370Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/200002",
+  "request": {
+    "method": "GET",
+    "endpoint": "/contract",
+    "payload": {
+      "chain": "1",
+      "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+    }
+  },
+  "paid": true,
+  "ok": false,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/200002\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/200002",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/200002"
+    },
+    "x402Version": 2
+  },
+  "status": 500,
+  "durationMs": 18005,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a59b9f09cad7b885-IAD",
+    "connection": "keep-alive",
+    "content-length": "739",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Fri, 13 Nov 2026 06:12:06 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHgzMTU3MTZlYTdlODU4ODU1YTNjZDY1OTM1YzdkMGNhZTk1MGQ5NDY0NTQ1Y2M0ZDYyMjMzZTc3OWM1MjU1NDI1IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=xE61B6W3Sr0DRM00zTUCTNAO6PXmjOMMKRvXFCa9nBGDQRuV24ozg0kEc7aMniTq70ZKRjDQBA0q%2Fbl%2BrV3fK0yc%2FOobzP3A2IyAClISpjZaaENCfXo%2FGLWnE7uD9bjUTCIE0x6bqbCPc8ezNttByA%3D%3D\"}]}",
+    "server": "cloudflare",
+    "vary": "Origin, Origin",
+    "x-payment-outcome": "escrow_credit_pending",
+    "x-payment-tx": "0x315716ea7e858855a3cd65935c7d0cae950d9464545cc4d62233e779c5255425"
+  },
+  "bodyText": "{\"error\":\"upstream error 400: {\\\"customCode\\\":\\\"invalid_parameter\\\",\\\"message\\\":\\\"Unknown query parameter 'chain'\\\",\\\"errorId\\\":\\\"78de9ed6-d3d0-4681-8e56-0f5393c80d8f\\\"}\",\"payment\":{\"status\":\"escrow_credit_pending\",\"message\":\"Your payment settled but the request failed, so nothing was billed. The amount is being credited to your Telegraph escrow balance (on-chain, usually within a few minutes): it then pays for your next asks, or withdraw it with requestWithdraw then executeWithdraw. If your balance has not risen after a while, contact support with this transaction.\",\"transaction\":\"0x315716ea7e858855a3cd65935c7d0cae950d9464545cc4d62233e779c5255425\",\"network\":\"eip155:11155111\",\"payer\":\"0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44\"}}",
+  "body": {
+    "error": "upstream error 400: {\"customCode\":\"invalid_parameter\",\"message\":\"Unknown query parameter 'chain'\",\"errorId\":\"78de9ed6-d3d0-4681-8e56-0f5393c80d8f\"}",
+    "payment": {
+      "status": "escrow_credit_pending",
+      "message": "Your payment settled but the request failed, so nothing was billed. The amount is being credited to your Telegraph escrow balance (on-chain, usually within a few minutes): it then pays for your next asks, or withdraw it with requestWithdraw then executeWithdraw. If your balance has not risen after a while, contact support with this transaction.",
+      "transaction": "0x315716ea7e858855a3cd65935c7d0cae950d9464545cc4d62233e779c5255425",
+      "network": "eip155:11155111",
+      "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44"
+    }
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x315716ea7e858855a3cd65935c7d0cae950d9464545cc4d62233e779c5255425",
+    "network": "eip155:11155111"
+  },
+  "receipt": null,
+  "reason": "http_500",
+  "charged": true
+}

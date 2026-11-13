@@ -77,7 +77,7 @@ footer p{margin:6px 0}
   function link(href, text) { var u = safeUrl(href); if (!u) return el("span", null, text); var a = el("a", null, text); a.href = u; a.target = "_blank"; a.rel = "noopener"; return a; }
   function usd(n) { return "$" + Number(n || 0).toFixed(3); }
   var BADGE = { SAFE: "🟢 SAFE", CAUTION: "🟡 CAUTION", BLOCK: "🔴 BLOCK" };
-  var NAMES = { deps: "Dependency", diff: "Code", secrets: "Secrets", "install-scripts": "Install scripts" };
+  var NAMES = { deps: "Dependency", diff: "Code", addresses: "Address", "address-changes": "Address change", secrets: "Secrets", "install-scripts": "Install scripts" };
 
   function showError(msg) { var e = $("#err"); e.textContent = msg; e.hidden = !msg; }
 

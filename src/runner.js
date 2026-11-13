@@ -74,7 +74,7 @@ export function judgeRouted(r, route, entries, vars) {
 
 /** Confirm high findings by deterministic evidence; flag local-rule hits the reviewer missed. */
 export function confirmFindings(check, answer, vars) {
-  if (check === "deps") return { ...answer, confirmed: isHigh(answer.severity) && answer.verified === true, disagreement: false };
+  if (check === "deps" || check === "addresses") return { ...answer, confirmed: isHigh(answer.severity) && answer.verified === true, disagreement: false };
   if (check !== "diff" || !vars.diff) return { ...answer, confirmed: false, disagreement: false };
   const local = scan(vars.diff).findings.filter((f) => f.rule !== "hardcoded-secret"); // secrets: the local secret scan reports those
   const matches = (f, l) => (f.category && f.category === l.rule) || (f.file && f.line && f.file === l.file && f.line === l.line);
@@ -117,7 +117,8 @@ export async function runCheck({ tg, miners, job, deadline, onCall, routing = { 
   const tryRoute = route && routing.mode !== "off" && health[route.intent] !== false && !priorCalls.length;
   if (tryRoute) {
     if (Date.now() > deadline) return { ...base, status: "skipped", severity: "none", reason: "time limit" };
-    const r = await tg.ask({ intent: route.intent, params: route.params });
+    // A canonical ask (intent + params), or a plain-language query for an intent with no input schema.
+    const r = await tg.ask(route.body ?? { intent: route.intent, params: route.params });
     const judged = judgeRouted(r, route, entries, vars);
     calls.push(callSummary(r, { via: "routed", note: judged.reject && `not used: ${judged.reject}` }));
     await ledger(r, r.body?.miner_id ?? "routed", route.intent);

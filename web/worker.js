@@ -25,7 +25,7 @@ const DEFAULTS = {
   usdPerScan: 0.1,
   usdPerCall: 0.05,
 };
-const LIMITS = { maxDeps: 8, maxChunks: 3, maxChars: 12_000 };
+const LIMITS = { maxDeps: 8, maxChunks: 3, maxChars: 12_000, maxAddresses: 3 };
 const MAX_FILES = 100;
 const SCAN_TTL = 60 * 60 * 24 * 90; // keep reports 90 days
 const ROUTE_RETRY_SECONDS = 6 * 60 * 60; // try routing an intent again after an unusable answer
@@ -106,7 +106,7 @@ async function createScan(request, env, deps) {
     baseSha,
     headSha: pull.head.sha,
     getText,
-    checks: new Set(["deps", "diff"]),
+    checks: new Set(["deps", "diff", "addresses"]),
     limits: LIMITS,
   });
 

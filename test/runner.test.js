@@ -264,3 +264,20 @@ test("a one-off unreadable routed answer falls back for that check only; routing
   const second = await runCheck({ tg, miners: fallback, job: routedJob, deadline: FAR, routing });
   assert.deepEqual(second.calls.map((c) => c.via), ["routed"]);
 });
+
+test("new addresses: a plain-language routed ask, then GoPlus when the routed answer is off-target; swaps caution locally", async () => {
+  const files = [{ filename: "src/pay.ts", status: "modified", patch: '@@ -1,1 +1,1 @@\n-export const PAYOUT = "0x1111111111111111111111111111111111111111";\n+export const PAYOUT = "0x2222222222222222222222222222222222222222";' }];
+  const [job] = buildJobs({ deps: [], files }, new Set(["addresses"]));
+  assert.equal(job.target, "0x2222222222222222222222222222222222222222 on Ethereum (assumed)");
+  assert.match(job.route.body.query, /^Token and contract security risk .* 0x2222222222222222222222222222222222222222 on Ethereum \(chain id 1\)$/);
+  const tg = fakeTg([rawJunk, okResponse("200001")]);
+  const goplus = { addresses: [{ minerId: "200001", endpoint: "/token-security", method: "GET", payload: { chain_id: "{{chain_id}}", contract_addresses: "{{address}}" }, normalizer: "goplus-token-security" }] };
+  const out = await runCheck({ tg, miners: goplus, job, deadline: FAR });
+  assert.deepEqual(tg.sent[0], { auto: true, body: job.route.body });
+  assert.deepEqual(tg.sent[1].payload, { chain_id: "1", contract_addresses: "0x2222222222222222222222222222222222222222" });
+  assert.deepEqual(out.calls.map((c) => c.via), ["routed", "direct"]);
+  const local = localOutcomes(files, []);
+  const swap = local.find((o) => o.check === "address-changes");
+  assert.match(swap.findings[0].title, /address changed: 0x1111.* → 0x2222/);
+  assert.equal(decide(local).verdict, "CAUTION");
+});

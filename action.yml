@@ -20,8 +20,8 @@ inputs:
     description: Fail the job on `block`, `caution` (CAUTION or BLOCK), or `never`.
     default: block
   checks:
-    description: Comma-separated paid checks to run. `deps` and `diff` have vetted miners on Telegraph's current network; `patch` and `urls` are skipped until theirs are. Secret and install-script checks always run locally.
-    default: deps,diff
+    description: Comma-separated paid checks to run. `deps`, `diff` and `addresses` (new on-chain addresses) have vetted miners on Telegraph's current network; `patch` and `urls` are skipped until theirs are. Secret, install-script and address-change checks always run locally.
+    default: deps,diff,addresses
   routing:
     description: "`auto` (default) buys each check through Telegraph's routing first and falls back to a vetted miner when the routed answer is unusable. `off` asks the vetted miners directly."
     default: auto

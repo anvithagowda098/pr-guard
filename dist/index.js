@@ -50646,6 +50646,14 @@ function cvssSeverity(score) {
   return "low";
 }
 var SECURITY_CATEGORIES = [
+  // Smart contracts (Solidity)
+  { id: "reentrancy", severity: "high", re: /re-?entran(cy|t)/i },
+  { id: "access-control", severity: "high", re: /access[\s-]*control|\bunrestricted\b|anyone can (call|change|set|withdraw|mint|update|transfer|take)|missing (an? )?(onlyowner|access|authori[sz]ation|modifier)|\bunprotected\b|lacks? (an? )?(access|authori[sz]ation|onlyowner)/i },
+  { id: "tx-origin", severity: "high", re: /tx\.origin/i },
+  { id: "delegatecall", severity: "medium", re: /delegatecall/i },
+  { id: "selfdestruct", severity: "medium", re: /self-?destruct/i },
+  { id: "unchecked-call", severity: "medium", re: /unchecked (low-level )?(call|send)|return value[^.]{0,40}(not checked|ignored|unchecked)/i },
+  // General
   { id: "sql-injection", severity: "high", re: /sql[\s-]*injection|\bsqli\b/i },
   { id: "command-injection", severity: "high", re: /(command|shell)[\s-]*injection|os command/i },
   { id: "code-injection", severity: "high", re: /code[\s-]*(injection|execution)|remote code execution|\brce\b|\beval\b/i },
@@ -50933,8 +50941,77 @@ var RULES2 = [
     fix: "drive debug mode from the environment and keep it off in production"
   }
 ];
+var SOLIDITY_RULES = [
+  {
+    id: "tx-origin",
+    title: "tx.origin used for authorization",
+    cwe: "CWE-863",
+    test: (l) => /\btx\.origin\b\s*(==|!=)|(==|!=)\s*tx\.origin\b/.test(l),
+    severity: () => "high",
+    confidence: 0.85,
+    fix: "check msg.sender instead; tx.origin can be any contract's caller"
+  },
+  {
+    id: "delegatecall",
+    title: "delegatecall",
+    cwe: "CWE-829",
+    test: (l) => /\.delegatecall\s*\(/.test(l),
+    severity: () => "medium",
+    confidence: 0.6,
+    fix: "only delegatecall a fixed, trusted implementation; never a caller-supplied address"
+  },
+  {
+    id: "selfdestruct",
+    title: "selfdestruct",
+    cwe: "CWE-284",
+    test: (l) => /\b(selfdestruct|suicide)\s*\(/.test(l),
+    severity: () => "medium",
+    confidence: 0.7,
+    fix: "remove selfdestruct, or restrict it to a governed, time-locked path"
+  },
+  {
+    id: "unchecked-call",
+    title: "low-level call result not checked",
+    cwe: "CWE-252",
+    // A bare statement: nothing captures or tests the returned success flag.
+    test: (l) => /^\s*[\w.()[\]]+\.(call|send)\s*(\{[^}]*\})?\s*\([^;]*\)\s*;/.test(l),
+    severity: () => "medium",
+    confidence: 0.7,
+    fix: "capture the success flag and require it, or use a safe transfer helper"
+  }
+];
+var VALUE_CALL = /\.call\s*\{\s*value\s*:|\.call\.value\s*\(/;
+var STATE_WRITE = /\b\w+\s*\[[^\]]+\]\s*(=|-=|\+=)(?!=)|\b\w*(balance|deposit|share|credit)\w*\s*(=|-=)(?!=)/i;
+var PUBLIC_FN = /\bfunction\s+\w+\s*\([^)]*\)([^{;]*)\b(external|public)\b([^{;]*)/;
+var GUARDED = /\bonly[A-Z]\w*|\bauth\b|\binitializer\b|\brequiresAuth\b/;
+var PRIVILEGED_WRITE = /\b_?(owner|admin|governance|implementation|operator|minter|treasury)\s*=(?!=)/i;
+var SENDER_CHECK = /require\s*\(\s*msg\.sender\s*==|msg\.sender\s*!=|_checkOwner\s*\(|_checkRole\s*\(|hasRole\s*\(/;
+function solidityFlows(lines) {
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const { text: l, line, file } = lines[i];
+    if (COMMENT.test(l)) continue;
+    const next = lines.slice(i + 1, i + 9).filter((x) => x.file === file);
+    if (VALUE_CALL.test(l) && next.some((x) => !COMMENT.test(x.text) && STATE_WRITE.test(x.text))) {
+      out.push({ rule: "reentrancy", title: "state updated after an external call (reentrancy)", severity: "high", cwe: "CWE-841", ...file && { file }, line, evidence: evidence(l), fix: "update balances before the call (checks-effects-interactions), or add a reentrancy guard", confidence: 0.75 });
+    }
+    const fn = l.match(PUBLIC_FN);
+    if (fn && !GUARDED.test(fn[1] + fn[3])) {
+      const body = [l.slice(l.indexOf("{") + 1)];
+      for (const x of next) {
+        if (/^\s*}\s*$/.test(x.text) || PUBLIC_FN.test(x.text)) break;
+        body.push(x.text);
+      }
+      const text = body.join("\n");
+      if (PRIVILEGED_WRITE.test(text) && !SENDER_CHECK.test(text)) {
+        out.push({ rule: "access-control", title: "privileged state set without access control", severity: "high", cwe: "CWE-284", ...file && { file }, line, evidence: evidence(l), fix: "restrict it (onlyOwner, a role, or require(msg.sender == owner))", confidence: 0.75 });
+      }
+    }
+  }
+  return out;
+}
 var SECRET_RULE = { id: "hardcoded-secret", cwe: "CWE-798", confidence: 0.9, fix: "move it to a secret store or environment variable, and rotate the exposed value" };
-var RULE_COUNT = RULES2.length + 1;
+var RULE_COUNT = RULES2.length + SOLIDITY_RULES.length + 2 + 1;
 var looksLikeDiff = (text) => /^(diff --git |@@ -\d)/m.test(text);
 function linesOf(text) {
   if (!looksLikeDiff(text)) return text.split(/\r?\n/).map((t, i) => ({ line: i + 1, text: t }));
@@ -50947,7 +51024,9 @@ function linesOf(text) {
 }
 var evidence = (line) => redact(line.trim()).text.slice(0, 160);
 function scan(text) {
-  const lines = linesOf(String(text ?? ""));
+  const src = String(text ?? "");
+  const lines = linesOf(src);
+  const isSolidity = (file) => file ? /\.sol$/i.test(file) : /\bpragma\s+solidity\b/.test(src);
   const findings = [];
   for (const { line, text: l, file } of lines) {
     for (const s of new Set(secretSpans(l).map((x) => `${x.type}\0${x.severity}`))) {
@@ -50955,10 +51034,11 @@ function scan(text) {
       findings.push({ rule: SECRET_RULE.id, title: `hardcoded secret (${type.replace(/_/g, " ")})`, severity, cwe: SECRET_RULE.cwe, ...file && { file }, line, evidence: evidence(l), fix: SECRET_RULE.fix, confidence: SECRET_RULE.confidence });
     }
     if (COMMENT.test(l)) continue;
-    for (const r of RULES2) {
+    for (const r of isSolidity(file) ? [...RULES2, ...SOLIDITY_RULES] : RULES2) {
       if (r.test(l)) findings.push({ rule: r.id, title: r.title, severity: r.severity(l), cwe: r.cwe, ...file && { file }, line, evidence: evidence(l), fix: r.fix, confidence: r.confidence });
     }
   }
+  findings.push(...solidityFlows(lines.filter((x) => isSolidity(x.file))));
   return { findings, linesScanned: lines.length };
 }
 

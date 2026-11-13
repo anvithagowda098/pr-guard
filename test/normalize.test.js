@@ -209,3 +209,13 @@ test("Unicode hyphens in a finding still name its category (seen live from miner
   const n = normalize("code-review-format", { verdict: "Request changes", findings: ["Hard‑coded AWS credentials expose secrets; they will be leaked."] });
   assert.deepEqual([n.findings[0].category, n.findings[0].severity], ["hardcoded-secret", "high"]);
 });
+
+test("Solidity through routed code review (miner 302, captured): reentrancy and open setOwner, confirmed by PR Guard's rules -> BLOCK", () => {
+  const cap = routed("code-review-solidity-reentrancy-302-intent.json");
+  const diff = cap.request.params.code;
+  const n = normalize("code-review-format", cap.body.result);
+  assert.deepEqual(n.findings.filter((f) => f.category).map((f) => f.category), ["reentrancy", "access-control"]);
+  const c = confirmFindings("diff", n, { diff });
+  assert.deepEqual([c.confirmed, c.disagreement], [true, false]);
+  assert.equal(decide([{ check: "diff", target: "contracts/Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});

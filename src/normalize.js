@@ -22,6 +22,14 @@ function cvssSeverity(score) {
 // Security categories in free-text findings, named like PR Guard's local rules
 // (miner/rules.js) so a reviewer's finding and a local rule hit can be matched.
 export const SECURITY_CATEGORIES = [
+  // Smart contracts (Solidity)
+  { id: "reentrancy", severity: "high", re: /re-?entran(cy|t)/i },
+  { id: "access-control", severity: "high", re: /access[\s-]*control|\bunrestricted\b|anyone can (call|change|set|withdraw|mint|update|transfer|take)|missing (an? )?(onlyowner|access|authori[sz]ation|modifier)|\bunprotected\b|lacks? (an? )?(access|authori[sz]ation|onlyowner)/i },
+  { id: "tx-origin", severity: "high", re: /tx\.origin/i },
+  { id: "delegatecall", severity: "medium", re: /delegatecall/i },
+  { id: "selfdestruct", severity: "medium", re: /self-?destruct/i },
+  { id: "unchecked-call", severity: "medium", re: /unchecked (low-level )?(call|send)|return value[^.]{0,40}(not checked|ignored|unchecked)/i },
+  // General
   { id: "sql-injection", severity: "high", re: /sql[\s-]*injection|\bsqli\b/i },
   { id: "command-injection", severity: "high", re: /(command|shell)[\s-]*injection|os command/i },
   { id: "code-injection", severity: "high", re: /code[\s-]*(injection|execution)|remote code execution|\brce\b|\beval\b/i },

@@ -213,3 +213,28 @@ test("registration helper sends exactly the intended transactions", async () => 
   // The page was served once at /register (Oct 31) and removed after use.
   assert.equal((await createHandler()(new Request("https://miner.test/register"))).status, 405);
 });
+
+// ---- Solidity rules ------------------------------------------------------
+const sol = (body) => `diff --git a/contracts/V.sol b/contracts/V.sol\n@@ -1,1 +1,${body.split("\n").length + 1} @@\n pragma solidity ^0.8.20;\n${body.split("\n").map((l) => "+" + l).join("\n")}`;
+const rulesOf = async (diff) => (await import("../miner/rules.js")).scan(diff).findings.map((f) => `${f.rule}:${f.severity}`);
+
+test("Solidity: state written after an external value call is reentrancy; written before is fine", async () => {
+  const bad = sol("function withdraw() external {\n    uint256 a = balances[msg.sender];\n    (bool ok, ) = msg.sender.call{value: a}(\"\");\n    require(ok);\n    balances[msg.sender] = 0;\n}");
+  assert.deepEqual(await rulesOf(bad), ["reentrancy:high"]);
+  const good = sol("function withdraw() external {\n    uint256 a = balances[msg.sender];\n    balances[msg.sender] = 0;\n    (bool ok, ) = msg.sender.call{value: a}(\"\");\n    require(ok);\n}");
+  assert.deepEqual(await rulesOf(good), []);
+});
+
+test("Solidity: an open function that sets the owner is flagged; a guarded one isn't", async () => {
+  assert.deepEqual(await rulesOf(sol("function setOwner(address o) external { owner = o; }")), ["access-control:high"]);
+  assert.deepEqual(await rulesOf(sol("function setOwner(address o) external onlyOwner { owner = o; }")), []);
+  assert.deepEqual(await rulesOf(sol("function setOwner(address o) external {\n    require(msg.sender == owner);\n    owner = o;\n}")), []);
+});
+
+test("Solidity: tx.origin auth, unchecked send, delegatecall and selfdestruct; none of it applies to JavaScript", async () => {
+  assert.deepEqual(await rulesOf(sol("function f() external { require(tx.origin == owner); }")), ["tx-origin:high"]);
+  assert.deepEqual(await rulesOf(sol("    payable(to).send(amount);")), ["unchecked-call:medium"]);
+  assert.deepEqual(await rulesOf(sol("    (bool ok, ) = impl.delegatecall(data);")), ["delegatecall:medium"]);
+  assert.deepEqual(await rulesOf(sol("    selfdestruct(payable(owner));")), ["selfdestruct:medium"]);
+  assert.deepEqual(await rulesOf("diff --git a/a.js b/a.js\n@@ -1,1 +1,2 @@\n x\n+payable(to).send(amount); if (tx.origin == owner) {}"), []);
+});

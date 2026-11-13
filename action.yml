@@ -5,10 +5,13 @@ branding:
   color: green
 inputs:
   telegraph-private-key:
-    description: Burner key holding Telegraph test USDC on Ethereum Sepolia (store as a secret). Never a key with real funds.
+    description: Burner key holding Telegraph test USDC on Ethereum Sepolia (store as a secret). Never a key with real funds. Leave it out to use free hosted scans (public repositories only).
     required: false
+  service-url:
+    description: Hosted PR Guard service used when no key is set. It pays for the checks from a sponsor wallet.
+    default: https://pr-guard-app.pr-guard.workers.dev
   max-usd-per-pr:
-    description: Hard cap on total spend for one PR run, in USD.
+    description: Hard cap on total spend for one PR run, in USD. Hosted scans are capped at $0.10 by the service.
     default: "0.10"
   max-usd-per-call:
     description: Hard cap on a single paid call, in USD. Quotes above it are refused before signing.
@@ -19,6 +22,9 @@ inputs:
   checks:
     description: Comma-separated paid checks to run. `deps` and `diff` have vetted miners on Telegraph's current network; `patch` and `urls` are skipped until theirs are. Secret and install-script checks always run locally.
     default: deps,diff
+  routing:
+    description: "`auto` (default) buys each check through Telegraph's routing first and falls back to a vetted miner when the routed answer is unusable. `off` asks the vetted miners directly."
+    default: auto
   node-url:
     description: Telegraph node URL.
     default: https://devnode.telegraphprotocol.com

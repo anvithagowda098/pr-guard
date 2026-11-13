@@ -20,12 +20,17 @@ function resultCell(o) {
   if (o.status === "failed") return `⚠️ failed (${o.reason ?? ""})`;
   const top = o.findings.find((f) => f.severity === o.severity) ?? o.findings[0];
   const high = o.severity === "high" || o.severity === "critical";
-  const extra = o.disagreement ? " · miners disagree" : high && o.confirmed ? " · confirmed" : "";
+  const extra = o.disagreement ? " · local rules disagree" : high && o.confirmed ? " · confirmed" : "";
   const advice = o.advice ? ` · fix: ${o.advice}` : "";
   return `${SEV_ICON[o.severity] ?? ""} ${o.severity}${top ? `: ${top.title}` : ""}${extra}${advice}`;
 }
 
-const minerCell = (calls) => calls.map((c) => `#${c.minerId}${c.minerName ? ` ${c.minerName}` : ""}`).join(", ") || "local";
+// "routed": Telegraph's routing picked the miner; "fallback": a vetted miner
+// called directly because the routed answer couldn't be used.
+const minerCell = (calls) =>
+  calls
+    .map((c) => `#${c.minerId ?? "?"}${c.minerName ? ` ${c.minerName}` : ""}${c.via === "routed" ? (c.note ? " (routed, not used)" : " (routed)") : c.via === "direct" ? " (fallback)" : ""}`)
+    .join(", ") || "local";
 
 const evidenceCell = (calls, nodeUrl) =>
   calls.filter((c) => c.signalHash).map((c) => `[signal](${nodeUrl}/engine/v1/signal/${c.signalHash})`).join(" ") || "—";
@@ -54,7 +59,7 @@ export function renderComment({ verdict, reasons = [], outcomes = [], spentUsd =
     lines.push("| Check | Target | Result | Miner | Cost | Evidence |", "|---|---|---|---|---|---|");
     for (const o of outcomes) {
       const cost = o.calls.reduce((s, c) => s + (c.costUsd ?? 0), 0);
-      lines.push(`| ${o.check} | ${cell(o.target, 60)} | ${cell(resultCell(o))} | ${cell(minerCell(o.calls), 50)} | ${usd(cost)} | ${evidenceCell(o.calls, nodeUrl)} |`);
+      lines.push(`| ${o.check} | ${cell(o.target, 60)} | ${cell(resultCell(o))} | ${cell(minerCell(o.calls), 140)} | ${usd(cost)} | ${evidenceCell(o.calls, nodeUrl)} |`);
     }
     lines.push("");
   }
@@ -63,6 +68,9 @@ export function renderComment({ verdict, reasons = [], outcomes = [], spentUsd =
   const paid = calls.filter((c) => c.costUsd > 0);
   const budget = budgetUsd !== undefined ? ` of ${usd(budgetUsd)} budget` : "";
   lines.push(`**Spent:** ${usd(spentUsd)}${budget} · ${paid.length} paid call${paid.length === 1 ? "" : "s"} · Telegraph testnet (${NETWORK_LABEL})`);
+
+  const routingNotes = [...new Set(outcomes.flatMap((o) => o.notes ?? []))];
+  if (routingNotes.length) lines.push("", ...routingNotes.slice(0, 5).map((n) => `<sub>Routing: ${cell(n, 300)}</sub><br>`));
 
   const detailed = outcomes.filter((o) => o.findings.length);
   if (detailed.length) {

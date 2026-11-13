@@ -2,13 +2,44 @@
 
 Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) plus the Miners track. The event runs Nov 1 to Dec 1, 2026 (23:59 UTC). Submit by Nov 29.
 
-## The rules that matter (hackathon.telegraphprotocol.com/rules, read Oct 27)
+## Design change, Nov 13: routing first
+
+The Discord digest says the team advised builders not to call several miners directly just to cross-check them: that "defeats Telegraph's purpose" and won't meet mainnet readiness. PR Guard now:
+- buys every check through routing first (canonical intent + params);
+- uses a routed answer only if it's in the intent's format, or from a vetted miner and about the exact target;
+- falls back to one vetted miner, and records why;
+- never buys a second opinion.
+
+Confirmation is now deterministic: registry data about the exact package version, or PR Guard's local rules (Sentinel's rule set, run in-process) on the same diff.
+
+Other notes from the digest:
+- Old integrate.telegraphprotocol.com is deprecated; use anjoman.ai/earn.
+- List the app at anjoman.ai/dashboard/apps.
+- Nov 14 milestone evidence (tx, request, response) goes in Discord #hackathon. Links are only allowed in the showcase channel.
+
+## Rule changes found Nov 13 (re-read hackathon.telegraphprotocol.com/rules)
+
+- **New Apps & Agents rubric:** technical 35 (minimum 24), commercial 25, independent adoption and retention 10, integration 5, reproducibility and proof 5, and a new **organic growth, education and developer activation: 20**. This replaces 35/30/15/10/10.
+- **The 20 growth points:**
+  - **Content (5):** a public explanation (2), a tutorial on Telegraph's role (2), honest limits and lessons (1).
+  - **Ease of adoption (5):** steps with an example (2), something another developer can test (2), troubleshooting, costs and next steps (1).
+  - **Distribution (5):** at least 3 original updates on separate dates (2), shared beyond our own Discord thread (2), real replies to feedback (1).
+  - **Activation (5):** an invitation with a concrete next step (1), an independent developer acting on it (2), a further verified contribution or repeat use (2).
+  - **Not evidence on their own:** stars, follows, likes, Discord joins. Strong evidence: GitHub issues, accepted PRs, reproduction reports, external integrations.
+- **New requirement for every track:** star github.com/telegraphprotocol/bounties. The submission asks for the GitHub username that starred it.
+- **Posts:** tag @Telegraphprotoc on X and disclose hackathon participation and the prize incentive. The tag alone isn't disclosure.
+- **Nov 14 First Integration Milestone (Apps & Agents):** show a first working Telegraph request or purchase, or what's blocking you. It's a progress check, not a deadline.
+- **Other dates:** community showcase Nov 20; an Anjoman hands-on session in the final week; judging Dec 2–8; results from Dec 9.
+- **December challenges ($3,000 reserved):** 4 × $500 for new missions or technical results, and 2 × $500 for adoption. They need their own submission.
+- **Mission coverage:** delivery awards favour covering distinct missions. `SECURITY_REVIEW` also maps to missions 01 Exchange and 14 Web3 Native & DeFi, and `SMART_CONTRACT_AUDIT_GENERAL` has 18 miners. A Solidity check could cover mission 14 honestly.
+
+## The rules that matter (hackathon.telegraphprotocol.com/rules, read Oct 27; see the changes above)
 
 - **Apps & Agents prizes:**
   - 8 delivery awards of $225. Judges pick the set of entries covering the most distinct missions, then the most distinct working apps.
   - Excellence awards: $700 / $350 / $150, ranked by score.
 - **Miners prizes:** 4 delivery awards of $300 (favours unblocking missing, mission-critical intents), plus excellence $500 / $300.
-- **To win:** at least 70/100, with technical quality at least 24/35. The rubric: technical 35, commercial 30, adoption 15, integration 10, proof 10.
+- **To win:** at least 70/100, with technical quality at least 24/35. (Rubric changed; see above.)
 - **Multiple tracks and earlier work:** entering more than one track is allowed if each entry is a distinct contribution. Code written before Nov 1 is allowed (disclose reused parts). **Transaction evidence must come from Nov 1–Dec 1:** the October test payments don't count.
 - **Disqualifying:** fake receipts, manufactured adoption, collusive requests. PR Guard buying from our own miner must be disclosed. The miner's case rests on independent tests, not self-purchases.
 - **Reviewers check each mission in five steps:** run with new input, check the result, inspect the Telegraph request, break it, reproduce it.
@@ -33,13 +64,32 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
   - **Active on Telegraph since Nov 2.** Listed among the 24 `SECURITY_REVIEW_GENERAL` miners. Paid calls through Telegraph to `/review` and `/package` both work.
 - **Diff review on the new network (Nov 2):** Verity (#5530, independent) asks first; Sentinel confirms. On the planted bugs both agree at the same file:line, giving BLOCK.
 
-## What works today
+## Evidence log (in-event, from Nov 1)
 
-- **The Action** (`src/`), 75 tests:
-  - Dependency check: deps.dev Package Review #77010, confirmed by Secrev Depsdev #190048 matching advisory ids.
-  - Diff security review: ChainSight #302 `/secreview`.
-  - Local secret and install-script scan.
-  - Budget reserved at quote time, a PR comment, a ledger.
+| When (UTC) | What | Proof |
+|---|---|---|
+| Nov 2, 17:40–17:46 | Paid calls through Telegraph to the Sentinel miner (`/review`, `/package`), plus Verity and TxLens | fixtures in `test/fixtures/miner-responses/SECURITY_REVIEW_GENERAL/` |
+| Nov 2, 18:08 | Demo PR #1 (clean change): 🟢 SAFE, check passed, 28 s, $0.01 | Actions run 41497627143, signal `0x9295941f…` |
+| Nov 2, 18:08 | Demo PR #2 (lodash 4.17.15): 🔴 BLOCK, confirmed by #77010 and #190048, 39 s, $0.03 | Actions run 41497634721, signals `0x0de90d58…`, `0x9bd69588…`, `0x2e618468…` |
+| Nov 2, 18:08 | Demo PR #3 (fake key + SQL injection + eval): 🔴 BLOCK, local key scan; injection confirmed by Verity #5530 and Sentinel #731001, 32 s, $0.02 | Actions run 41497642958, signals `0x66fe812b…`, `0x997dd666…` |
+| Nov 2 | Hosted page, first live paid scan: expressjs/express#6100 → 🟢 SAFE, Verity #5530, $0.01 | signal `0x765e1625…` (our own test, not adoption) |
+
+| Nov 13, 05:21–05:26 | Routing tests (burner `0xd0Cd…cfB44`): canonical SECURITY_REVIEW_GENERAL ×2 → miner 77003, off-target; CODE_REVIEW_GENERAL → miner 302, usable; direct Verity #5530 → both bugs | signals `0x87fa3b8d…`, `0x9207fce2…`, `0xb0d09814…` (tx `0x44bcae92…51da`, block 12123863); fixtures in `test/fixtures/miner-responses/ROUTED/` |
+
+- The demo PRs are paid by the bot wallet `0x83b5…abcc`, whose key is in the repo secret `TELEGRAPH_PRIVATE_KEY`. They stay open as fixtures.
+- The first runs failed safely, with nothing spent: MetaMask exports keys without the 0x prefix. Fixed in `ff78842`.
+
+## What works today (Nov 2)
+
+- **The Action** (`src/`), 120 tests, all offline:
+  - Dependencies: deps.dev Package Review #77010 (npm), PR Guard Sentinel #731001 (PyPI, Go, crates.io), Secrev Depsdev #190048 (confirms by advisory id).
+  - Code diff: Telegraph Verity #5530 first; Sentinel #731001 confirms high or critical findings.
+  - Local secret and install-script scans; budget reserved at quote time; one PR comment; a purchase ledger.
+  - **Two modes:** with `TELEGRAPH_PRIVATE_KEY` it pays miners itself. Without a key, public repositories get a free hosted scan through the web service (sponsor wallet), and private ones are skipped. Hosted mode needs this repository to be public, because other repositories `uses:` it.
+- **The hosted page and API** (`web/`): https://pr-guard-app.pr-guard.workers.dev.
+  - Paste a public PR link; one paid check per request; permalinks; a recent-scans feed.
+  - Limits: 5 scans per visitor per day on the page, 20 per repository per day through the Action, $1.50 per day overall, $0.10 per scan.
+  - Secrets in Cloudflare: `SPONSOR_KEY`, `GITHUB_TOKEN` (no scopes).
 - **The miner** (`miner/`): PR Guard Sentinel, `SECURITY_REVIEW`.
   - Rule-based `/review` and OSV-backed `/package`.
   - **Deployed:** https://pr-guard-sentinel.pr-guard.workers.dev (Cloudflare Workers, `npm run deploy:miner`).
@@ -49,7 +99,7 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
     - tx `0x88e4ca7650af50613b85b018a91882b75339f395845eb44236a968727e09de67`, relayed by the console.
   - The registered YAML URL is `/miner.yaml` on the Worker, committed by hash. **Any YAML change needs `updateMiner` from the owner wallet.**
   - **First paid call through Telegraph:** `/engine/v1/ask/731001`, /package lodash 4.17.15, 200, $0.01. Signal `0x2d457569…b48d`. This was a self-test from the PR Guard burner, to be disclosed; it predates the event, so it isn't evidence.
-- **Network facts learned:** see the README section "Which miners, and why". Failed miner calls are charged. Unknown packages answer 500 with "upstream error 404".
+- **Network facts learned:** see `docs/MINERS.md` (vetting history). Unknown packages answer 500 with "upstream error 404".
 
 ## Timeline (dates in UTC; the deadline is Dec 1 23:59 UTC, which is Dec 2 05:29 IST)
 

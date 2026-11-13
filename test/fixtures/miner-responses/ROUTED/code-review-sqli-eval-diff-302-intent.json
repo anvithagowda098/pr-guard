@@ -1,0 +1,148 @@
+{
+  "captured_at": "2026-11-13T05:26:41.126Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask",
+  "request": {
+    "intent": "CODE_REVIEW_GENERAL",
+    "params": {
+      "code": "diff --git a/src/users.js b/src/users.js\n@@ -1,3 +1,6 @@\n const db = require('./db');\n+app.get('/user', async (req, res) => {\n+  const rows = await db.query(\"SELECT * FROM users WHERE id = '\" + req.query.id + \"'\");\n+  res.json(rows);\n+});\n+app.post('/calc', (req, res) => res.send(String(eval(req.body.expr))));"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for LLM-routed inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 32061,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a59b5c321e83f3c4-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Fri, 13 Nov 2026 05:26:40 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHg4YmNlY2M2YjRhNzUwNDhmODlhNWMyYmY3Y2ExNmI2MDM2Yjc4YTczMmZhNTBmMTZjOTQxMTA0ZjM5MTU2NzA5IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=zbkgUnofoQQJ%2F%2F3glJNdqNG6plCH1wX4UvoK8QnYk%2BDSZgv2pzFbWoNoMTtquwvBXPbR0N58ovPzm6B6we2Xq298PcKcVfGdrMMeZ0iA%2BL1yxF%2B1fAsIt8KK6q3WasdgjQrGlWFIufvrB4AZxgsa%2Fg%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDA2OTA5NzZjYmYwYWQ3MjI1YTMyMDkyOWQwNTI5NzBkMjAyYjFjYzJmZjg3Nzg5OTQ1MWJlNjJhMzM1Mjc2MmQiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI0ODkzIiwiaW50ZW50IjoiQ09ERV9SRVZJRVdfR0VORVJBTCIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjIwNzksInNldHRsZW1lbnQiOiJvbmNoYWluIiwiY2hhaW4iOiJlaXAxNTU6MTExNTUxMTEiLCJ0eF9oYXNoIjoiMHg4YmNlY2M2YjRhNzUwNDhmODlhNWMyYmY3Y2ExNmI2MDM2Yjc4YTczMmZhNTBmMTZjOTQxMTA0ZjM5MTU2NzA5IiwidGltZXN0YW1wIjoxNzk0NTQ3NjAwfQ=="
+  },
+  "bodyText": "{\"miner_id\":\"302\",\"miner_name\":\"ChainSight — Universal Intelligence \\u0026 Data Oracle\",\"endpoint\":\"/codereview\",\"result\":{\"verdict\":\"Request changes\",\"findings\":[\"SQL Injection: Directly concatenating req.query.id into the SQL string allows attackers to execute arbitrary queries. Use parameterized queries or an ORM.\",\"Code Injection / Remote Code Execution: eval(req.body.expr) executes any JavaScript code sent by the client, opening the server to full compromise. Never use eval on user input.\",\"Missing app definition: The file imports db but never imports or creates an Express app instance, causing a ReferenceError.\",\"No input validation / sanitization: Neither endpoint validates request parameters (e.g., ensure id is a number) or checks request body content.\",\"Improper HTTP method for data retrieval: The /user route should likely be GET /users/:id (RESTful) rather than using a query string.\",\"Error handling: Asynchronous errors from db.query are not caught; unhandled promise rejections could crash the process.\",\"Response format: db.query likely returns an array; returning the raw array may expose internal DB structure. Consider selecting needed fields and handling empty results.\",\"Potential missing Content-Type handling: req.body.expr requires body‑parser middleware; ensure it's configured.\",\"Security best practices: Add rate limiting, authentication/authorization checks, and avoid exposing raw DB rows.\"],\"summary\":\"Verdict: The changes introduce serious security vulnerabilities and functional issues; they must not be merged as‑is.\"},\"result_shape\":\"intent\",\"format_version\":3,\"field_status\":{\"verdict\":\"ok\",\"findings\":\"ok\",\"summary\":\"ok\"},\"input\":{\"code\":\"diff --git a/src/users.js b/src/users.js\\n@@ -1,3 +1,6 @@\\n const db = require('./db');\\n+app.get('/user', async (req, res) =\\u003e {\\n+  const rows = await db.query(\\\"SELECT * FROM users WHERE id = '\\\" + req.query.id + \\\"'\\\");\\n+  res.json(rows);\\n+});\\n+app.post('/calc', (req, res) =\\u003e res.send(String(eval(req.body.expr))));\"},\"input_schema_version\":3,\"cost_usd\":0.01,\"duration_ms\":1276,\"timestamp\":\"2026-11-13T05:26:30.626210097Z\",\"reasoning\":\"Intent: intent given by the caller\\nMiner: The user wants a code review, and the intent is fixed as CODE_REVIEW_GENERAL. The provided miner configuration has an endpoint '/codereview' that explicitly serves the CODE_REVIEW_GENERAL intent. The 'query' parameter is required for this endpoint and should contain the user's code for review.\",\"intent\":\"CODE_REVIEW_GENERAL\",\"signal_hash\":\"0x7fc96af0e75f713824acbaed777ff708aea6eb1139beaf3fc39acd1dcbf50816\"}",
+  "body": {
+    "miner_id": "302",
+    "miner_name": "ChainSight — Universal Intelligence & Data Oracle",
+    "endpoint": "/codereview",
+    "result": {
+      "verdict": "Request changes",
+      "findings": [
+        "SQL Injection: Directly concatenating req.query.id into the SQL string allows attackers to execute arbitrary queries. Use parameterized queries or an ORM.",
+        "Code Injection / Remote Code Execution: eval(req.body.expr) executes any JavaScript code sent by the client, opening the server to full compromise. Never use eval on user input.",
+        "Missing app definition: The file imports db but never imports or creates an Express app instance, causing a ReferenceError.",
+        "No input validation / sanitization: Neither endpoint validates request parameters (e.g., ensure id is a number) or checks request body content.",
+        "Improper HTTP method for data retrieval: The /user route should likely be GET /users/:id (RESTful) rather than using a query string.",
+        "Error handling: Asynchronous errors from db.query are not caught; unhandled promise rejections could crash the process.",
+        "Response format: db.query likely returns an array; returning the raw array may expose internal DB structure. Consider selecting needed fields and handling empty results.",
+        "Potential missing Content-Type handling: req.body.expr requires body‑parser middleware; ensure it's configured.",
+        "Security best practices: Add rate limiting, authentication/authorization checks, and avoid exposing raw DB rows."
+      ],
+      "summary": "Verdict: The changes introduce serious security vulnerabilities and functional issues; they must not be merged as‑is."
+    },
+    "result_shape": "intent",
+    "format_version": 3,
+    "field_status": {
+      "verdict": "ok",
+      "findings": "ok",
+      "summary": "ok"
+    },
+    "input": {
+      "code": "diff --git a/src/users.js b/src/users.js\n@@ -1,3 +1,6 @@\n const db = require('./db');\n+app.get('/user', async (req, res) => {\n+  const rows = await db.query(\"SELECT * FROM users WHERE id = '\" + req.query.id + \"'\");\n+  res.json(rows);\n+});\n+app.post('/calc', (req, res) => res.send(String(eval(req.body.expr))));"
+    },
+    "input_schema_version": 3,
+    "cost_usd": 0.01,
+    "duration_ms": 1276,
+    "timestamp": "2026-11-13T05:26:30.626210097Z",
+    "reasoning": "Intent: intent given by the caller\nMiner: The user wants a code review, and the intent is fixed as CODE_REVIEW_GENERAL. The provided miner configuration has an endpoint '/codereview' that explicitly serves the CODE_REVIEW_GENERAL intent. The 'query' parameter is required for this endpoint and should contain the user's code for review.",
+    "intent": "CODE_REVIEW_GENERAL",
+    "signal_hash": "0x7fc96af0e75f713824acbaed777ff708aea6eb1139beaf3fc39acd1dcbf50816"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x8bcecc6b4a75048f89a5c2bf7ca16b6036b78a732fa50f16c941104f39156709",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x0690976cbf0ad7225a320929d052970d202b1cc2ff877899451be62a3352762d",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "4893",
+    "intent": "CODE_REVIEW_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2079,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x8bcecc6b4a75048f89a5c2bf7ca16b6036b78a732fa50f16c941104f39156709",
+    "timestamp": 1794547600
+  },
+  "charged": true
+}

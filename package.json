@@ -13,7 +13,8 @@
     "wallet": "node scripts/wallet.js",
     "first-call": "node scripts/first-call.js",
     "test": "node --test",
-    "deploy:miner": "node scripts/embed-yaml.js && wrangler deploy -c miner/wrangler.toml"
+    "deploy:miner": "node scripts/embed-yaml.js && wrangler deploy -c miner/wrangler.toml",
+    "deploy:web": "wrangler deploy -c web/wrangler.toml"
   },
   "dependencies": {
     "@actions/core": "3.0.1",

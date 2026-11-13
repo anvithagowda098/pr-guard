@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { fillTemplate, runCheck, runAll } from "../src/runner.js";
-import { buildJobs, localOutcomes, unresolvableDepOutcomes } from "../src/checks.js";
+import { buildJobs, rankDeps, localOutcomes, unresolvableDepOutcomes } from "../src/checks.js";
 import { decide } from "../src/policy.js";
 import { renderComment, MARKER } from "../src/report.js";
 
@@ -168,4 +168,87 @@ test("disabled entries are kept in config but never called", async () => {
 test("fix advice reaches the PR comment", () => {
   const body = renderComment({ verdict: "BLOCK", reasons: [], outcomes: [{ check: "deps", target: "lodash@4.17.15", status: "ok", severity: "high", confirmed: true, disagreement: false, advice: "upgrade to 4.18.0", findings: [{ title: "Prototype Pollution", severity: "high" }], calls: [] }], nodeUrl: "https://n" });
   assert.match(body, /high: Prototype Pollution · confirmed · fix: upgrade to 4\.18\.0/);
+});
+
+test("rankDeps: over the cap, the packages the PR is about are checked first", () => {
+  const d = (name, extra = {}) => ({ ecosystem: "npm", name, to: "1.0.0", direct: false, ...extra });
+  const deps = [d("@rtsao/scc"), d("array-includes", { from: "0.9.0" }), d("lodash", { from: "4.17.15" }), d("express", { direct: true }), d("@babel/core")];
+  const order = (title) => rankDeps(deps, title).map((x) => x.name);
+  assert.deepEqual(order("Bump lodash from 4.17.15 to 4.17.21"), ["express", "lodash", "array-includes", "@rtsao/scc", "@babel/core"]);
+  assert.deepEqual(order("Bump @babel/core"), ["express", "@babel/core", "array-includes", "lodash", "@rtsao/scc"]);
+  const jobs = buildJobs({ deps, files: [], title: "Bump lodash and n8n-workflow" }, new Set(["deps"]), { maxDeps: 2 });
+  assert.deepEqual(jobs.map((j) => j.target), ["express@1.0.0", "lodash@1.0.0"]);
+});
+
+test("planScan notes the packages left over by the cap", async () => {
+  const { planScan } = await import("../src/plan.js");
+  const lock = (names) => JSON.stringify({ lockfileVersion: 3, packages: Object.fromEntries([["", {}], ...names.map((n) => [`node_modules/${n}`, { version: "1.0.0" }])]) });
+  const texts = { "b:package-lock.json": lock([]), "h:package-lock.json": lock(["a", "b", "c", "lodash"]) };
+  const { jobs, notes } = await planScan({
+    pr: { title: "Bump lodash" },
+    rawFiles: [{ filename: "package-lock.json", status: "modified", patch: "" }],
+    baseSha: "b", headSha: "h",
+    getText: async ({ path, ref }) => texts[`${ref}:${path}`] ?? null,
+    checks: new Set(["deps", "diff"]),
+    limits: { maxDeps: 2 },
+  });
+  assert.deepEqual(jobs.map((j) => j.target), ["lodash@1.0.0", "a@1.0.0"]);
+  assert.deepEqual(notes, ["2 of 4 changed packages were not checked (limit 2): direct dependencies and packages named in the title go first."]);
+});
+
+// ---- routing first ---------------------------------------------------------
+const routedJob = { ...job, route: { intent: "SECURITY_REVIEW_GENERAL", params: { target: "npm package lodash version 4.17.15" }, normalizer: "security-review-format" } };
+const intentAnswer = (minerId, result) => ({ ok: true, status: 200, costUsd: 0.01, body: { miner_id: minerId, result_shape: "intent", result, signal_hash: `0xsig${minerId}` }, receipt: { receipt_hash: `0xr${minerId}` } });
+const rawJunk = { ok: true, status: 200, costUsd: 0.01, body: { miner_id: "77003", result_shape: "raw", result: [{ ghsa_id: "GHSA-unrelated" }], signal_hash: "0xsigjunk" }, receipt: { receipt_hash: "0xrjunk" } };
+const fallback = { deps: [{ minerId: "77010", name: "deps.dev", endpoint: "/query", method: "GET", payload: { pkg: "{{name}}" }, normalizer: "none-yet" }] };
+
+test("routing first: a usable canonical answer is used, and no miner is called directly", async () => {
+  const tg = fakeTg([intentAnswer("302", { verdict: "Secure", vulnerability_count: 0, issues: [], summary: "ok" })]);
+  const out = await runCheck({ tg, miners: fallback, job: routedJob, deadline: FAR });
+  assert.deepEqual(tg.sent, [{ auto: true, body: { intent: "SECURITY_REVIEW_GENERAL", params: { target: "npm package lodash version 4.17.15" } } }]);
+  assert.deepEqual([out.status, out.severity], ["ok", "none"]);
+  assert.deepEqual(out.calls.map((c) => [c.minerId, c.via]), [["302", "routed"]]);
+});
+
+test("an off-target routed answer falls back to one vetted miner, and routing isn't paid for again this run", async () => {
+  const routing = { mode: "auto", health: {} };
+  const tg = fakeTg([rawJunk, okResponse("77010"), okResponse("77010")]);
+  const first = await runCheck({ tg, miners: fallback, job: routedJob, deadline: FAR, routing });
+  assert.deepEqual(first.calls.map((c) => [c.minerId, c.via]), [["77003", "routed"], ["77010", "direct"]]);
+  assert.match(first.calls[0].note, /not used: miner 77003 answered in its own format/);
+  assert.match(first.notes[0], /Routed SECURITY_REVIEW_GENERAL answer not used/);
+  assert.equal(routing.health.SECURITY_REVIEW_GENERAL, false);
+  const second = await runCheck({ tg, miners: fallback, job: { ...routedJob, target: "other@1.0.0" }, deadline: FAR, routing });
+  assert.deepEqual(second.calls.map((c) => c.via), ["direct"], "no second routed call");
+  assert.equal(tg.sent.filter((s) => s.auto).length, 1);
+});
+
+test("deferFallback stops after a rejected routed answer; the next request runs only the fallback", async () => {
+  const tg = fakeTg([rawJunk, okResponse("77010")]);
+  const deferred = await runCheck({ tg, miners: fallback, job: routedJob, deadline: FAR, routing: { mode: "auto", health: {}, deferFallback: true } });
+  assert.equal(deferred.deferred, true);
+  assert.equal(deferred.calls.length, 1);
+  const out = await runCheck({ tg, miners: fallback, job: routedJob, deadline: FAR, priorCalls: deferred.calls, priorNotes: deferred.notes });
+  assert.deepEqual(out.calls.map((c) => c.via), ["routed", "direct"]);
+  assert.equal(out.notes.length, 1);
+});
+
+test("routing off, or a chunk too big for a canonical ask, goes straight to the vetted miner", async () => {
+  const off = await runCheck({ tg: fakeTg([okResponse("77010")]), miners: fallback, job: routedJob, deadline: FAR, routing: { mode: "off", health: {} } });
+  assert.deepEqual(off.calls.map((c) => c.via), ["direct"]);
+  const big = "diff --git a/a.js b/a.js\n@@ -1,1 +1,2 @@\n x\n" + "+const y = 2;\n".repeat(200);
+  const [diffJob] = buildJobs({ deps: [], files: [{ filename: "a.js", patch: big.split("\n").slice(1).join("\n") }] }, new Set(["diff"]));
+  assert.equal(diffJob.route, null);
+  const out = await runCheck({ tg: fakeTg([okResponse("5530")]), miners: { diff: [{ minerId: "5530", endpoint: "/v1/intent", payload: {} }] }, job: diffJob, deadline: FAR });
+  assert.deepEqual(out.calls.map((c) => c.via), ["direct"]);
+  assert.match(out.notes[0], /over the 2,000-character limit/);
+});
+
+test("buildJobs gives each check its canonical ask", () => {
+  const deps = [{ ecosystem: "PyPI", name: "django", from: "3.2.0", to: "3.2.1", direct: true }];
+  const files = [{ filename: "a.js", patch: "@@ -1 +1 @@\n-a\n+b" }];
+  const [d, diff] = buildJobs({ deps, files }, new Set(["deps", "diff"]));
+  assert.deepEqual(d.route, { intent: "SECURITY_REVIEW_GENERAL", params: { target: "PyPI package django version 3.2.1" }, normalizer: "security-review-format" });
+  assert.equal(diff.route.intent, "CODE_REVIEW_GENERAL");
+  assert.match(diff.route.params.code, /^diff --git a\/a\.js/);
 });

@@ -121,7 +121,9 @@ export class Telegraph {
    * @param {number} [opts.timeoutMs] per-request timeout, default 45s
    * @param {typeof fetch} [opts.fetch] injectable for tests
    */
-  constructor({ nodeUrl = DEFAULT_NODE_URL, privateKey, maxUsdPerCall = 0.05, budget, timeoutMs = 45_000, fetch: fetchImpl = globalThis.fetch } = {}) {
+  // The default fetch is wrapped: Cloudflare Workers reject a bare fetch
+  // called as a method of another object ("Illegal invocation").
+  constructor({ nodeUrl = DEFAULT_NODE_URL, privateKey, maxUsdPerCall = 0.05, budget, timeoutMs = 45_000, fetch: fetchImpl = (...a) => globalThis.fetch(...a) } = {}) {
     this.nodeUrl = nodeUrl.replace(/\/+$/, "");
     this.fetch = fetchImpl;
     this.timeoutMs = timeoutMs;

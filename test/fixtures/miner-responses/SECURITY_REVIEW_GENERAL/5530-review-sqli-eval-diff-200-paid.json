@@ -1,0 +1,187 @@
+{
+  "captured_at": "2026-11-13T05:23:27.415Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/5530",
+  "request": {
+    "method": "POST",
+    "endpoint": "/v1/intent",
+    "payload": {
+      "intent": "SECURITY_REVIEW",
+      "input": {
+        "code": "diff --git a/src/users.js b/src/users.js\n@@ -1,3 +1,6 @@\n const db = require('./db');\n+app.get('/user', async (req, res) => {\n+  const rows = await db.query(\"SELECT * FROM users WHERE id = '\" + req.query.id + \"'\");\n+  res.json(rows);\n+});\n+app.post('/calc', (req, res) => res.send(String(eval(req.body.expr))));"
+      }
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/5530\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/5530",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/5530"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 13907,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a59b57dcae25286e-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Fri, 13 Nov 2026 05:23:26 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHg0NGJjYWU5MjgwY2QxOTZhYWYyZmFkYWIxNzc2YTliZDVmNGUzMTFlNWQ5ZDhmZmZlZTJjYTBlMDliODQ1MWRhIiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=NszxqNNYPTojo3Hzson7%2B%2BcMieS3ZwsZvHqQj1QyF%2Fyj0R8LL2N3T5s5qto2flP0jtcLHrKzOIkDRZT6ETpfMZrsFu%2BleSQ4nEdcIKw2P%2B0ztPpYNxw3eHdKV0Svvojen3GM%2F%2Blt7cDGxoOGtYRH9A%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDQ2NDM4ZTg1Y2VkOTA1M2NkZmFkNzNhOGUxNGMxMjQwZWJkNmIwMDdjNDczMjI5NTQyYjlhZTViMWJhYjA0ZDAiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI1MDkyIiwiaW50ZW50IjoiRkFDVF9DSEVDS19HRU5FUkFMIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6MjA3OSwic2V0dGxlbWVudCI6Im9uY2hhaW4iLCJjaGFpbiI6ImVpcDE1NToxMTE1NTExMSIsInR4X2hhc2giOiIweDQ0YmNhZTkyODBjZDE5NmFhZjJmYWRhYjE3NzZhOWJkNWY0ZTMxMWU1ZDlkOGZmZmVlMmNhMGUwOWI4NDUxZGEiLCJ0aW1lc3RhbXAiOjE3OTQ1NDc0MDZ9"
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":292,\"miner_id\":\"5530\",\"miner_name\":\"Telegraph Verity Intelligence\",\"result\":{\"answer\":{\"dependency_scan_performed\":false,\"findings\":[{\"line\":5,\"message\":\"SQL statement may be constructed using string interpolation or concatenation.\",\"recommendation\":\"Use parameterized queries and bind user-controlled values separately.\",\"rule_id\":\"sql-injection-risk\",\"severity\":\"high\"},{\"line\":8,\"message\":\"Dynamic code execution can turn untrusted input into executable code.\",\"recommendation\":\"Replace dynamic execution with explicit parsing and allow-listed operations.\",\"rule_id\":\"dynamic-code-execution\",\"severity\":\"high\"}],\"lines_reviewed\":8,\"scope\":\"static-security-heuristics\"},\"confidence\":0.73,\"evidence\":[{\"excerpt\":\"+  const rows = await db.query(\\\"SELECT * FROM users WHERE id = '\\\" + req.query.id + \\\"'\\\");\",\"metadata\":{\"line\":5,\"rule_id\":\"sql-injection-risk\",\"severity\":\"high\"},\"retrieved_at\":\"2026-11-13T05:23:26.128Z\",\"source_id\":\"security-review:line:5:sql-injection-risk\",\"source_type\":\"static-security-review\",\"title\":\"Line 5: sql-injection-risk\"},{\"excerpt\":\"+app.post('/calc', (req, res) =\\u003e res.send(String(eval(req.body.expr))));\",\"metadata\":{\"line\":8,\"rule_id\":\"dynamic-code-execution\",\"severity\":\"high\"},\"retrieved_at\":\"2026-11-13T05:23:26.128Z\",\"source_id\":\"security-review:line:8:dynamic-code-execution\",\"source_type\":\"static-security-review\",\"title\":\"Line 8: dynamic-code-execution\"}],\"intent\":\"SECURITY_REVIEW\",\"retrieved_at\":\"2026-11-13T05:23:26.128Z\",\"uncertainty\":[{\"code\":\"static_security_review_only\",\"message\":\"This is a bounded static heuristic scan, not a full security audit. Findings require manual validation, and no findings do not prove the system is secure.\"},{\"code\":\"dependency_scan_not_performed\",\"message\":\"Dependency vulnerability feeds were not queried by this handler. Use CVE_LOOKUP for known CVE identifiers and a dedicated dependency scanner for package manifests.\"}],\"verdict\":\"likely\"},\"result_shape\":\"raw\",\"signal_hash\":\"0xb0d09814a0080e07d94aeb23b6dccfd4f8b77502f8c93054b583ba72072f7995\",\"timestamp\":\"2026-11-13T05:23:26.257122929Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 292,
+    "miner_id": "5530",
+    "miner_name": "Telegraph Verity Intelligence",
+    "result": {
+      "answer": {
+        "dependency_scan_performed": false,
+        "findings": [
+          {
+            "line": 5,
+            "message": "SQL statement may be constructed using string interpolation or concatenation.",
+            "recommendation": "Use parameterized queries and bind user-controlled values separately.",
+            "rule_id": "sql-injection-risk",
+            "severity": "high"
+          },
+          {
+            "line": 8,
+            "message": "Dynamic code execution can turn untrusted input into executable code.",
+            "recommendation": "Replace dynamic execution with explicit parsing and allow-listed operations.",
+            "rule_id": "dynamic-code-execution",
+            "severity": "high"
+          }
+        ],
+        "lines_reviewed": 8,
+        "scope": "static-security-heuristics"
+      },
+      "confidence": 0.73,
+      "evidence": [
+        {
+          "excerpt": "+  const rows = await db.query(\"SELECT * FROM users WHERE id = '\" + req.query.id + \"'\");",
+          "metadata": {
+            "line": 5,
+            "rule_id": "sql-injection-risk",
+            "severity": "high"
+          },
+          "retrieved_at": "2026-11-13T05:23:26.128Z",
+          "source_id": "security-review:line:5:sql-injection-risk",
+          "source_type": "static-security-review",
+          "title": "Line 5: sql-injection-risk"
+        },
+        {
+          "excerpt": "+app.post('/calc', (req, res) => res.send(String(eval(req.body.expr))));",
+          "metadata": {
+            "line": 8,
+            "rule_id": "dynamic-code-execution",
+            "severity": "high"
+          },
+          "retrieved_at": "2026-11-13T05:23:26.128Z",
+          "source_id": "security-review:line:8:dynamic-code-execution",
+          "source_type": "static-security-review",
+          "title": "Line 8: dynamic-code-execution"
+        }
+      ],
+      "intent": "SECURITY_REVIEW",
+      "retrieved_at": "2026-11-13T05:23:26.128Z",
+      "uncertainty": [
+        {
+          "code": "static_security_review_only",
+          "message": "This is a bounded static heuristic scan, not a full security audit. Findings require manual validation, and no findings do not prove the system is secure."
+        },
+        {
+          "code": "dependency_scan_not_performed",
+          "message": "Dependency vulnerability feeds were not queried by this handler. Use CVE_LOOKUP for known CVE identifiers and a dedicated dependency scanner for package manifests."
+        }
+      ],
+      "verdict": "likely"
+    },
+    "result_shape": "raw",
+    "signal_hash": "0xb0d09814a0080e07d94aeb23b6dccfd4f8b77502f8c93054b583ba72072f7995",
+    "timestamp": "2026-11-13T05:23:26.257122929Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x44bcae9280cd196aaf2fadab1776a9bd5f4e311e5d9d8fffee2ca0e09b8451da",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x46438e85ced9053cdfad73a8e14c1240ebd6b007c473229542b9ae5b1bab04d0",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "5092",
+    "intent": "FACT_CHECK_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2079,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x44bcae9280cd196aaf2fadab1776a9bd5f4e311e5d9d8fffee2ca0e09b8451da",
+    "timestamp": 1794547406
+  },
+  "charged": true
+}

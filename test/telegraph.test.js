@@ -209,3 +209,20 @@ test("private keys are accepted with or without 0x and surrounding whitespace", 
   const tg = new Telegraph({ nodeUrl: "https://node.test", privateKey: hex, fetch: async () => new Response("{}") });
   assert.match(tg.address, /^0x[0-9a-fA-F]{40}$/);
 });
+
+test("the default fetch is called unbound, as Cloudflare Workers require", async () => {
+  const real = globalThis.fetch;
+  // Workers throw "Illegal invocation" when fetch runs with another object as `this`.
+  globalThis.fetch = function (input) {
+    if (this !== undefined && this !== globalThis) throw new TypeError("Illegal invocation");
+    return Promise.resolve(new Response(JSON.stringify({ ok: true, url: String(input) })));
+  };
+  try {
+    const tg = new Telegraph({ nodeUrl: "https://node.test" });
+    assert.deepEqual(await tg.getJson("/x"), { ok: true, url: "https://node.test/x" });
+    const r = await tg.post("/y", {}, { pay: false });
+    assert.equal(r.status, 200);
+  } finally {
+    globalThis.fetch = real;
+  }
+});

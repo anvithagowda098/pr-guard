@@ -4,8 +4,10 @@
 //   { check, target, status: "ok"|"failed"|"skipped", reason?,
 //     severity: "none"|"low"|"medium"|"high"|"critical"|"unknown",
 //     findings: [{ title, severity, ... }], confirmed, disagreement, calls: [...] }
-// `confirmed` means a high/critical result is backed by two agreeing miners or
-// by a deterministic local check. One miner alone can't BLOCK a PR.
+// `confirmed` means a high/critical result is backed by deterministic evidence:
+// registry-backed data about this exact package and version, PR Guard's local
+// rules finding the same issue in the diff, or a local check (a committed key).
+// A reviewer's opinion alone can't BLOCK a PR.
 
 export const SEVERITIES = ["none", "low", "medium", "high", "critical"];
 const rank = (s) => SEVERITIES.indexOf(s);
@@ -30,8 +32,8 @@ export function decide(outcomes) {
       caution.push(o.findings.length ? `${label} — ${o.findings.length} finding${o.findings.length === 1 ? "" : "s"}, severity not rated` : `${label} — miner answer could not be interpreted`);
     }
     else if (isHigh(o.severity) && o.confirmed) block.push(`${label} — ${o.severity}`);
-    else if (isHigh(o.severity)) caution.push(`${label} — ${o.severity}, unconfirmed${o.disagreement ? " (miners disagree)" : ""}`);
-    else if (o.disagreement) caution.push(`${label} — miners disagree`);
+    else if (isHigh(o.severity)) caution.push(`${label} — ${o.severity}, unconfirmed${o.disagreement ? " (reviewer and local rules disagree)" : ""}`);
+    else if (o.disagreement) caution.push(`${label} — PR Guard's local rules flagged something the reviewer didn't`);
     else if (o.severity === "medium") caution.push(`${label} — medium`);
   }
   if (block.length) return { verdict: "BLOCK", reasons: [...block, ...caution] };
@@ -49,40 +51,4 @@ export function shouldFail(verdict, failOn = "block") {
 /** Highest severity among findings ("none" if empty). */
 export function maxSeverity(findings) {
   return findings.reduce((acc, f) => (rank(f.severity) > rank(acc) ? f.severity : acc), "none");
-}
-
-/**
- * Combine two normalized opinions ({ severity, findings }) on the same target.
- *
- * When findings carry ids (advisory ids), the second miner corroborates by id:
- * listing a high/critical id confirms it even if that miner rates nothing, and
- * a definite answer that lists none of them is a disagreement. Without ids,
- * agreement on high/critical severity confirms.
- */
-export function combineOpinions(first, second) {
-  const unconfirmed = { ...first, confirmed: false, disagreement: false };
-  if (!second) return unconfirmed;
-  // One advisory can carry several ids (GHSA, CVE, PYSEC…); any of them matches.
-  const idsOf = (f) => [f.id, ...(f.aliases ?? [])].filter(Boolean);
-  const highIds = first.findings.filter((f) => isHigh(f.severity)).flatMap(idsOf);
-  const secondIds = new Set(second.findings.flatMap(idsOf));
-  if (highIds.length && (secondIds.size || second.severity === "none")) {
-    const confirmed = highIds.some((id) => secondIds.has(id));
-    return {
-      severity: first.severity,
-      findings: first.findings.map((f) => (idsOf(f).some((id) => secondIds.has(id)) ? { ...f, corroborated: true } : f)),
-      confirmed,
-      disagreement: !confirmed,
-      ...(first.advice && { advice: first.advice }),
-    };
-  }
-  if (second.severity === "unknown") return unconfirmed;
-  const firstHigh = isHigh(first.severity);
-  const secondHigh = isHigh(second.severity);
-  return {
-    severity: rank(second.severity) > rank(first.severity) ? second.severity : first.severity,
-    findings: [...first.findings, ...second.findings],
-    confirmed: firstHigh && secondHigh,
-    disagreement: firstHigh !== secondHigh,
-  };
 }

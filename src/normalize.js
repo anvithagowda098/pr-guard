@@ -19,6 +19,34 @@ function cvssSeverity(score) {
   return "low";
 }
 
+// Security categories in free-text findings, named like PR Guard's local rules
+// (miner/rules.js) so a reviewer's finding and a local rule hit can be matched.
+export const SECURITY_CATEGORIES = [
+  { id: "sql-injection", severity: "high", re: /sql[\s-]*injection|\bsqli\b/i },
+  { id: "command-injection", severity: "high", re: /(command|shell)[\s-]*injection|os command/i },
+  { id: "code-injection", severity: "high", re: /code[\s-]*(injection|execution)|remote code execution|\brce\b|\beval\b/i },
+  { id: "unsafe-deserialization", severity: "high", re: /deserializ/i },
+  { id: "path-traversal", severity: "high", re: /(path|directory)[\s-]*traversal/i },
+  { id: "ssrf", severity: "high", re: /\bssrf\b|server[\s-]*side request forgery/i },
+  { id: "xss", severity: "high", re: /\bxss\b|cross[\s-]*site scripting/i },
+  { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b/i },
+  { id: "tls-verification-disabled", severity: "medium", re: /(tls|ssl|certificate) (verification|validation)|rejectunauthorized/i },
+  { id: "weak-hash", severity: "medium", re: /\bmd5\b|\bsha-?1\b|weak hash/i },
+];
+// "No SQL injection risk here" names a category without reporting it.
+const NEGATED = /\b(no|not|never|without|isn't|prevents?|protect(s|ed)? against|safe from|free of|mitigat\w*|parameteri[sz]ed)\b[^.;:!?]*$/i;
+export function securityCategory(text) {
+  // Miners write "hard‑coded" and "server‑side" with Unicode hyphens too.
+  const t = String(text ?? "").replace(/[\u2010-\u2015\u2212]/g, "-");
+  for (const c of SECURITY_CATEGORIES) {
+    const m = t.match(c.re);
+    if (m && !NEGATED.test(t.slice(0, m.index))) return c;
+  }
+  return null;
+}
+
+const advisoryRef = (id) => (/^(GHSA|CVE|PYSEC|GO|RUSTSEC)-/i.test(id) ? `https://osv.dev/vulnerability/${id}` : undefined);
+
 const same = (a, b) => String(a ?? "").toLowerCase() === String(b ?? "").toLowerCase();
 
 function expect(cond, what) {
@@ -33,6 +61,45 @@ function overall(findings) {
 }
 
 const NORMALIZERS = {
+  // ---- Canonical answers --------------------------------------------------
+  // With result_shape "intent", the node has read the answer into the intent's
+  // published response format (GET /engine/v1/intents/{intent} -> response.fields),
+  // so these depend on the intent, not on which miner answered.
+
+  // SECURITY_REVIEW_GENERAL, format v3: verdict Secure | Needs changes | Insecure,
+  // vulnerability_count, issues (CVE, GHSA, CWE or OWASP ids, most serious first), summary.
+  // The format carries no per-issue severity, so Insecure reads as high, unconfirmed.
+  "security-review-format": (result) => {
+    const verdict = result?.verdict;
+    expect(["Secure", "Needs changes", "Insecure"].includes(verdict), "no verdict");
+    const severity = { Secure: "none", "Needs changes": "medium", Insecure: "high" }[verdict];
+    if (severity === "none") return { severity, findings: [] };
+    const issues = Array.isArray(result.issues) ? result.issues.map(String) : [];
+    const findings = issues.length
+      ? issues.map((id) => ({ id, title: id, severity, ...(advisoryRef(id) && { ref: advisoryRef(id) }) }))
+      : [{ title: String(result.summary || verdict).slice(0, 200), severity }];
+    return { severity, findings };
+  },
+
+  // CODE_REVIEW_GENERAL, format v3: verdict Approve | Request changes | Comment,
+  // findings (free text, severity order), summary. Captured from miner 302 on
+  // Nov 13. Only findings that name a security category count above "low".
+  "code-review-format": (result) => {
+    expect(["Approve", "Request changes", "Comment"].includes(result?.verdict), "no verdict");
+    // A reviewer that approves the change reports nothing above "low".
+    const approved = result.verdict === "Approve";
+    const findings = (Array.isArray(result.findings) ? result.findings : []).map((t) => {
+      const text = String(t);
+      const cat = securityCategory(text);
+      const title = text.split(/:\s|\.\s/)[0].slice(0, 120);
+      return { title, severity: cat && !approved ? cat.severity : "low", ...(cat && { category: cat.id }), detail: text.slice(0, 400) };
+    });
+    if (result.verdict === "Request changes" && !findings.length) return { severity: "unknown", findings: [] };
+    return { severity: maxSeverity(findings), findings };
+  },
+
+  // ---- Vetted miners, called directly as the fallback ----------------------
+
   // deps.dev Package Review (#77010): GET /query {pkg, ver}, npm only.
   // result.version.advisories[] carries GitHub's severity and a CVSS score.
   "depsdev-version": (result, vars) => {
@@ -49,7 +116,8 @@ const NORMALIZERS = {
         ref: a.sourceURL,
       };
     });
-    return { severity: overall(findings), findings };
+    // Checked above to be about this exact package and version, from GitHub's advisory data.
+    return { severity: overall(findings), findings, verified: true };
   },
 
   // Secrev Depsdev (#190048): GET /query {system, pkg, ver}, any deps.dev system.
@@ -89,6 +157,7 @@ const NORMALIZERS = {
         severity: String(f.severity ?? "").toLowerCase(),
         ...(at?.file && { file: at.file }),
         line: at?.line ?? f.line,
+        ...(securityCategory(`${f.rule_id} ${f.message}`) && { category: securityCategory(`${f.rule_id} ${f.message}`).id }),
         detail: [f.rule_id, f.recommendation].filter(Boolean).join(" → "),
       };
     });
@@ -109,7 +178,7 @@ const NORMALIZERS = {
       detail: [v.id, ...(v.aliases ?? []).slice(0, 2), v.cvss ? `CVSS ${v.cvss}` : null].filter(Boolean).join(" · "),
       ref: v.url,
     }));
-    return { severity: overall(findings), findings, ...(p.upgrade_to && { advice: `upgrade to ${p.upgrade_to}` }) };
+    return { severity: overall(findings), findings, verified: true, ...(p.upgrade_to && { advice: `upgrade to ${p.upgrade_to}` }) };
   },
 
   "sentinel-review": (result) => {

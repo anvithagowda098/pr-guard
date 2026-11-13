@@ -28931,7 +28931,7 @@ var init_withResolvers = __esm({
 });
 
 // node_modules/viem/_esm/utils/promise/createBatchScheduler.js
-function createBatchScheduler({ fn, id, shouldSplitBatch, wait: wait2 = 0, sort }) {
+function createBatchScheduler({ fn, id, shouldSplitBatch, wait: wait3 = 0, sort }) {
   const exec = async () => {
     const scheduler = getScheduler();
     flush();
@@ -28969,7 +28969,7 @@ function createBatchScheduler({ fn, id, shouldSplitBatch, wait: wait2 = 0, sort 
         return promise;
       }
       setScheduler({ args, resolve, reject });
-      setTimeout(exec, wait2);
+      setTimeout(exec, wait3);
       return promise;
     }
   };
@@ -29463,7 +29463,7 @@ function getRequestOptionsId(requestOptions) {
   return nextId;
 }
 async function scheduleMulticall(client, args) {
-  const { batchSize = 1024, deployless = false, wait: wait2 = 0 } = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
+  const { batchSize = 1024, deployless = false, wait: wait3 = 0 } = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
   const { blockHash, blockNumber, blockTag = client.experimental_blockTag ?? "latest", requireCanonical, data, multicallAddress: multicallAddress_, requestOptions, rpcStateOverride, to } = args;
   const multicallAddress = multicallAddress_ !== void 0 ? multicallAddress_ : getMulticallAddress(client, {
     blockNumber,
@@ -29479,7 +29479,7 @@ async function scheduleMulticall(client, args) {
   const stateOverrideKey = rpcStateOverride ? `.${JSON.stringify(rpcStateOverride)}` : "";
   const { schedule } = createBatchScheduler({
     id: `${client.uid}.${blockId}.${getRequestOptionsId(requestOptions)}${stateOverrideKey}`,
-    wait: wait2,
+    wait: wait3,
     shouldSplitBatch(args2) {
       const size5 = args2.reduce((size6, { data: data2 }) => size6 + (data2.length - 2), 0);
       return size5 > batchSize * 2;
@@ -45768,10 +45768,10 @@ async function multicall(client, parameters) {
 }
 async function scheduleMulticall2(client, parameters) {
   const { batchSize, call: call2, multicallAddress, ...rest } = parameters;
-  const { wait: wait2 = 0 } = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
+  const { wait: wait3 = 0 } = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
   const { schedule } = createBatchScheduler({
     id: stringify(["multicall", client.uid, batchSize, multicallAddress, rest]),
-    wait: wait2,
+    wait: wait3,
     shouldSplitBatch(calls) {
       if (batchSize === 0)
         return false;
@@ -47973,7 +47973,7 @@ function getSignalId(signal) {
 function http(url, config = {}) {
   const { batch, fetchFn, fetchOptions, key = "http", maxResponseBodySize, methods, name = "HTTP JSON-RPC", onFetchRequest, onFetchResponse, retryDelay, raw } = config;
   return ({ chain, retryCount: retryCount_, timeout: timeout_ }) => {
-    const { batchSize = 1e3, wait: wait2 = 0 } = typeof batch === "object" ? batch : {};
+    const { batchSize = 1e3, wait: wait3 = 0 } = typeof batch === "object" ? batch : {};
     const retryCount = config.retryCount ?? retryCount_;
     const timeout = timeout_ ?? config.timeout ?? 1e4;
     const url_ = url || chain?.rpcUrls.default.http[0];
@@ -47996,7 +47996,7 @@ function http(url, config = {}) {
         const fetchOptions2 = options?.signal ? { signal: options.signal } : void 0;
         const { schedule } = createBatchScheduler({
           id: `${url_}.${getSignalId(options?.signal)}`,
-          wait: wait2,
+          wait: wait3,
           shouldSplitBatch(requests) {
             return requests.length > batchSize;
           },
@@ -49200,7 +49200,9 @@ var Telegraph = class {
    * @param {number} [opts.timeoutMs] per-request timeout, default 45s
    * @param {typeof fetch} [opts.fetch] injectable for tests
    */
-  constructor({ nodeUrl = DEFAULT_NODE_URL, privateKey, maxUsdPerCall = 0.05, budget, timeoutMs = 45e3, fetch: fetchImpl = globalThis.fetch } = {}) {
+  // The default fetch is wrapped: Cloudflare Workers reject a bare fetch
+  // called as a method of another object ("Illegal invocation").
+  constructor({ nodeUrl = DEFAULT_NODE_URL, privateKey, maxUsdPerCall = 0.05, budget, timeoutMs = 45e3, fetch: fetchImpl = (...a) => globalThis.fetch(...a) } = {}) {
     this.nodeUrl = nodeUrl.replace(/\/+$/, "");
     this.fetch = fetchImpl;
     this.timeoutMs = timeoutMs;
@@ -50360,6 +50362,7 @@ var LOCKFILES = /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-
 var GENERATED = /(^|\/)(vendor|node_modules|third_party|dist|build)\/|\.min\.(js|css)$|\.map$/;
 var BINARY = /\.(png|jpe?g|gif|ico|webp|bmp|pdf|zip|gz|tgz|bz2|xz|7z|jar|woff2?|ttf|eot|otf|mp[34]|mov|wasm|exe|dll|so|dylib|class|pyc)$/i;
 var isSensitiveFile = (path) => /(^|\/)\.env(\.(?!example$|sample$|template$)[^/]+)?$/.test(path) || /\.(pem|key|p12|pfx|jks|keystore)$/i.test(path) || /(^|\/)(id_(rsa|dsa|ecdsa|ed25519)|\.npmrc|\.pypirc|\.netrc|credentials(\.json)?)$/.test(path);
+var isDocFile = (path) => /\.(md|mdx|markdown|rst|txt|adoc)$/i.test(path) || /(^|\/)(README|LICENSE|LICENCE|CHANGELOG|AUTHORS|NOTICE|CONTRIBUTING)(\.(md|txt|rst|adoc|markdown))?$/i.test(path);
 var shouldSkipFile = (path) => LOCKFILES.test(path) || GENERATED.test(path) || BINARY.test(path) || isSensitiveFile(path);
 function splitLong(header, body, maxChars) {
   const pieces = [];
@@ -50392,7 +50395,7 @@ function splitLong(header, body, maxChars) {
 function chunkDiff(files, { maxChars = 12e3 } = {}) {
   const sections = [];
   for (const f of files) {
-    if (!f.patch || shouldSkipFile(f.filename)) continue;
+    if (!f.patch || shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
     const header = `diff --git a/${f.filename} b/${f.filename}
 `;
     const text = header + f.patch + "\n";
@@ -50439,6 +50442,9 @@ function* matches(text) {
       yield { rule, start, end: start + value.length };
     }
   }
+}
+function secretSpans(text) {
+  return [...matches(text ?? "")].map(({ rule, start, end }) => ({ type: rule.type, severity: rule.severity, start, end }));
 }
 function redact(text) {
   if (!text) return { text: text ?? "", hits: [] };
@@ -50488,8 +50494,8 @@ function decide(outcomes) {
     } else if (o.severity === "unknown") {
       caution.push(o.findings.length ? `${label} \u2014 ${o.findings.length} finding${o.findings.length === 1 ? "" : "s"}, severity not rated` : `${label} \u2014 miner answer could not be interpreted`);
     } else if (isHigh(o.severity) && o.confirmed) block.push(`${label} \u2014 ${o.severity}`);
-    else if (isHigh(o.severity)) caution.push(`${label} \u2014 ${o.severity}, unconfirmed${o.disagreement ? " (miners disagree)" : ""}`);
-    else if (o.disagreement) caution.push(`${label} \u2014 miners disagree`);
+    else if (isHigh(o.severity)) caution.push(`${label} \u2014 ${o.severity}, unconfirmed${o.disagreement ? " (reviewer and local rules disagree)" : ""}`);
+    else if (o.disagreement) caution.push(`${label} \u2014 PR Guard's local rules flagged something the reviewer didn't`);
     else if (o.severity === "medium") caution.push(`${label} \u2014 medium`);
   }
   if (block.length) return { verdict: "BLOCK", reasons: [...block, ...caution] };
@@ -50504,53 +50510,39 @@ function shouldFail(verdict, failOn = "block") {
 function maxSeverity(findings) {
   return findings.reduce((acc, f) => rank(f.severity) > rank(acc) ? f.severity : acc, "none");
 }
-function combineOpinions(first, second) {
-  const unconfirmed = { ...first, confirmed: false, disagreement: false };
-  if (!second) return unconfirmed;
-  const idsOf = (f) => [f.id, ...f.aliases ?? []].filter(Boolean);
-  const highIds = first.findings.filter((f) => isHigh(f.severity)).flatMap(idsOf);
-  const secondIds = new Set(second.findings.flatMap(idsOf));
-  if (highIds.length && (secondIds.size || second.severity === "none")) {
-    const confirmed = highIds.some((id) => secondIds.has(id));
-    return {
-      severity: first.severity,
-      findings: first.findings.map((f) => idsOf(f).some((id) => secondIds.has(id)) ? { ...f, corroborated: true } : f),
-      confirmed,
-      disagreement: !confirmed,
-      ...first.advice && { advice: first.advice }
-    };
-  }
-  if (second.severity === "unknown") return unconfirmed;
-  const firstHigh = isHigh(first.severity);
-  const secondHigh = isHigh(second.severity);
-  return {
-    severity: rank(second.severity) > rank(first.severity) ? second.severity : first.severity,
-    findings: [...first.findings, ...second.findings],
-    confirmed: firstHigh && secondHigh,
-    disagreement: firstHigh !== secondHigh
-  };
-}
 
 // src/checks.js
 var DEFAULT_CHECKS = ["deps", "diff"];
+var ROUTE_MAX_CHARS = 2e3;
 var DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
-function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3 } = {}) {
+function rankDeps(deps, title = "") {
+  const named = new Set(String(title).toLowerCase().match(/[@\w./-]+/g) ?? []);
+  const rank2 = (d) => d.direct ? 0 : named.has(d.name.toLowerCase()) ? 1 : d.from ? 2 : 3;
+  return deps.map((d, i) => [d, i]).sort((a, b) => rank2(a[0]) - rank2(b[0]) || a[1] - b[1]).map(([d]) => d);
+}
+function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3, maxChunks = Infinity } = {}) {
   const depJob = (d) => ({
     check: "deps",
     intent: "SECURITY_REVIEW_GENERAL",
     target: d.to ? `${d.name}@${d.to}` : `${d.name} (${d.spec})`,
-    vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec, depsdev_system: DEPSDEV_SYSTEM[d.ecosystem] }
+    vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec, depsdev_system: DEPSDEV_SYSTEM[d.ecosystem] },
+    route: { intent: "SECURITY_REVIEW_GENERAL", params: { target: `${d.ecosystem} package ${d.name} version ${d.to}` }, normalizer: "security-review-format" }
   });
-  const resolvable = deps.filter((d) => d.to).slice(0, maxDeps);
+  const resolvable = rankDeps(deps.filter((d) => d.to), title).slice(0, maxDeps);
   const direct = resolvable.filter((d) => d.direct).map(depJob);
   const transitive = resolvable.filter((d) => !d.direct).map(depJob);
-  const chunks = chunkDiff(files, { maxChars });
-  const diff = chunks.map((c, i) => ({
-    check: "diff",
-    intent: "SECURITY_REVIEW_GENERAL",
-    target: chunks.length > 1 ? `chunk ${i + 1}/${chunks.length}: ${c.files.join(", ")}` : c.files.join(", "),
-    vars: { diff: c.text, files: c.files, chunk_index: i + 1, chunk_count: chunks.length }
-  }));
+  const chunks = chunkDiff(files, { maxChars }).slice(0, maxChunks);
+  const diff = chunks.map((c, i) => {
+    const routable = c.text.length <= ROUTE_MAX_CHARS;
+    return {
+      check: "diff",
+      intent: routable ? "CODE_REVIEW_GENERAL" : "SECURITY_REVIEW_GENERAL",
+      target: chunks.length > 1 ? `chunk ${i + 1}/${chunks.length}: ${c.files.join(", ")}` : c.files.join(", "),
+      vars: { diff: c.text, files: c.files, chunk_index: i + 1, chunk_count: chunks.length },
+      route: routable ? { intent: "CODE_REVIEW_GENERAL", params: { code: c.text }, normalizer: "code-review-format" } : null,
+      ...!routable && { routeSkipped: `over the ${ROUTE_MAX_CHARS.toLocaleString("en-US")}-character limit for canonical asks` }
+    };
+  });
   const patch = chunks.length ? [{
     check: "patch",
     intent: "CODE_PATCH_VERIFY_GENERAL",
@@ -50590,7 +50582,7 @@ var local = (check, target, findings) => ({
   status: "ok",
   severity: maxSeverity(findings),
   findings,
-  // Deterministic and run on the raw diff, so a hit doesn't need a second opinion.
+  // Deterministic and run on the raw diff, so a hit is confirmed on its own.
   confirmed: true,
   disagreement: false,
   calls: []
@@ -50608,6 +50600,41 @@ function localOutcomes(rawFiles, installScripts) {
   return out;
 }
 
+// src/plan.js
+async function collectDependencies(getText2, files, baseSha, headSha) {
+  const deps = [];
+  const installScripts = [];
+  const errors = [];
+  for (const f of files) {
+    if (!manifestEcosystem(f.filename)) continue;
+    const basePath = f.previous_filename ?? f.filename;
+    try {
+      const [baseText, headText] = await Promise.all([
+        f.status === "added" ? null : getText2({ path: basePath, ref: baseSha }),
+        f.status === "removed" ? null : getText2({ path: f.filename, ref: headSha })
+      ]);
+      deps.push(...diffManifest(f.filename, baseText, headText));
+      installScripts.push(...diffInstallScripts(f.filename, baseText, headText));
+    } catch (err) {
+      errors.push({ file: f.filename, error: err.message });
+    }
+  }
+  return { deps: mergeDependencyChanges(deps), installScripts, errors };
+}
+async function planScan({ pr, rawFiles, baseSha, headSha, getText: getText2, checks, limits }) {
+  const { deps, installScripts, errors } = await collectDependencies(getText2, rawFiles, baseSha, headSha);
+  const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
+  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, checks, limits);
+  const local2 = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps)];
+  const notes = [];
+  const changed = deps.filter((d) => d.to).length;
+  const checked = jobs.filter((j) => j.check === "deps").length;
+  if (checks.has("deps") && changed > checked) {
+    notes.push(`${changed - checked} of ${changed} changed packages were not checked (limit ${checked}): direct dependencies and packages named in the title go first.`);
+  }
+  return { jobs, local: local2, errors, notes };
+}
+
 // src/normalize.js
 var GITHUB_SEVERITY = { CRITICAL: "critical", HIGH: "high", MODERATE: "medium", LOW: "low" };
 var SEVERITY_WORD = /\b(critical|high|medium|moderate|low)\b/gi;
@@ -50618,6 +50645,28 @@ function cvssSeverity(score) {
   if (score >= 4) return "medium";
   return "low";
 }
+var SECURITY_CATEGORIES = [
+  { id: "sql-injection", severity: "high", re: /sql[\s-]*injection|\bsqli\b/i },
+  { id: "command-injection", severity: "high", re: /(command|shell)[\s-]*injection|os command/i },
+  { id: "code-injection", severity: "high", re: /code[\s-]*(injection|execution)|remote code execution|\brce\b|\beval\b/i },
+  { id: "unsafe-deserialization", severity: "high", re: /deserializ/i },
+  { id: "path-traversal", severity: "high", re: /(path|directory)[\s-]*traversal/i },
+  { id: "ssrf", severity: "high", re: /\bssrf\b|server[\s-]*side request forgery/i },
+  { id: "xss", severity: "high", re: /\bxss\b|cross[\s-]*site scripting/i },
+  { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b/i },
+  { id: "tls-verification-disabled", severity: "medium", re: /(tls|ssl|certificate) (verification|validation)|rejectunauthorized/i },
+  { id: "weak-hash", severity: "medium", re: /\bmd5\b|\bsha-?1\b|weak hash/i }
+];
+var NEGATED = /\b(no|not|never|without|isn't|prevents?|protect(s|ed)? against|safe from|free of|mitigat\w*|parameteri[sz]ed)\b[^.;:!?]*$/i;
+function securityCategory(text) {
+  const t = String(text ?? "").replace(/[\u2010-\u2015\u2212]/g, "-");
+  for (const c of SECURITY_CATEGORIES) {
+    const m = t.match(c.re);
+    if (m && !NEGATED.test(t.slice(0, m.index))) return c;
+  }
+  return null;
+}
+var advisoryRef = (id) => /^(GHSA|CVE|PYSEC|GO|RUSTSEC)-/i.test(id) ? `https://osv.dev/vulnerability/${id}` : void 0;
 var same = (a, b) => String(a ?? "").toLowerCase() === String(b ?? "").toLowerCase();
 function expect(cond, what) {
   if (!cond) throw new Error(`unexpected answer: ${what}`);
@@ -50627,6 +50676,38 @@ function overall(findings) {
   return findings.length && max === "none" ? "unknown" : max;
 }
 var NORMALIZERS = {
+  // ---- Canonical answers --------------------------------------------------
+  // With result_shape "intent", the node has read the answer into the intent's
+  // published response format (GET /engine/v1/intents/{intent} -> response.fields),
+  // so these depend on the intent, not on which miner answered.
+  // SECURITY_REVIEW_GENERAL, format v3: verdict Secure | Needs changes | Insecure,
+  // vulnerability_count, issues (CVE, GHSA, CWE or OWASP ids, most serious first), summary.
+  // The format carries no per-issue severity, so Insecure reads as high, unconfirmed.
+  "security-review-format": (result) => {
+    const verdict = result?.verdict;
+    expect(["Secure", "Needs changes", "Insecure"].includes(verdict), "no verdict");
+    const severity = { Secure: "none", "Needs changes": "medium", Insecure: "high" }[verdict];
+    if (severity === "none") return { severity, findings: [] };
+    const issues = Array.isArray(result.issues) ? result.issues.map(String) : [];
+    const findings = issues.length ? issues.map((id) => ({ id, title: id, severity, ...advisoryRef(id) && { ref: advisoryRef(id) } })) : [{ title: String(result.summary || verdict).slice(0, 200), severity }];
+    return { severity, findings };
+  },
+  // CODE_REVIEW_GENERAL, format v3: verdict Approve | Request changes | Comment,
+  // findings (free text, severity order), summary. Captured from miner 302 on
+  // Nov 13. Only findings that name a security category count above "low".
+  "code-review-format": (result) => {
+    expect(["Approve", "Request changes", "Comment"].includes(result?.verdict), "no verdict");
+    const approved = result.verdict === "Approve";
+    const findings = (Array.isArray(result.findings) ? result.findings : []).map((t) => {
+      const text = String(t);
+      const cat = securityCategory(text);
+      const title = text.split(/:\s|\.\s/)[0].slice(0, 120);
+      return { title, severity: cat && !approved ? cat.severity : "low", ...cat && { category: cat.id }, detail: text.slice(0, 400) };
+    });
+    if (result.verdict === "Request changes" && !findings.length) return { severity: "unknown", findings: [] };
+    return { severity: maxSeverity(findings), findings };
+  },
+  // ---- Vetted miners, called directly as the fallback ----------------------
   // deps.dev Package Review (#77010): GET /query {pkg, ver}, npm only.
   // result.version.advisories[] carries GitHub's severity and a CVSS score.
   "depsdev-version": (result, vars) => {
@@ -50643,7 +50724,7 @@ var NORMALIZERS = {
         ref: a.sourceURL
       };
     });
-    return { severity: overall(findings), findings };
+    return { severity: overall(findings), findings, verified: true };
   },
   // Secrev Depsdev (#190048): GET /query {system, pkg, ver}, any deps.dev system.
   // Advisory ids only, no severity: useful to corroborate another miner by id.
@@ -50680,6 +50761,7 @@ var NORMALIZERS = {
         severity: String(f.severity ?? "").toLowerCase(),
         ...at?.file && { file: at.file },
         line: at?.line ?? f.line,
+        ...securityCategory(`${f.rule_id} ${f.message}`) && { category: securityCategory(`${f.rule_id} ${f.message}`).id },
         detail: [f.rule_id, f.recommendation].filter(Boolean).join(" \u2192 ")
       };
     });
@@ -50699,7 +50781,7 @@ var NORMALIZERS = {
       detail: [v.id, ...(v.aliases ?? []).slice(0, 2), v.cvss ? `CVSS ${v.cvss}` : null].filter(Boolean).join(" \xB7 "),
       ref: v.url
     }));
-    return { severity: overall(findings), findings, ...p.upgrade_to && { advice: `upgrade to ${p.upgrade_to}` } };
+    return { severity: overall(findings), findings, verified: true, ...p.upgrade_to && { advice: `upgrade to ${p.upgrade_to}` } };
   },
   "sentinel-review": (result) => {
     expect(["secure", "vulnerable", "needs review"].includes(result?.verdict) && Array.isArray(result.findings), "no verdict or findings");
@@ -50751,6 +50833,135 @@ async function appendLedger(path, entry) {
   await appendFile2(path, JSON.stringify(entry) + "\n");
 }
 
+// miner/rules.js
+var USER_INPUT = /\breq\.(query|body|params|headers|cookies)\b|\brequest\.(args|form|json|GET|POST|data|values|params|query|body|files)\b|\$_(GET|POST|REQUEST|COOKIE)\b|\bctx\.(query|request|params)\b|\.FormValue\(|\.URL\.Query\(\)|\bprocess\.argv\b|\bsys\.argv\b|\binput\(/;
+var BUILT_STRING = /["'`]\s*\+\s*[\w$(]|[\w$)\]]\s*\+\s*["'`]|\$\{[^}]+\}|\bf["'][^"']*\{|["']\s*%\s*[\w(]|["']\s*\.format\(|["']\s*\.\s*\$\w/;
+var SQL_UPPER = /\b(SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b[\s\S]*?\b(FROM|INTO|SET|WHERE|VALUES)\b/;
+var SQL_LOWER = /\bselect\s+(\*|[\w.]+\s*,|count\s*\()[\s\S]*\bfrom\b|\b(insert\s+into|delete\s+from)\s+[\w.`"]+|\bupdate\s+[\w.`"]+\s+set\b|\bwhere\s+[\w.]+\s*=/i;
+var SQL_TEXT = { test: (l) => SQL_UPPER.test(l) || SQL_LOWER.test(l) };
+var COMMENT = /^\s*(\/\/|#|\/\*|\*|--)/;
+var RULES2 = [
+  {
+    id: "sql-injection",
+    title: "SQL built from strings",
+    cwe: "CWE-89",
+    test: (l) => SQL_TEXT.test(l) && BUILT_STRING.test(l),
+    severity: (l) => USER_INPUT.test(l) ? "critical" : "high",
+    confidence: 0.85,
+    fix: "use a parameterized query or the driver's placeholders"
+  },
+  {
+    id: "command-injection",
+    title: "OS command built from strings",
+    cwe: "CWE-78",
+    test: (l) => /\b(exec|execSync)\s*\(/.test(l) && (BUILT_STRING.test(l) || USER_INPUT.test(l)) || /\bspawn(Sync)?\s*\([^)]*shell\s*:\s*true/.test(l) || /\bos\.(system|popen)\s*\(|\bsubprocess\.\w+\([^)]*shell\s*=\s*True/.test(l) || /\bexec\.Command\(\s*"(sh|bash|cmd(\.exe)?)"\s*,\s*"(-c|\/c)"/.test(l) || /\b(system|shell_exec|passthru|popen|proc_open)\s*\(\s*\$/.test(l),
+    severity: (l) => USER_INPUT.test(l) ? "critical" : "high",
+    confidence: 0.85,
+    fix: "pass arguments as an array (execFile, subprocess.run([...])) and never through a shell"
+  },
+  {
+    id: "code-injection",
+    title: "dynamic code evaluation",
+    cwe: "CWE-95",
+    test: (l) => /\beval\s*\(|\bnew\s+Function\s*\(|\bvm\.run(InNewContext|InThisContext|InContext)?\s*\(|\bsetTimeout\s*\(\s*["'`]/.test(l),
+    severity: (l) => USER_INPUT.test(l) ? "critical" : "medium",
+    confidence: 0.8,
+    fix: "parse the input instead of executing it (JSON.parse, a math parser, a lookup table)"
+  },
+  {
+    id: "unsafe-deserialization",
+    title: "deserializing untrusted data",
+    cwe: "CWE-502",
+    test: (l) => /\bpickle\.loads?\s*\(|\bmarshal\.loads\s*\(|\bObjectInputStream\s*\(|\bunserialize\s*\(\s*\$/.test(l) || /\byaml\.load\s*\(/.test(l) && !/Loader\s*=\s*(yaml\.)?(Safe|CSafe)Loader/.test(l),
+    severity: (l) => USER_INPUT.test(l) ? "critical" : "high",
+    confidence: 0.8,
+    fix: "use a data-only format (JSON) or a safe loader (yaml.safe_load)"
+  },
+  {
+    id: "tls-verification-disabled",
+    title: "TLS certificate verification turned off",
+    cwe: "CWE-295",
+    test: (l) => /rejectUnauthorized\s*:\s*false|\bverify\s*=\s*False\b|InsecureSkipVerify\s*:\s*true|NODE_TLS_REJECT_UNAUTHORIZED["'\]]*\s*=\s*["']?0|CURLOPT_SSL_VERIFYPEER\s*,\s*(false|0)\b/.test(l),
+    severity: () => "high",
+    confidence: 0.9,
+    fix: "keep verification on; trust a private CA explicitly instead"
+  },
+  {
+    id: "path-traversal",
+    title: "file path taken from the request",
+    cwe: "CWE-22",
+    test: (l) => /\b(readFile|readFileSync|createReadStream|sendFile|send_file|open|os\.Open|file_get_contents)\s*\(/.test(l) && USER_INPUT.test(l),
+    severity: () => "high",
+    confidence: 0.7,
+    fix: "resolve the path against a fixed root and reject anything that escapes it"
+  },
+  {
+    id: "ssrf",
+    title: "server-side request to a URL from the request",
+    cwe: "CWE-918",
+    test: (l) => /\b(fetch|axios(\.\w+)?|got|requests\.\w+|urlopen|http\.Get|curl_init)\s*\(/.test(l) && USER_INPUT.test(l),
+    severity: () => "high",
+    confidence: 0.7,
+    fix: "allow-list destination hosts and block private address ranges"
+  },
+  {
+    id: "xss",
+    title: "unescaped HTML output",
+    cwe: "CWE-79",
+    // A plain string literal assigned to innerHTML is fine; anything else isn't.
+    test: (l) => /\.(innerHTML|outerHTML)\s*=(?!=)(?!\s*["'`][^"'`$]*["'`]\s*;?\s*$)|dangerouslySetInnerHTML|\bdocument\.write\s*\(|\bmark_safe\s*\(|\|\s*safe\b/.test(l),
+    severity: (l) => USER_INPUT.test(l) ? "high" : "medium",
+    confidence: 0.6,
+    fix: "set textContent, or escape/sanitize before inserting HTML"
+  },
+  {
+    id: "weak-hash",
+    title: "weak hash (MD5/SHA-1)",
+    cwe: "CWE-328",
+    test: (l) => /createHash\(\s*["'](md5|sha1)["']\)|\bhashlib\.(md5|sha1)\s*\(|MessageDigest\.getInstance\(\s*"(MD5|SHA-?1)"|\b(md5|sha1)\s*\(\s*\$/.test(l),
+    severity: (l) => /pass(word|wd)?/i.test(l) ? "high" : "low",
+    confidence: 0.6,
+    fix: "use bcrypt/argon2 for passwords and SHA-256+ elsewhere"
+  },
+  {
+    id: "debug-enabled",
+    title: "debug mode enabled",
+    cwe: "CWE-489",
+    test: (l) => /\bapp\.run\([^)]*debug\s*=\s*True|^\s*DEBUG\s*=\s*True\b/.test(l),
+    severity: () => "medium",
+    confidence: 0.6,
+    fix: "drive debug mode from the environment and keep it off in production"
+  }
+];
+var SECRET_RULE = { id: "hardcoded-secret", cwe: "CWE-798", confidence: 0.9, fix: "move it to a secret store or environment variable, and rotate the exposed value" };
+var RULE_COUNT = RULES2.length + 1;
+var looksLikeDiff = (text) => /^(diff --git |@@ -\d)/m.test(text);
+function linesOf(text) {
+  if (!looksLikeDiff(text)) return text.split(/\r?\n/).map((t, i) => ({ line: i + 1, text: t }));
+  const out = [];
+  for (const section of text.split(/^(?=diff --git )/m)) {
+    const file = section.match(/^diff --git a\/\S+ b\/(\S+)/)?.[1] ?? section.match(/^\+\+\+ b\/(\S+)/m)?.[1] ?? null;
+    for (const l of addedLines(section.replace(/^diff --git .*$/gm, ""))) out.push(file ? { ...l, file } : l);
+  }
+  return out;
+}
+var evidence = (line) => redact(line.trim()).text.slice(0, 160);
+function scan(text) {
+  const lines = linesOf(String(text ?? ""));
+  const findings = [];
+  for (const { line, text: l, file } of lines) {
+    for (const s of new Set(secretSpans(l).map((x) => `${x.type}\0${x.severity}`))) {
+      const [type, severity] = s.split("\0");
+      findings.push({ rule: SECRET_RULE.id, title: `hardcoded secret (${type.replace(/_/g, " ")})`, severity, cwe: SECRET_RULE.cwe, ...file && { file }, line, evidence: evidence(l), fix: SECRET_RULE.fix, confidence: SECRET_RULE.confidence });
+    }
+    if (COMMENT.test(l)) continue;
+    for (const r of RULES2) {
+      if (r.test(l)) findings.push({ rule: r.id, title: r.title, severity: r.severity(l), cwe: r.cwe, ...file && { file }, line, evidence: evidence(l), fix: r.fix, confidence: r.confidence });
+    }
+  }
+  return { findings, linesScanned: lines.length };
+}
+
 // src/runner.js
 var MAX_ATTEMPTS = 3;
 function fillTemplate(template, vars) {
@@ -50765,65 +50976,121 @@ function fillTemplate(template, vars) {
   }
   return template;
 }
-function callMiner(tg, entry, vars) {
-  if (entry.auto) return tg.ask(fillTemplate(entry.body, vars));
-  return tg.askMiner(entry.minerId, { method: entry.method ?? "POST", endpoint: entry.endpoint, payload: fillTemplate(entry.payload, vars) });
-}
-var callSummary = (entry, r) => ({
-  minerId: r.body?.miner_id ?? entry.minerId ?? "auto",
-  minerName: r.body?.miner_name ?? entry.name ?? null,
+var callSummary = (r, { via, entry, note } = {}) => ({
+  minerId: r.body?.miner_id ?? entry?.minerId ?? null,
+  minerName: r.body?.miner_name ?? entry?.name ?? null,
+  via,
+  // "routed": Telegraph picked the miner; "direct": a vetted fallback
   costUsd: r.costUsd,
   signalHash: r.body?.signal_hash ?? null,
   receiptHash: r.receipt?.receipt_hash ?? null,
   durationMs: r.durationMs,
   ok: r.ok,
-  reason: r.reason ?? null
+  reason: r.reason ?? null,
+  ...note && { note }
 });
 var isHigh2 = (s) => s === "high" || s === "critical";
+var isEmpty = (n) => n.severity === "unknown" && !n.findings.length;
 var isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(r.bodyText ?? "");
-async function runCheck({ tg, miners, job, deadline, onCall }) {
-  const { check, intent, target, vars } = job;
+function judgeRouted(r, route, entries, vars) {
+  if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})` };
+  const id = r.body?.miner_id ?? "?";
+  if (r.body?.result_shape === "intent") {
+    const n = normalize(route.normalizer, r.body.result, vars);
+    return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict` } : { answer: n };
+  }
+  const vetted = entries.find((e) => String(e.minerId) === String(id));
+  if (vetted) {
+    const n = normalize(vetted.normalizer, r.body?.result, vars);
+    if (!isEmpty(n)) return { answer: n };
+  }
+  return { reject: `miner ${id} answered in its own format, and not about this target` };
+}
+function confirmFindings(check, answer, vars) {
+  if (check === "deps") return { ...answer, confirmed: isHigh2(answer.severity) && answer.verified === true, disagreement: false };
+  if (check !== "diff" || !vars.diff) return { ...answer, confirmed: false, disagreement: false };
+  const local2 = scan(vars.diff).findings.filter((f) => f.rule !== "hardcoded-secret");
+  const matches2 = (f, l) => f.category && f.category === l.rule || f.file && f.line && f.file === l.file && f.line === l.line;
+  const findings = answer.findings.map((f) => isHigh2(f.severity) && local2.some((l) => matches2(f, l)) ? { ...f, corroborated: true } : f);
+  const missed = local2.filter((l) => isHigh2(l.severity) && !answer.findings.some((f) => matches2(f, l)));
+  return {
+    ...answer,
+    findings: [
+      ...findings,
+      ...missed.map((l) => ({ title: `${l.title} (PR Guard local rule)`, severity: "medium", ...l.file && { file: l.file }, line: l.line, detail: `${l.evidence} \u2192 ${l.fix}` }))
+    ],
+    severity: missed.length && answer.severity === "none" ? "medium" : answer.severity,
+    confirmed: findings.some((f) => f.corroborated),
+    disagreement: missed.length > 0
+  };
+}
+async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "auto", health: {} }, priorCalls = [], priorNotes = [] }) {
+  const { check, intent, target, vars, route } = job;
   const entries = (miners[check] ?? []).filter((e) => e.enabled !== false && (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)));
-  const calls = [];
-  const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls };
-  if (!entries.length) return { ...base, status: "skipped", severity: "none", reason: `no vetted ${check} miner yet` };
-  let next = 0;
+  const calls = [...priorCalls];
+  const notes = [...priorNotes];
+  const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls, notes };
+  const ledger = (r, minerId, askedIntent) => onCall?.(ledgerEntry({ check, target, intent: askedIntent, minerId }, r));
+  const health = routing.health ?? {};
+  let answer = null;
   let lastReason = null;
-  const opinion = async () => {
-    for (let tries = 0; tries < MAX_ATTEMPTS && next < entries.length; tries++) {
+  const tryRoute = route && routing.mode !== "off" && health[route.intent] !== false && !priorCalls.length;
+  if (tryRoute) {
+    if (Date.now() > deadline) return { ...base, status: "skipped", severity: "none", reason: "time limit" };
+    const r = await tg.ask({ intent: route.intent, params: route.params });
+    const judged2 = judgeRouted(r, route, entries, vars);
+    calls.push(callSummary(r, { via: "routed", note: judged2.reject && `not used: ${judged2.reject}` }));
+    await ledger(r, r.body?.miner_id ?? "routed", route.intent);
+    if (judged2.answer) answer = judged2.answer;
+    else {
+      if (r.reason === "over_budget") return { ...base, status: "skipped", severity: "none", reason: "budget exhausted" };
+      health[route.intent] = false;
+      notes.push(`Routed ${route.intent} answer not used: ${judged2.reject}.`);
+      await routing.onUnusable?.(route.intent, judged2.reject);
+      if (routing.deferFallback) return { deferred: true, calls, notes };
+    }
+  } else if (!route && job.routeSkipped) {
+    notes.push(`Not routed: ${job.routeSkipped}.`);
+  }
+  if (!answer) {
+    if (!entries.length) {
+      return tryRoute ? { ...base, status: "failed", severity: "none", reason: "routed answer unusable and no vetted miner for this target" } : { ...base, status: "skipped", severity: "none", reason: `no vetted ${check} miner yet` };
+    }
+    for (let i = 0; i < Math.min(MAX_ATTEMPTS, entries.length); i++) {
       if (Date.now() > deadline) {
         lastReason = "time limit";
-        return null;
+        break;
       }
-      const entry = entries[next++];
-      const r = await callMiner(tg, entry, vars);
-      calls.push(callSummary(entry, r));
-      await onCall?.(ledgerEntry({ check, target, intent, minerId: entry.minerId }, r));
-      if (r.ok) return normalize(entry.normalizer, r.body?.result, vars);
+      const entry = entries[i];
+      const r = await tg.askMiner(entry.minerId, { method: entry.method ?? "POST", endpoint: entry.endpoint, payload: fillTemplate(entry.payload, vars) });
+      calls.push(callSummary(r, { via: "direct", entry }));
+      await ledger(r, entry.minerId, entry.intent);
+      if (r.ok) {
+        answer = normalize(entry.normalizer, r.body?.result, vars);
+        break;
+      }
       lastReason = r.reason;
       if (isUpstreamNotFound(r)) {
         lastReason = "not_found";
-        return null;
+        break;
       }
-      if (r.reason === "over_budget") return null;
+      if (r.reason === "over_budget") break;
     }
-    return null;
-  };
-  const first = await opinion();
-  if (!first) {
+  }
+  if (!answer) {
     const skipped = { over_budget: "budget exhausted", "time limit": "time limit", not_found: "not in the public registry" };
     if (skipped[lastReason]) return { ...base, status: "skipped", severity: "none", reason: skipped[lastReason] };
     return { ...base, status: "failed", severity: "none", reason: lastReason };
   }
-  const combined = isHigh2(first.severity) ? combineOpinions(first, await opinion()) : first;
+  const judged = confirmFindings(check, answer, vars);
   return {
     ...base,
     status: "ok",
-    severity: combined.severity,
-    findings: combined.findings,
-    confirmed: combined.confirmed ?? false,
-    disagreement: combined.disagreement ?? false,
-    ...(combined.advice ?? first.advice) && { advice: combined.advice ?? first.advice }
+    severity: judged.severity,
+    findings: judged.findings,
+    confirmed: judged.confirmed,
+    disagreement: judged.disagreement,
+    ...judged.advice && { advice: judged.advice }
   };
 }
 async function runAll(jobs, worker, concurrency = 4) {
@@ -50854,11 +51121,11 @@ function resultCell(o) {
   if (o.status === "failed") return `\u26A0\uFE0F failed (${o.reason ?? ""})`;
   const top = o.findings.find((f) => f.severity === o.severity) ?? o.findings[0];
   const high = o.severity === "high" || o.severity === "critical";
-  const extra = o.disagreement ? " \xB7 miners disagree" : high && o.confirmed ? " \xB7 confirmed" : "";
+  const extra = o.disagreement ? " \xB7 local rules disagree" : high && o.confirmed ? " \xB7 confirmed" : "";
   const advice = o.advice ? ` \xB7 fix: ${o.advice}` : "";
   return `${SEV_ICON[o.severity] ?? ""} ${o.severity}${top ? `: ${top.title}` : ""}${extra}${advice}`;
 }
-var minerCell = (calls) => calls.map((c) => `#${c.minerId}${c.minerName ? ` ${c.minerName}` : ""}`).join(", ") || "local";
+var minerCell = (calls) => calls.map((c) => `#${c.minerId ?? "?"}${c.minerName ? ` ${c.minerName}` : ""}${c.via === "routed" ? c.note ? " (routed, not used)" : " (routed)" : c.via === "direct" ? " (fallback)" : ""}`).join(", ") || "local";
 var evidenceCell = (calls, nodeUrl) => calls.filter((c) => c.signalHash).map((c) => `[signal](${nodeUrl}/engine/v1/signal/${c.signalHash})`).join(" ") || "\u2014";
 function renderComment({ verdict, reasons = [], outcomes = [], spentUsd = 0, budgetUsd, nodeUrl, runUrl, note }) {
   const lines = [MARKER, `## PR Guard: ${BADGE[verdict] ?? verdict}`, ""];
@@ -50872,7 +51139,7 @@ function renderComment({ verdict, reasons = [], outcomes = [], spentUsd = 0, bud
     lines.push("| Check | Target | Result | Miner | Cost | Evidence |", "|---|---|---|---|---|---|");
     for (const o of outcomes) {
       const cost = o.calls.reduce((s, c) => s + (c.costUsd ?? 0), 0);
-      lines.push(`| ${o.check} | ${cell(o.target, 60)} | ${cell(resultCell(o))} | ${cell(minerCell(o.calls), 50)} | ${usd(cost)} | ${evidenceCell(o.calls, nodeUrl)} |`);
+      lines.push(`| ${o.check} | ${cell(o.target, 60)} | ${cell(resultCell(o))} | ${cell(minerCell(o.calls), 140)} | ${usd(cost)} | ${evidenceCell(o.calls, nodeUrl)} |`);
     }
     lines.push("");
   }
@@ -50880,6 +51147,8 @@ function renderComment({ verdict, reasons = [], outcomes = [], spentUsd = 0, bud
   const paid = calls.filter((c) => c.costUsd > 0);
   const budget = budgetUsd !== void 0 ? ` of ${usd(budgetUsd)} budget` : "";
   lines.push(`**Spent:** ${usd(spentUsd)}${budget} \xB7 ${paid.length} paid call${paid.length === 1 ? "" : "s"} \xB7 Telegraph testnet (${NETWORK_LABEL})`);
+  const routingNotes = [...new Set(outcomes.flatMap((o) => o.notes ?? []))];
+  if (routingNotes.length) lines.push("", ...routingNotes.slice(0, 5).map((n) => `<sub>Routing: ${cell(n, 300)}</sub><br>`));
   const detailed = outcomes.filter((o) => o.findings.length);
   if (detailed.length) {
     lines.push("", "<details><summary>Findings</summary>", "");
@@ -50940,9 +51209,69 @@ async function upsertComment(octokit, { owner, repo, issue_number, body }) {
   return data;
 }
 
+// src/hosted.js
+var DEFAULT_SERVICE_URL = "https://pr-guard-app.pr-guard.workers.dev";
+var HostedRefusal = class extends Error {
+};
+var wait2 = (ms) => new Promise((r) => setTimeout(r, ms));
+async function scanHosted({ serviceUrl = DEFAULT_SERVICE_URL, prUrl, deadline, fetch: fetchImpl = (...a) => globalThis.fetch(...a), sleep = wait2, busyWaitMs = 5e3 }) {
+  const base = serviceUrl.replace(/\/+$/, "");
+  const call2 = async (method, path, body) => {
+    const res = await fetchImpl(base + path, {
+      method,
+      headers: { "content-type": "application/json", "user-agent": "pr-guard-action" },
+      body: body ? JSON.stringify(body) : void 0
+    });
+    const data = await res.json().catch(() => ({}));
+    return { status: res.status, data };
+  };
+  const start = await call2("POST", "/api/scan", { url: prUrl, source: "action" });
+  if (start.status === 400 || start.status === 429) throw new HostedRefusal(start.data.error ?? `the service answered ${start.status}`);
+  if (start.status >= 300) throw new Error(`PR Guard service answered ${start.status}: ${start.data.error ?? "no reason given"}`);
+  const id = start.data.id;
+  let scan2 = start.data.scan ?? (await call2("GET", `/api/scan/${id}`)).data.scan;
+  let failures = 0;
+  while (scan2?.status !== "done") {
+    if (Date.now() >= deadline) return { ...timedOut(scan2), reportUrl: `${base}/r/${id}` };
+    let r;
+    try {
+      r = await call2("POST", `/api/scan/${id}/step`);
+      failures = 0;
+    } catch (err) {
+      if (++failures > 3) throw err;
+      await sleep(busyWaitMs);
+      scan2 = (await call2("GET", `/api/scan/${id}`)).data.scan ?? scan2;
+      continue;
+    }
+    if (r.status === 409) {
+      await sleep(busyWaitMs);
+      scan2 = (await call2("GET", `/api/scan/${id}`)).data.scan ?? scan2;
+      continue;
+    }
+    if (r.status !== 200) throw new Error(`PR Guard service answered ${r.status}: ${r.data.error ?? "no reason given"}`);
+    scan2 = r.data.scan;
+  }
+  return { ...scan2, reportUrl: `${base}/r/${id}` };
+}
+function timedOut(scan2) {
+  const skipped = scan2.jobs.slice(scan2.next).map(({ check, intent, target }) => ({
+    check,
+    intent,
+    target,
+    status: "skipped",
+    reason: "time limit",
+    severity: "none",
+    findings: [],
+    confirmed: false,
+    disagreement: false,
+    calls: []
+  }));
+  return { ...scan2, outcomes: [...scan2.outcomes, ...skipped], verdict: null, reasons: [], timedOut: true };
+}
+
 // config/miners.json
 var miners_default = {
-  _comment: "Vetted miners per PR Guard check, best first. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional enabled:false (kept but not called). A check with no enabled entries is skipped. Re-vetted after Telegraph's Oct 30 move to Ethereum Sepolia: ChainSight (#302) is gone and id 302 now belongs to another miner.",
+  _comment: "Vetted fallback miners per PR Guard check, best first. Every check is first asked through Telegraph's routing (a canonical intent + params ask; see src/checks.js); a miner here is called directly only when the routed answer is unusable, and the next one only if that call fails. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional enabled:false. A routed answer from a miner listed here is read with its normalizer.",
   deps: [
     {
       minerId: "77010",
@@ -50976,7 +51305,7 @@ var miners_default = {
         "Go",
         "crates.io"
       ],
-      _note: "Our own miner (disclosed); rates PyPI/Go/crates.io, which deps.dev Package Review (npm-only) can't. Live since Nov 2."
+      _note: "Our own miner (disclosed); rates PyPI/Go/crates.io, which deps.dev Package Review (npm-only) can't."
     },
     {
       minerId: "190048",
@@ -50989,7 +51318,8 @@ var miners_default = {
         pkg: "{{name}}",
         ver: "{{version}}"
       },
-      normalizer: "depsdev-advisory-keys"
+      normalizer: "depsdev-advisory-keys",
+      _note: "Advisory ids only, unrated: last resort, so its findings give CAUTION, never BLOCK."
     }
   ],
   diff: [
@@ -51006,7 +51336,7 @@ var miners_default = {
         }
       },
       normalizer: "verity-security",
-      _note: "Independent operator, asked first. Takes the old intent name inside its payload (verified Nov 2)."
+      _note: "Independent operator. Takes the old intent name inside its payload (verified Nov 2 and Nov 13). Used for diff chunks over the 2,000-character canonical limit, or when the routed review is unusable."
     },
     {
       minerId: "731001",
@@ -51018,7 +51348,7 @@ var miners_default = {
         diff: "{{diff}}"
       },
       normalizer: "sentinel-review",
-      _note: "Our own rule-based miner (disclosed), asked to confirm a high/critical finding."
+      _note: "Our own rule-based miner (disclosed), used only if Verity fails."
     }
   ],
   patch: [],
@@ -51027,6 +51357,7 @@ var miners_default = {
 
 // src/index.js
 var RUN_DEADLINE_MS = 1e5;
+var HOSTED_DEADLINE_MS = 4 * 6e4;
 var LEDGER_PATH = "pr-guard-ledger.jsonl";
 function inputs() {
   const num2 = (name, dflt) => {
@@ -51036,6 +51367,7 @@ function inputs() {
   };
   const failOn = getInput("fail-on") || "block";
   if (!["block", "caution", "never"].includes(failOn)) throw new Error("input fail-on must be block, caution or never");
+  if (!["auto", "off"].includes(getInput("routing") || "auto")) throw new Error("input routing must be auto or off");
   return {
     privateKey: getInput("telegraph-private-key"),
     maxUsdPerPr: num2("max-usd-per-pr", 0.1),
@@ -51044,28 +51376,10 @@ function inputs() {
     checks: new Set((getInput("checks") || DEFAULT_CHECKS.join(",")).split(",").map((s) => s.trim()).filter(Boolean)),
     nodeUrl: getInput("node-url") || DEFAULT_NODE_URL,
     minersConfig: getInput("miners-config"),
-    token: getInput("github-token")
+    token: getInput("github-token"),
+    serviceUrl: getInput("service-url") || DEFAULT_SERVICE_URL,
+    routing: getInput("routing") || "auto"
   };
-}
-async function collectDependencies(octokit, repoRef, files, baseSha, headSha) {
-  const deps = [];
-  const installScripts = [];
-  const errors = [];
-  for (const f of files) {
-    if (!manifestEcosystem(f.filename)) continue;
-    const basePath = f.previous_filename ?? f.filename;
-    try {
-      const [baseText, headText] = await Promise.all([
-        f.status === "added" ? null : getText(octokit, { ...repoRef, path: basePath, ref: baseSha }),
-        f.status === "removed" ? null : getText(octokit, { ...repoRef, path: f.filename, ref: headSha })
-      ]);
-      deps.push(...diffManifest(f.filename, baseText, headText));
-      installScripts.push(...diffInstallScripts(f.filename, baseText, headText));
-    } catch (err) {
-      errors.push({ file: f.filename, error: err.message });
-    }
-  }
-  return { deps: mergeDependencyChanges(deps), installScripts, errors };
 }
 async function run() {
   const cfg = inputs();
@@ -51092,36 +51406,54 @@ async function run() {
       warning(`could not write the job summary: ${err.message}`);
     }
   };
+  const finish = async ({ verdict: verdict2, spentUsd: spentUsd2, signalHashes: signalHashes2 = [], ledgerPath = "" }) => {
+    setOutput("verdict", verdict2);
+    setOutput("cost_usd", spentUsd2.toFixed(6));
+    setOutput("signal_hashes", signalHashes2.join(","));
+    setOutput("ledger_path", ledgerPath);
+    if (shouldFail(verdict2, cfg.failOn)) setFailed(`PR Guard verdict: ${verdict2}`);
+  };
   if (!cfg.privateKey) {
-    const fork = pr.head?.repo?.full_name !== pr.base?.repo?.full_name;
-    const note = fork ? "Skipped: workflows on fork PRs don't receive secrets, so there is no wallet to pay for checks." : "Skipped: no `telegraph-private-key` secret is configured, so there is no wallet to pay for checks.";
-    await post(renderComment({ verdict: "SKIPPED", note, nodeUrl: cfg.nodeUrl }));
-    setOutput("verdict", "SKIPPED");
-    setOutput("cost_usd", "0");
-    return;
+    if (context3.payload.repository?.private) {
+      const note2 = "Skipped: this repository is private. Free hosted scans cover public repositories only; add a `TELEGRAPH_PRIVATE_KEY` secret to pay for checks from your own wallet.";
+      await post(renderComment({ verdict: "SKIPPED", note: note2, nodeUrl: cfg.nodeUrl }));
+      return finish({ verdict: "SKIPPED", spentUsd: 0 });
+    }
+    let scan2;
+    try {
+      scan2 = await scanHosted({ serviceUrl: cfg.serviceUrl, prUrl: pr.html_url, deadline: Date.now() + HOSTED_DEADLINE_MS });
+    } catch (err) {
+      if (!(err instanceof HostedRefusal)) throw err;
+      await post(renderComment({ verdict: "SKIPPED", note: `Skipped: ${err.message}`, nodeUrl: cfg.nodeUrl }));
+      return finish({ verdict: "SKIPPED", spentUsd: 0 });
+    }
+    const { verdict: verdict2, reasons: reasons2 } = scan2.verdict ? scan2 : decide(scan2.outcomes);
+    const note = [
+      `Free hosted scan: checks were paid from PR Guard's sponsor wallet in test USDC. [Full report](${scan2.reportUrl})${scan2.timedOut ? " (some checks ran out of time)" : ""}.`,
+      ...scan2.notes ?? []
+    ].join(" ");
+    await post(renderComment({ verdict: verdict2, reasons: reasons2, outcomes: scan2.outcomes, spentUsd: scan2.spentUsd, budgetUsd: scan2.budgetUsd, nodeUrl: scan2.nodeUrl, runUrl, note }));
+    const signalHashes2 = scan2.outcomes.flatMap((o) => o.calls.map((c) => c.signalHash)).filter(Boolean);
+    return finish({ verdict: verdict2, spentUsd: scan2.spentUsd, signalHashes: signalHashes2 });
   }
   const deadline = Date.now() + RUN_DEADLINE_MS;
   const miners = cfg.minersConfig ? JSON.parse(await readFile(cfg.minersConfig, "utf8")) : miners_default;
   const rawFiles = await listPrFiles(octokit, { ...repoRef, pull_number: pr.number });
   const base = await mergeBase(octokit, { ...repoRef, base: pr.base.sha, head: pr.head.sha });
-  const { deps, installScripts, errors } = await collectDependencies(octokit, repoRef, rawFiles, base, pr.head.sha);
+  const getFileText = ({ path, ref }) => getText(octokit, { ...repoRef, path, ref });
+  const { jobs, local: local2, errors, notes } = await planScan({ pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks });
   for (const e of errors) warning(`could not read ${e.file}: ${e.error}`);
-  const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
-  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, cfg.checks);
   const budget = new Budget(cfg.maxUsdPerPr);
   const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 45e3 });
   const onCall = (entry) => appendLedger(LEDGER_PATH, { pr: pr.number, ...entry });
-  const paid = await runAll(jobs, (job) => runCheck({ tg, miners, job, deadline, onCall }));
-  const outcomes = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps), ...paid];
+  const routing = { mode: cfg.routing, health: {} };
+  const paid = await runAll(jobs, (job) => runCheck({ tg, miners, job, deadline, onCall, routing }));
+  const outcomes = [...local2, ...paid];
   const { verdict, reasons } = decide(outcomes);
   const spentUsd = Number(budget.spent) / 1e6;
-  await post(renderComment({ verdict, reasons, outcomes, spentUsd, budgetUsd: cfg.maxUsdPerPr, nodeUrl: cfg.nodeUrl, runUrl }));
+  await post(renderComment({ verdict, reasons, outcomes, spentUsd, budgetUsd: cfg.maxUsdPerPr, nodeUrl: cfg.nodeUrl, runUrl, note: notes.join(" ") || void 0 }));
   const signalHashes = outcomes.flatMap((o) => o.calls.map((c) => c.signalHash)).filter(Boolean);
-  setOutput("verdict", verdict);
-  setOutput("cost_usd", spentUsd.toFixed(6));
-  setOutput("signal_hashes", signalHashes.join(","));
-  setOutput("ledger_path", LEDGER_PATH);
-  if (shouldFail(verdict, cfg.failOn)) setFailed(`PR Guard verdict: ${verdict}`);
+  await finish({ verdict, spentUsd, signalHashes, ledgerPath: LEDGER_PATH });
 }
 run().catch(async (err) => {
   error(err.stack ?? String(err));

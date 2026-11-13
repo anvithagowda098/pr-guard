@@ -310,6 +310,9 @@ export const isSensitiveFile = (path) =>
   /\.(pem|key|p12|pfx|jks|keystore)$/i.test(path) ||
   /(^|\/)(id_(rsa|dsa|ecdsa|ed25519)|\.npmrc|\.pypirc|\.netrc|credentials(\.json)?)$/.test(path);
 
+/** Prose, not code: not worth a paid code review (secrets in it are still scanned locally). */
+export const isDocFile = (path) => /\.(md|mdx|markdown|rst|txt|adoc)$/i.test(path) || /(^|\/)(README|LICENSE|LICENCE|CHANGELOG|AUTHORS|NOTICE|CONTRIBUTING)(\.(md|txt|rst|adoc|markdown))?$/i.test(path);
+
 /** Lockfiles, generated/vendored code, binaries and sensitive files aren't reviewed. */
 export const shouldSkipFile = (path) =>
   LOCKFILES.test(path) || GENERATED.test(path) || BINARY.test(path) || isSensitiveFile(path);
@@ -343,7 +346,7 @@ function splitLong(header, body, maxChars) {
 export function chunkDiff(files, { maxChars = 12_000 } = {}) {
   const sections = [];
   for (const f of files) {
-    if (!f.patch || shouldSkipFile(f.filename)) continue;
+    if (!f.patch || shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
     const header = `diff --git a/${f.filename} b/${f.filename}\n`;
     const text = header + f.patch + "\n";
     if (text.length <= maxChars) sections.push({ files: [f.filename], text });

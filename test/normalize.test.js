@@ -1,9 +1,11 @@
-// Normalizers against real paid responses captured 2026-10-27.
+// Normalizers against real paid responses (captured 2026-10-27 to 2026-11-13),
+// and how their findings are confirmed.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { normalize } from "../src/normalize.js";
-import { combineOpinions, decide } from "../src/policy.js";
+import { decide } from "../src/policy.js";
+import { confirmFindings, judgeRouted } from "../src/runner.js";
 
 const capture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/SECURITY_REVIEW/${name}`, import.meta.url), "utf8"));
 const result = (name) => capture(name).body.result;
@@ -27,7 +29,7 @@ test("deps.dev Package Review: lodash@4.17.15 has six advisories, worst HIGH", (
 });
 
 test("deps.dev Package Review: a clean version is none", () => {
-  assert.deepEqual(normalize("depsdev-version", result("77010-npm-lodash-4.18.1-200-paid.json"), { name: "lodash", version: "4.18.1" }), { severity: "none", findings: [] });
+  assert.deepEqual(normalize("depsdev-version", result("77010-npm-lodash-4.18.1-200-paid.json"), { name: "lodash", version: "4.18.1" }), { severity: "none", findings: [], verified: true });
 });
 
 test("an answer about a different package or version is unknown, not trusted", () => {
@@ -50,23 +52,20 @@ test("unknown normalizer or malformed answer is unknown", () => {
   assert.equal(normalize("depsdev-advisory-keys", null, lodash15).severity, "unknown");
 });
 
-test("the two deps.dev miners together: ids corroborate the HIGH findings -> BLOCK", () => {
-  const first = normalize("depsdev-version", result("77010-npm-lodash-4.17.15-200-paid.json"), lodash15);
-  const second = normalize("depsdev-advisory-keys", result("190048-npm-lodash-4.17.15-200-paid.json"), lodash15);
-  const combined = combineOpinions(first, second);
-  assert.equal(combined.confirmed, true);
-  assert.equal(combined.disagreement, false);
-  assert.equal(combined.findings.length, 6, "corroboration doesn't duplicate findings");
-  assert.ok(combined.findings.every((f) => f.corroborated));
-  const outcome = { check: "deps", target: "lodash@4.17.15", status: "ok", calls: [], ...combined };
-  assert.equal(decide([outcome]).verdict, "BLOCK");
+test("deps.dev Package Review is registry data about this exact version: a HIGH is confirmed -> BLOCK", () => {
+  const n = normalize("depsdev-version", result("77010-npm-lodash-4.17.15-200-paid.json"), lodash15);
+  assert.equal(n.verified, true);
+  const c = confirmFindings("deps", n, lodash15);
+  assert.deepEqual([c.confirmed, c.disagreement, c.findings.length], [true, false, 6]);
+  assert.equal(decide([{ check: "deps", target: "lodash@4.17.15", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
 });
 
-test("a second miner that answers 'no advisories' disagrees -> CAUTION", () => {
-  const first = normalize("depsdev-version", result("77010-npm-lodash-4.17.15-200-paid.json"), lodash15);
-  const combined = combineOpinions(first, { severity: "none", findings: [] });
-  assert.deepEqual([combined.confirmed, combined.disagreement], [false, true]);
-  assert.equal(decide([{ check: "deps", target: "x", status: "ok", calls: [], ...combined }]).verdict, "CAUTION");
+test("advisory ids with no rating, or a review that can't name the package, never BLOCK", () => {
+  const ids = confirmFindings("deps", normalize("depsdev-advisory-keys", result("190048-npm-lodash-4.17.15-200-paid.json"), lodash15), lodash15);
+  assert.deepEqual([ids.severity, ids.confirmed], ["unknown", false]);
+  const review = confirmFindings("deps", normalize("security-review-format", { verdict: "Insecure", vulnerability_count: 1, issues: ["GHSA-p6mc-m468-83gw"] }), lodash15);
+  assert.deepEqual([review.severity, review.confirmed], ["high", false]);
+  assert.equal(decide([{ check: "deps", target: "x", status: "ok", calls: [], ...review }]).verdict, "CAUTION");
 });
 
 test("PyPI with only unrated ids cautions with a clear reason", () => {
@@ -108,17 +107,10 @@ test("Sentinel /package: real answer through Telegraph, rated, with upgrade advi
   assert.equal(normalize("sentinel-package", result("731001-package-npm-lodash-4.17.15-200-paid.json"), { name: "lodash", version: "4.17.21" }).severity, "unknown");
 });
 
-test("Sentinel answers corroborated by deps.dev ids, through aliases too", () => {
-  const first = normalize("sentinel-package", result("731001-package-npm-lodash-4.17.15-200-paid.json"), lodash15);
-  const second = normalize("depsdev-advisory-keys", result("190048-npm-lodash-4.17.15-200-paid.json"), lodash15);
-  const c = combineOpinions(first, second);
+test("Sentinel /package is checked against the exact version: confirmed, with upgrade advice", () => {
+  const c = confirmFindings("deps", normalize("sentinel-package", result("731001-package-npm-lodash-4.17.15-200-paid.json"), lodash15), lodash15);
   assert.equal(c.confirmed, true);
   assert.equal(c.advice, "upgrade to 4.18.0");
-  const viaAlias = combineOpinions(
-    { severity: "high", findings: [{ id: "GHSA-aaaa", aliases: ["PYSEC-2021-1"], severity: "high", title: "x" }] },
-    { severity: "unknown", findings: [{ id: "PYSEC-2021-1", severity: "unknown", title: "PYSEC-2021-1" }] },
-  );
-  assert.equal(viaAlias.confirmed, true);
 });
 
 test("Sentinel /review: findings keep file and line; clean code is none", async () => {
@@ -148,15 +140,55 @@ test("Verity: clean diff is none ('uncertain', no findings); unusable input is u
   assert.equal(normalize("verity-security", newNet("5530-input-as-string-rejected-200-paid.json").body.result, {}).severity, "unknown");
 });
 
-test("two independent reviewers agree on the planted bugs -> BLOCK", () => {
+test("Verity's high findings are confirmed by PR Guard's local rules at the same file:line -> BLOCK", () => {
   const v = newNet("5530-review-two-file-diff-200-paid.json");
-  const s = newNet("731001-review-two-file-diff-200-paid.json");
-  const first = normalize("verity-security", v.body.result, { diff: v.request.payload.input.code });
-  const second = normalize("sentinel-review", s.body.result);
-  assert.deepEqual(second.findings.map((f) => `${f.file}:${f.line}`), ["src/routes/user.js:12", "src/routes/calc.js:2"], "same locations from both");
-  const c = combineOpinions(first, second);
-  assert.deepEqual([c.confirmed, c.disagreement, c.severity], [true, false, "critical"]);
+  const diff = v.request.payload.input.code;
+  const c = confirmFindings("diff", normalize("verity-security", v.body.result, { diff }), { diff });
+  assert.deepEqual([c.confirmed, c.disagreement, c.severity], [true, false, "high"]);
+  assert.ok(c.findings.every((f) => f.corroborated));
   assert.equal(decide([{ check: "diff", target: "src/routes", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("local rules catch what a reviewer misses: CAUTION, never a silent SAFE", () => {
+  const diff = "diff --git a/db.js b/db.js\n@@ -1,1 +1,2 @@\n x\n+db.query(\"SELECT * FROM t WHERE id = '\" + req.query.id + \"'\")";
+  const c = confirmFindings("diff", { severity: "none", findings: [] }, { diff });
+  assert.deepEqual([c.severity, c.confirmed, c.disagreement], ["medium", false, true]);
+  assert.match(c.findings[0].title, /PR Guard local rule/);
+  assert.equal(decide([{ check: "diff", target: "db.js", status: "ok", calls: [], ...c }]).verdict, "CAUTION");
+});
+
+const routed = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/ROUTED/${name}`, import.meta.url), "utf8"));
+const asRecord = (cap) => ({ ok: cap.ok, status: cap.status, body: cap.body, costUsd: cap.costUsd });
+
+test("routed CODE_REVIEW_GENERAL (miner 302, intent format): security findings rated, style notes low", () => {
+  const cap = routed("code-review-sqli-eval-diff-302-intent.json");
+  const diff = cap.request.params.code;
+  const route = { intent: "CODE_REVIEW_GENERAL", params: { code: diff }, normalizer: "code-review-format" };
+  const { answer } = judgeRouted(asRecord(cap), route, [], { diff });
+  assert.equal(answer.severity, "high");
+  assert.deepEqual(answer.findings.filter((f) => f.category).map((f) => f.category), ["sql-injection", "code-injection"]);
+  assert.ok(answer.findings.filter((f) => !f.category).every((f) => f.severity === "low"));
+  const c = confirmFindings("diff", answer, { diff });
+  assert.equal(c.confirmed, true, "local rules find the same two issues");
+  assert.equal(normalize("code-review-format", { verdict: "Approve", findings: [] }).severity, "none");
+  assert.equal(normalize("code-review-format", { verdict: "maybe" }).severity, "unknown");
+});
+
+test("routed SECURITY_REVIEW_GENERAL went to miner 77003, which ignored the target: rejected, for packages and code", () => {
+  for (const name of ["security-review-lodash-77003-off-target.json", "security-review-diff-77003-off-target.json"]) {
+    const cap = routed(name);
+    assert.equal(cap.body.result_shape, "raw");
+    const route = { intent: "SECURITY_REVIEW_GENERAL", params: cap.request.params, normalizer: "security-review-format" };
+    const judged = judgeRouted(asRecord(cap), route, [{ minerId: "77010", normalizer: "depsdev-version" }], lodash15);
+    assert.match(judged.reject, /miner 77003 answered in its own format, and not about this target/);
+  }
+  assert.match(judgeRouted({ ok: false, status: 503, reason: "http_503" }, {}, [], {}).reject, /could not route/);
+});
+
+test("a routed raw answer from a vetted miner is read with that miner's normalizer", () => {
+  const body = { miner_id: "77010", result_shape: "raw", result: result("77010-npm-lodash-4.17.15-200-paid.json") };
+  const { answer } = judgeRouted({ ok: true, status: 200, body }, { normalizer: "security-review-format" }, [{ minerId: "77010", normalizer: "depsdev-version" }], lodash15);
+  assert.deepEqual([answer.severity, answer.verified], ["high", true]);
 });
 
 test("Sentinel /package on the new network rates PyPI with upgrade advice", () => {
@@ -164,4 +196,16 @@ test("Sentinel /package on the new network rates PyPI with upgrade advice", () =
   assert.equal(n.severity, "critical");
   assert.equal(n.findings.length, 38);
   assert.equal(n.advice, "upgrade to 5.2.17");
+});
+
+test("code review wording: a negated or approved mention is not a finding", () => {
+  const n = normalize("code-review-format", { verdict: "Request changes", findings: ["The query is parameterized, so there is no SQL injection risk.", "Path traversal: req.params.file is joined into a filesystem path."] });
+  assert.deepEqual(n.findings.map((f) => [f.category ?? null, f.severity]), [[null, "low"], ["path-traversal", "high"]]);
+  const ok = normalize("code-review-format", { verdict: "Approve", findings: ["Uses eval() only on a constant string."] });
+  assert.equal(ok.severity, "low");
+});
+
+test("Unicode hyphens in a finding still name its category (seen live from miner 302)", () => {
+  const n = normalize("code-review-format", { verdict: "Request changes", findings: ["Hard‑coded AWS credentials expose secrets; they will be leaked."] });
+  assert.deepEqual([n.findings[0].category, n.findings[0].severity], ["hardcoded-secret", "high"]);
 });

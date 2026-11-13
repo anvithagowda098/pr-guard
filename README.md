@@ -27,6 +27,7 @@ Open **https://pr-guard-app.pr-guard.workers.dev** and paste a pull request link
 - **Cost:** none to you. A sponsor wallet pays for the checks, up to $0.10 per scan.
 - **Limits:** 5 scans per visitor per day.
 - **Reports:** each one gets a permanent link.
+- **Examples:** the three demo pull requests (one SAFE, two BLOCK) and their reports are in [demo/README.md](demo/README.md).
 
 ### 2. On your repository, with no setup (public repositories)
 
@@ -140,7 +141,7 @@ You need Node 20 or later.
 
 ```sh
 npm ci
-npm test             # 120 tests, all offline
+npm test             # 121 tests, all offline
 npm run build        # bundles dist/index.js; commit it, the Action runs from it
 npm run deploy:web   # the hosted page and API (Cloudflare Workers)
 npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)

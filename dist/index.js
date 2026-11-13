@@ -50993,18 +50993,19 @@ var isHigh2 = (s) => s === "high" || s === "critical";
 var isEmpty = (n) => n.severity === "unknown" && !n.findings.length;
 var isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(r.bodyText ?? "");
 function judgeRouted(r, route, entries, vars) {
-  if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})` };
+  if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})`, systematic: false };
   const id = r.body?.miner_id ?? "?";
+  const vetted = entries.find((e) => String(e.minerId) === String(id));
   if (r.body?.result_shape === "intent") {
     const n = normalize(route.normalizer, r.body.result, vars);
-    return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict` } : { answer: n };
+    return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false } : { answer: n };
   }
-  const vetted = entries.find((e) => String(e.minerId) === String(id));
   if (vetted) {
     const n = normalize(vetted.normalizer, r.body?.result, vars);
     if (!isEmpty(n)) return { answer: n };
   }
-  return { reject: `miner ${id} answered in its own format, and not about this target` };
+  const text = typeof r.body?.result?.answer === "string" || typeof r.body?.result === "string";
+  return text ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false } : { reject: `miner ${id} answered in its own format, and not about this target`, systematic: true };
 }
 function confirmFindings(check, answer, vars) {
   if (check === "deps") return { ...answer, confirmed: isHigh2(answer.severity) && answer.verified === true, disagreement: false };
@@ -51044,9 +51045,11 @@ async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "
     if (judged2.answer) answer = judged2.answer;
     else {
       if (r.reason === "over_budget") return { ...base, status: "skipped", severity: "none", reason: "budget exhausted" };
-      health[route.intent] = false;
       notes.push(`Routed ${route.intent} answer not used: ${judged2.reject}.`);
-      await routing.onUnusable?.(route.intent, judged2.reject);
+      if (judged2.systematic) {
+        health[route.intent] = false;
+        await routing.onUnusable?.(route.intent, judged2.reject);
+      }
       if (routing.deferFallback) return { deferred: true, calls, notes };
     }
   } else if (!route && job.routeSkipped) {

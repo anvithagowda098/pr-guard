@@ -252,3 +252,15 @@ test("buildJobs gives each check its canonical ask", () => {
   assert.equal(diff.route.intent, "CODE_REVIEW_GENERAL");
   assert.match(diff.route.params.code, /^diff --git a\/a\.js/);
 });
+
+test("a one-off unreadable routed answer falls back for that check only; routing stays on", async () => {
+  const routing = { mode: "auto", health: {} };
+  const prose = { ok: true, status: 200, costUsd: 0.01, body: { miner_id: "302", result_shape: "raw", result: { answer: "Verdict: The downgrade is safe but should be verified." } } };
+  const tg = fakeTg([prose, okResponse("77010"), intentAnswer("302", { verdict: "Secure", vulnerability_count: 0, issues: [] })]);
+  const first = await runCheck({ tg, miners: fallback, job: routedJob, deadline: FAR, routing });
+  assert.deepEqual(first.calls.map((c) => c.via), ["routed", "direct"]);
+  assert.match(first.notes[0], /no readable verdict/);
+  assert.equal(routing.health.SECURITY_REVIEW_GENERAL, undefined, "not marked unusable");
+  const second = await runCheck({ tg, miners: fallback, job: routedJob, deadline: FAR, routing });
+  assert.deepEqual(second.calls.map((c) => c.via), ["routed"]);
+});

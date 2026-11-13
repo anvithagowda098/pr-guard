@@ -49,21 +49,27 @@ const isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(
  * Whether a routed answer can be used, and read. An answer in the intent's
  * format is read by the intent's normalizer; a raw answer only if it came from
  * a vetted miner whose normalizer confirms it is about this target.
- * @returns {{ answer: object } | { reject: string }}
+ * `systematic` marks a miner that ignores the request (the router will keep
+ * sending it there); a one-off unreadable answer or an outage is not.
+ * @returns {{ answer: object } | { reject: string, systematic: boolean }}
  */
 export function judgeRouted(r, route, entries, vars) {
-  if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})` };
+  if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})`, systematic: false };
   const id = r.body?.miner_id ?? "?";
+  const vetted = entries.find((e) => String(e.minerId) === String(id));
   if (r.body?.result_shape === "intent") {
     const n = normalize(route.normalizer, r.body.result, vars);
-    return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict` } : { answer: n };
+    return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false } : { answer: n };
   }
-  const vetted = entries.find((e) => String(e.minerId) === String(id));
   if (vetted) {
     const n = normalize(vetted.normalizer, r.body?.result, vars);
     if (!isEmpty(n)) return { answer: n };
   }
-  return { reject: `miner ${id} answered in its own format, and not about this target` };
+  // Free text the node couldn't read into the format: unusable this time only.
+  const text = typeof r.body?.result?.answer === "string" || typeof r.body?.result === "string";
+  return text
+    ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false }
+    : { reject: `miner ${id} answered in its own format, and not about this target`, systematic: true };
 }
 
 /** Confirm high findings by deterministic evidence; flag local-rule hits the reviewer missed. */
@@ -118,9 +124,11 @@ export async function runCheck({ tg, miners, job, deadline, onCall, routing = { 
     if (judged.answer) answer = judged.answer;
     else {
       if (r.reason === "over_budget") return { ...base, status: "skipped", severity: "none", reason: "budget exhausted" };
-      health[route.intent] = false; // don't pay for the same unusable routing again this run
       notes.push(`Routed ${route.intent} answer not used: ${judged.reject}.`);
-      await routing.onUnusable?.(route.intent, judged.reject);
+      if (judged.systematic) {
+        health[route.intent] = false; // don't pay for the same off-target routing again this run
+        await routing.onUnusable?.(route.intent, judged.reject);
+      }
       if (routing.deferFallback) return { deferred: true, calls, notes };
     }
   } else if (!route && job.routeSkipped) {

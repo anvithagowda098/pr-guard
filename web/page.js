@@ -60,12 +60,12 @@ footer p{margin:6px 0}
 <section class="card"><h2>Recent scans</h2><div id="recent" class="recent"><p class="hint">Loading…</p></div></section>
 
 <footer>
-<p><strong>How it works.</strong> PR Guard reads the pull request from GitHub and redacts anything that looks like a secret. Then it buys checks from miners on Telegraph's network:</p>
+<p><strong>How it works.</strong> PR Guard reads the pull request from GitHub and redacts anything that looks like a secret. Then it buys each check through Telegraph's routing, which picks the miner for the task:</p>
 <ul>
-<li><strong>Dependencies:</strong> deps.dev Package Review (#77010) and Secrev Depsdev (#190048), plus PR Guard Sentinel for Python, Go and Rust.</li>
-<li><strong>Code:</strong> Telegraph Verity (#5530), confirmed by PR Guard Sentinel (#731001).</li>
+<li><strong>Code:</strong> a canonical <code>CODE_REVIEW_GENERAL</code> ask for each part of the diff.</li>
+<li><strong>Dependencies:</strong> a canonical <code>SECURITY_REVIEW_GENERAL</code> ask for each changed package.</li>
 </ul>
-<p>A finding blocks only when two miners agree. Every paid check links to its record on the Telegraph node.</p>
+<p>If a routed answer isn't about what was asked, PR Guard says so and asks one vetted miner instead: deps.dev Package Review (#77010) or PR Guard Sentinel for packages, Telegraph Verity (#5530) for code. A finding blocks only with deterministic evidence: registry data about the exact package version, or PR Guard's own rules finding the same issue in the diff. Every paid check links to its receipt on the Telegraph node.</p>
 <p><strong>Disclosure.</strong> PR Guard Sentinel is built by the PR Guard team. Payments are test USDC on Ethereum Sepolia, not real money. Up to $0.10 is spent per scan. A scan is advisory, not a full audit.</p>
 </footer>
 </main>
@@ -93,7 +93,7 @@ footer p{margin:6px 0}
       var top = (o.findings || []).filter(function (f) { return f.severity === o.severity; })[0] || (o.findings || [])[0];
       res.append(el("span", "s-" + o.severity, o.severity === "none" ? "no issues" : o.severity));
       if (top) res.append(document.createTextNode(": " + top.title));
-      if (o.disagreement) res.append(document.createTextNode(" · miners disagree"));
+      if (o.disagreement) res.append(document.createTextNode(" · local rules disagree"));
       else if (o.confirmed && (o.severity === "high" || o.severity === "critical")) res.append(document.createTextNode(" · confirmed"));
       if (o.advice) res.append(document.createTextNode(" · fix: " + o.advice));
     }
@@ -103,7 +103,10 @@ footer p{margin:6px 0}
     if (!calls.length) meta.textContent = "local check, free";
     else {
       var cost = calls.reduce(function (s, c) { return s + (c.costUsd || 0); }, 0);
-      meta.append(document.createTextNode(calls.map(function (c) { return "#" + c.minerId + (c.minerName ? " " + c.minerName : ""); }).join(", ") + " · " + usd(cost)));
+      meta.append(document.createTextNode(calls.map(function (c) {
+        var via = c.via === "routed" ? (c.note ? " (routed, not used)" : " (routed)") : c.via === "direct" ? " (fallback)" : "";
+        return "#" + c.minerId + (c.minerName ? " " + c.minerName : "") + via;
+      }).join(", ") + " · " + usd(cost)));
       calls.forEach(function (c) {
         if (!c.signalHash) return;
         meta.append(document.createTextNode(" · "));
@@ -111,6 +114,7 @@ footer p{margin:6px 0}
       });
     }
     row.append(meta);
+    (o.notes || []).forEach(function (n) { row.append(el("p", "meta", n)); });
     if ((o.findings || []).length && o.severity !== "none") {
       var d = el("details"); d.append(el("summary", null, o.findings.length + " finding" + (o.findings.length === 1 ? "" : "s")));
       var ul = el("ul");

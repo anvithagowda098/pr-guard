@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decide, shouldFail, combineOpinions, maxSeverity } from "../src/policy.js";
+import { decide, shouldFail, maxSeverity } from "../src/policy.js";
 
 const o = (over) => ({ check: "deps", target: "x@1", status: "ok", severity: "none", findings: [], confirmed: false, disagreement: false, calls: [], ...over });
 
@@ -37,17 +37,6 @@ test("fail-on modes", () => {
   assert.equal(shouldFail("CAUTION", "block"), false);
   assert.equal(shouldFail("CAUTION", "caution"), true);
   assert.equal(shouldFail("BLOCK", "never"), false);
-});
-
-test("combineOpinions: agreement confirms, a lone high is a disagreement, no second opinion stays unconfirmed", () => {
-  const hi = { severity: "high", findings: [{ title: "CVE-1", severity: "high" }] };
-  const crit = { severity: "critical", findings: [{ title: "CVE-1", severity: "critical" }] };
-  const none = { severity: "none", findings: [] };
-  assert.deepEqual(combineOpinions(hi, crit), { severity: "critical", findings: [...hi.findings, ...crit.findings], confirmed: true, disagreement: false });
-  assert.equal(combineOpinions(hi, none).disagreement, true);
-  assert.equal(combineOpinions(hi, none).confirmed, false);
-  assert.deepEqual(combineOpinions(hi, null), { ...hi, confirmed: false, disagreement: false });
-  assert.equal(combineOpinions(hi, { severity: "unknown", findings: [] }).confirmed, false);
 });
 
 test("maxSeverity", () => {

@@ -28,6 +28,7 @@ const DEFAULTS = {
 const LIMITS = { maxDeps: 8, maxChunks: 3, maxChars: 12_000 };
 const MAX_FILES = 100;
 const SCAN_TTL = 60 * 60 * 24 * 90; // keep reports 90 days
+const ROUTE_RETRY_SECONDS = 6 * 60 * 60; // try routing an intent again after an unusable answer
 const RECENT = 30;
 
 const json = (status, body) =>
@@ -163,7 +164,7 @@ async function step(id, env, deps) {
   const job = scan.jobs[scan.next];
   let outcome;
   if (day.usd >= lim.usdPerDay || scan.spentUsd >= scan.budgetUsd) {
-    outcome = { check: job.check, intent: job.intent, target: job.target, status: "skipped", reason: "budget exhausted", severity: "none", findings: [], confirmed: false, disagreement: false, calls: [] };
+    outcome = { check: job.check, intent: job.intent, target: job.target, status: "skipped", reason: "budget exhausted", severity: "none", findings: [], confirmed: false, disagreement: false, calls: scan.pending?.[scan.next]?.calls ?? [] };
   } else {
     const budget = new Budget(Math.min(scan.budgetUsd - scan.spentUsd, lim.usdPerDay - day.usd));
     const tg = deps.telegraph ?? new Telegraph({
@@ -174,10 +175,36 @@ async function step(id, env, deps) {
       timeoutMs: 45_000,
       fetch: deps.fetch,
     });
-    outcome = await runCheck({ tg, miners: deps.miners ?? minersConfig, job, deadline: Date.now() + 100_000 });
+    // Routing health is shared across scans for a few hours: once a routed
+    // answer for an intent is unusable, later checks go straight to the fallback.
+    const intent = job.route?.intent;
+    const health = intent && (await env.SCANS.get(`route:${intent}`)) === "unusable" ? { [intent]: false } : {};
+    const routing = {
+      mode: env.ROUTING === "off" ? "off" : "auto",
+      health,
+      deferFallback: true, // one paid call per request keeps the step inside the CPU limit
+      onUnusable: (i, why) => env.SCANS.put(`route:${i}`, "unusable", { expirationTtl: ROUTE_RETRY_SECONDS, metadata: { why } }),
+    };
+    const pending = scan.pending?.[scan.next];
+    outcome = await runCheck({ tg, miners: deps.miners ?? minersConfig, job, deadline: Date.now() + 100_000, routing, priorCalls: pending?.calls ?? [], priorNotes: pending?.notes ?? [] });
     if (!deps.telegraph) outcome.spentUsd = atomicToUsd(budget.spent);
   }
-  const spent = outcome.spentUsd ?? outcome.calls.reduce((s, c) => s + (c.costUsd ?? 0), 0);
+  if (outcome.deferred) {
+    // The routed answer was unusable: keep its call, and buy the fallback on the next request.
+    const spentNow = outcome.spentUsd ?? outcome.calls.reduce((s, c) => s + (c.costUsd ?? 0), 0);
+    scan.pending = { ...(scan.pending ?? {}), [scan.next]: { calls: outcome.calls, notes: outcome.notes } };
+    scan.spentUsd = Math.round((scan.spentUsd + spentNow) * 1e6) / 1e6;
+    delete scan.lock;
+    await Promise.all([
+      kvPut(env, `scan:${id}`, scan, SCAN_TTL),
+      kvPut(env, dayKey, { scans: day.scans, usd: Math.round((day.usd + spentNow) * 1e6) / 1e6 }, 60 * 60 * 26),
+    ]);
+    return json(200, { scan: publicScan(scan) });
+  }
+  // A deferred routed call was counted on the request that made it.
+  const priorCost = (scan.pending?.[scan.next]?.calls ?? []).reduce((s, c) => s + (c.costUsd ?? 0), 0);
+  if (scan.pending) delete scan.pending[scan.next];
+  const spent = outcome.spentUsd ?? Math.max(0, outcome.calls.reduce((s, c) => s + (c.costUsd ?? 0), 0) - priorCost);
   delete outcome.spentUsd;
 
   scan.outcomes.push(outcome);

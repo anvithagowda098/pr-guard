@@ -20,6 +20,11 @@ const ANSWERS = {
   190048: captured("190048-npm-lodash-4.17.15-200-paid.json"),
 };
 
+const ROUTED = {
+  SECURITY_REVIEW_GENERAL: JSON.parse(readFileSync(new URL("./fixtures/miner-responses/ROUTED/security-review-lodash-77003-off-target.json", import.meta.url), "utf8")).body,
+  // A clean answer in CODE_REVIEW_GENERAL's published format (a real one is tested in normalize.test.js).
+  CODE_REVIEW_GENERAL: { miner_id: "302", miner_name: "ChainSight", result_shape: "intent", result: { verdict: "Approve", findings: [], summary: "Small, safe change." }, signal_hash: "0xsig302" },
+};
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64");
 const challenge = {
   x402Version: 2,
@@ -66,6 +71,12 @@ function fakeServer() {
       c.body = JSON.parse(body).body;
       return json(200, c);
     }
+    if (p === "/engine/v1/ask") {
+      if (!req.headers["payment-signature"]) return json(402, {}, { "PAYMENT-REQUIRED": b64(challenge) });
+      const routed = JSON.parse(body);
+      state.asks.push({ miner: `routed:${routed.intent}`, ...routed });
+      return json(200, ROUTED[routed.intent], { "X-TELEGRAPH-RECEIPT": b64({ receipt_hash: `0xrec-${routed.intent}` }), "PAYMENT-RESPONSE": b64({ success: true }) });
+    }
     const ask = p.match(/^\/engine\/v1\/ask\/(\d+)$/);
     if (ask && ANSWERS[ask[1]]) {
       if (!req.headers["payment-signature"]) return json(402, {}, { "PAYMENT-REQUIRED": b64(challenge) });
@@ -87,7 +98,7 @@ function runAction(env, cwd) {
   });
 }
 
-test("action: buys a dependency check, confirms it with a second miner, blocks, one comment across re-runs", async () => {
+test("action: routes each check through Telegraph, falls back when the routed answer is off-target, blocks, one comment across re-runs", async () => {
   const { server, state, base } = await fakeServer();
   const dir = await mkdtemp(join(tmpdir(), "pr-guard-"));
   try {
@@ -120,19 +131,18 @@ test("action: buys a dependency check, confirms it with a second miner, blocks, 
     assert.match(comment, /deps: lodash@4\.17\.15 — high/);
     assert.match(comment, /\[Prototype Pollution in lodash\]\(https:\/\/osv\.dev\/vulnerability\/GHSA-p6mc-m468-83gw\)/);
     assert.match(comment, /confirmed/);
-    assert.match(comment, /\/engine\/v1\/signal\/0x106d54f4/);
+    assert.match(comment, /\/engine\/v1\/signal\/0x6bada555/);
     const askedOf = (id) => state.asks.find((a) => a.miner === id);
+    assert.deepEqual(askedOf("routed:SECURITY_REVIEW_GENERAL"), { miner: "routed:SECURITY_REVIEW_GENERAL", intent: "SECURITY_REVIEW_GENERAL", params: { target: "npm package lodash version 4.17.15" } });
     assert.deepEqual(askedOf("77010"), { miner: "77010", method: "GET", endpoint: "/query", payload: { pkg: "lodash", ver: "4.17.15" } });
-    assert.deepEqual(askedOf("190048"), { miner: "190048", method: "GET", endpoint: "/query", payload: { system: "npm", pkg: "lodash", ver: "4.17.15" } });
-    assert.equal(askedOf("302"), undefined, "id 302 is no longer ChainSight and must not be called");
-    assert.equal(askedOf("5530").endpoint, "/v1/intent");
-    assert.equal(askedOf("5530").payload.intent, "SECURITY_REVIEW");
-    assert.match(askedOf("5530").payload.input.code, /^diff --git a\/package\.json/);
-    assert.equal(askedOf("731001"), undefined, "the confirming reviewer is only asked about high findings");
-    assert.match(comment, /\| diff \| package\.json, src\/app\.js \| ✅ none \|/);
+    assert.match(askedOf("routed:CODE_REVIEW_GENERAL").params.code, /^diff --git a\/package\.json/);
+    for (const id of ["190048", "5530", "731001", "302"]) assert.equal(askedOf(id), undefined, `no direct call to ${id}: no second opinions, and the routed code review was usable`);
+    assert.match(comment, /\| diff \| package\.json, src\/app\.js \| ✅ none \| #302 ChainSight \(routed\)/);
+    assert.match(comment, /#77003 GitHub Security Advisories \(routed, not used\), #77010 deps\.dev Package Review \(fallback\)/);
+    assert.match(comment, /Routing: Routed SECURITY_REVIEW_GENERAL answer not used: miner 77003/);
 
     const ledger = (await readFile(join(dir, "pr-guard-ledger.jsonl"), "utf8")).trim().split("\n").map(JSON.parse);
-    assert.equal(ledger.length, 6, "three paid calls per run: deps, its confirmation, the diff review");
+    assert.equal(ledger.length, 6, "three paid calls per run: routed deps (off-target), its fallback, the routed code review");
     assert.ok(ledger.every((e) => e.cost_usd === 0.01 && e.receipt.receipt_hash.startsWith("0xrec")));
     assert.match(await readFile(join(dir, "out"), "utf8"), /cost_usd[\s\S]*0\.030000/);
   } finally {

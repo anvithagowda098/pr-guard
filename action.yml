@@ -22,6 +22,9 @@ inputs:
   checks:
     description: Comma-separated paid checks to run. `deps` and `diff` have vetted miners on Telegraph's current network; `patch` and `urls` are skipped until theirs are. Secret and install-script checks always run locally.
     default: deps,diff
+  routing:
+    description: "`auto` (default) buys each check through Telegraph's routing first and falls back to a vetted miner when the routed answer is unusable. `off` asks the vetted miners directly."
+    default: auto
   node-url:
     description: Telegraph node URL.
     default: https://devnode.telegraphprotocol.com

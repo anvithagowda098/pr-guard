@@ -16,6 +16,13 @@ const ANSWERS = {
   190048: captured("190048-npm-lodash-4.17.15-200-paid.json"),
   5530: captured("5530-review-clean-diff-200-paid.json"),
 };
+const routedCapture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/ROUTED/${name}`, import.meta.url), "utf8")).body;
+// Routed answers: SECURITY_REVIEW_GENERAL as captured on Nov 13 (miner 77003, off-target);
+// CODE_REVIEW_GENERAL as a clean answer in that intent's published format.
+const ROUTED = {
+  SECURITY_REVIEW_GENERAL: routedCapture("security-review-lodash-77003-off-target.json"),
+  CODE_REVIEW_GENERAL: { miner_id: "302", miner_name: "ChainSight", result_shape: "intent", intent: "CODE_REVIEW_GENERAL", result: { verdict: "Approve", findings: [], summary: "Small, safe change." }, signal_hash: "0xsig302" },
+};
 const challenge = {
   x402Version: 2,
   resource: { url: "https://node.test/engine/v1/ask", description: "t", mimeType: "application/json" },
@@ -57,6 +64,12 @@ function world() {
       const key = u.pathname.replace(/^\/o\/r\//, "");
       return raw[key] ? ok(raw[key]) : new Response("", { status: 404 });
     }
+    if (u.host === "node.test" && u.pathname === "/engine/v1/ask") {
+      if (!req.headers.get("payment-signature")) return new Response("{}", { status: 402, headers: { "PAYMENT-REQUIRED": b64(challenge) } });
+      const body = await req.json();
+      asks.push({ miner: `routed:${body.intent}`, ...body });
+      return ok(ROUTED[body.intent], { "PAYMENT-RESPONSE": b64({ success: true }), "X-TELEGRAPH-RECEIPT": b64({ receipt_hash: `0xrec-${body.intent}` }) });
+    }
     const ask = u.pathname.match(/^\/engine\/v1\/ask\/(\d+)$/);
     if (u.host === "node.test" && ask) {
       if (!req.headers.get("payment-signature")) return new Response("{}", { status: 402, headers: { "PAYMENT-REQUIRED": b64(challenge) } });
@@ -95,13 +108,19 @@ test("a full scan from the page: plan, one paid check per step, verdict, permali
     s = (await r.json()).scan;
     steps++;
   }
-  assert.equal(steps, 2, "one request per paid job");
+  assert.equal(steps, 3, "one paid call per request: routed deps (unusable), its fallback, routed diff");
   assert.equal(s.verdict, "BLOCK");
   assert.equal(s.spentUsd, 0.03);
-  assert.deepEqual(asks.map((a) => a.miner), ["77010", "190048", "5530"]);
+  assert.deepEqual(asks.map((a) => a.miner), ["routed:SECURITY_REVIEW_GENERAL", "77010", "routed:CODE_REVIEW_GENERAL"]);
+  assert.deepEqual(asks[0].params, { target: "npm package lodash version 4.17.15" });
   const deps = s.outcomes.find((o) => o.check === "deps");
-  assert.equal(deps.confirmed, true);
+  assert.equal(deps.confirmed, true, "registry data about the exact version");
+  assert.deepEqual(deps.calls.map((c) => `${c.minerId}:${c.via}`), ["77003:routed", "77010:direct"]);
+  assert.match(deps.notes[0], /answer not used: miner 77003/);
   assert.ok(deps.calls.every((c) => c.signalHash && c.receiptHash));
+  const diff = s.outcomes.find((o) => o.check === "diff");
+  assert.deepEqual([diff.severity, diff.calls[0].via, diff.calls[0].minerId], ["none", "routed", "302"]);
+  assert.equal(env.SCANS.m.get("route:SECURITY_REVIEW_GENERAL"), "unusable", "later scans skip unusable routing for a while");
 
   const again = await call(app, env, "GET", `/api/scan/${id}`);
   assert.equal((await again.json()).scan.verdict, "BLOCK");
@@ -112,6 +131,16 @@ test("a full scan from the page: plan, one paid check per step, verdict, permali
   const cached = await (await call(app, env, "POST", "/api/scan", { url: "https://github.com/o/r/pull/7" })).json();
   assert.deepEqual([cached.id, cached.cached], [id, true]);
   assert.equal(asks.length, 3);
+});
+
+test("while routing for an intent is marked unusable, its checks go straight to the fallback", async () => {
+  const { app, env, asks } = world();
+  env.SCANS.m.set("route:SECURITY_REVIEW_GENERAL", "unusable");
+  const { id } = await (await call(app, env, "POST", "/api/scan", { url: "https://github.com/o/r/pull/7" })).json();
+  let s;
+  do s = (await (await call(app, env, "POST", `/api/scan/${id}/step`)).json()).scan; while (s.status !== "done");
+  assert.deepEqual(asks.map((a) => a.miner), ["77010", "routed:CODE_REVIEW_GENERAL"]);
+  assert.equal(s.spentUsd, 0.02);
 });
 
 test("a PR with nothing to buy finishes at once, for free", async () => {
@@ -163,7 +192,7 @@ test("hosted mode: the Action's client runs a whole scan through the service", a
   assert.equal(scan.verdict, "BLOCK");
   assert.equal(scan.spentUsd, 0.03);
   assert.match(scan.reportUrl, /^https:\/\/web\.test\/r\/[a-z0-9]+$/);
-  assert.deepEqual(asks.map((a) => a.miner), ["77010", "190048", "5530"]);
+  assert.deepEqual(asks.map((a) => a.miner), ["routed:SECURITY_REVIEW_GENERAL", "77010", "routed:CODE_REVIEW_GENERAL"]);
   assert.equal(JSON.parse(env.SCANS.m.get(`scan:${scan.id}`)).source, "action");
 });
 
@@ -196,5 +225,5 @@ test("hosted mode: a dropped connection mid-check is retried without paying twic
   };
   const scan = await scanHosted({ serviceUrl: "https://web.test", prUrl: "https://github.com/o/r/pull/7", deadline: Date.now() + 60_000, fetch: flaky, sleep: async () => {} });
   assert.equal(scan.verdict, "BLOCK");
-  assert.deepEqual(asks.map((a) => a.miner), ["77010", "190048", "5530"], "each miner paid once");
+  assert.deepEqual(asks.map((a) => a.miner), ["routed:SECURITY_REVIEW_GENERAL", "77010", "routed:CODE_REVIEW_GENERAL"], "each call paid once");
 });

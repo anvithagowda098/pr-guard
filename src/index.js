@@ -26,6 +26,7 @@ function inputs() {
   };
   const failOn = core.getInput("fail-on") || "block";
   if (!["block", "caution", "never"].includes(failOn)) throw new Error("input fail-on must be block, caution or never");
+  if (!["auto", "off"].includes(core.getInput("routing") || "auto")) throw new Error("input routing must be auto or off");
   return {
     privateKey: core.getInput("telegraph-private-key"),
     maxUsdPerPr: num("max-usd-per-pr", 0.1),
@@ -36,6 +37,7 @@ function inputs() {
     minersConfig: core.getInput("miners-config"),
     token: core.getInput("github-token"),
     serviceUrl: core.getInput("service-url") || DEFAULT_SERVICE_URL,
+    routing: core.getInput("routing") || "auto",
   };
 }
 
@@ -114,7 +116,10 @@ async function run() {
   const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 45_000 });
   const onCall = (entry) => appendLedger(LEDGER_PATH, { pr: pr.number, ...entry });
 
-  const paid = await runAll(jobs, (job) => runCheck({ tg, miners, job, deadline, onCall }));
+  // One routing record for the run: once a routed answer for an intent is
+  // unusable, the remaining checks for that intent go straight to the fallback.
+  const routing = { mode: cfg.routing, health: {} };
+  const paid = await runAll(jobs, (job) => runCheck({ tg, miners, job, deadline, onCall, routing }));
   const outcomes = [...local, ...paid];
   const { verdict, reasons } = decide(outcomes);
   const spentUsd = Number(budget.spent) / 1e6;

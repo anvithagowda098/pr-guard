@@ -9,6 +9,9 @@ export const ALL_CHECKS = ["deps", "diff", "patch", "urls"];
 // Paid checks with vetted, routable miners today; the others stay opt-in.
 export const DEFAULT_CHECKS = ["deps", "diff"];
 
+// Canonical params are at most 2,000 characters a string (refused above that).
+export const ROUTE_MAX_CHARS = 2000;
+
 // deps.dev's names for our ecosystems.
 const DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
 
@@ -39,23 +42,31 @@ export function rankDeps(deps, title = "") {
 export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12_000, maxChunks = Infinity } = {}) {
   // Package-version vulnerability lookups live under SECURITY_REVIEW_GENERAL on
   // Telegraph; CVE_LOOKUP_CVSS miners only take a CVE id (see data/miners-summary.json).
+  // Each job carries the canonical ask Telegraph routes by ranking (`route`);
+  // the vetted miners in config/miners.json are the fallback.
   const depJob = (d) => ({
     check: "deps",
     intent: "SECURITY_REVIEW_GENERAL",
     target: d.to ? `${d.name}@${d.to}` : `${d.name} (${d.spec})`,
     vars: { ecosystem: d.ecosystem, name: d.name, version: d.to, from: d.from, spec: d.spec, depsdev_system: DEPSDEV_SYSTEM[d.ecosystem] },
+    route: { intent: "SECURITY_REVIEW_GENERAL", params: { target: `${d.ecosystem} package ${d.name} version ${d.to}` }, normalizer: "security-review-format" },
   });
   const resolvable = rankDeps(deps.filter((d) => d.to), title).slice(0, maxDeps);
   const direct = resolvable.filter((d) => d.direct).map(depJob);
   const transitive = resolvable.filter((d) => !d.direct).map(depJob);
 
   const chunks = chunkDiff(files, { maxChars }).slice(0, maxChunks);
-  const diff = chunks.map((c, i) => ({
-    check: "diff",
-    intent: "SECURITY_REVIEW_GENERAL",
-    target: chunks.length > 1 ? `chunk ${i + 1}/${chunks.length}: ${c.files.join(", ")}` : c.files.join(", "),
-    vars: { diff: c.text, files: c.files, chunk_index: i + 1, chunk_count: chunks.length },
-  }));
+  const diff = chunks.map((c, i) => {
+    const routable = c.text.length <= ROUTE_MAX_CHARS;
+    return {
+      check: "diff",
+      intent: routable ? "CODE_REVIEW_GENERAL" : "SECURITY_REVIEW_GENERAL",
+      target: chunks.length > 1 ? `chunk ${i + 1}/${chunks.length}: ${c.files.join(", ")}` : c.files.join(", "),
+      vars: { diff: c.text, files: c.files, chunk_index: i + 1, chunk_count: chunks.length },
+      route: routable ? { intent: "CODE_REVIEW_GENERAL", params: { code: c.text }, normalizer: "code-review-format" } : null,
+      ...(!routable && { routeSkipped: `over the ${ROUTE_MAX_CHARS.toLocaleString("en-US")}-character limit for canonical asks` }),
+    };
+  });
 
   const patch = chunks.length
     ? [{
@@ -103,7 +114,7 @@ const local = (check, target, findings) => ({
   status: "ok",
   severity: maxSeverity(findings),
   findings,
-  // Deterministic and run on the raw diff, so a hit doesn't need a second opinion.
+  // Deterministic and run on the raw diff, so a hit is confirmed on its own.
   confirmed: true,
   disagreement: false,
   calls: [],

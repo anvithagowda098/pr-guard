@@ -1,0 +1,144 @@
+{
+  "captured_at": "2026-11-13T06:08:17.795Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask",
+  "request": {
+    "intent": "CODE_REVIEW_GENERAL",
+    "params": {
+      "code": "diff --git a/contracts/Vault.sol b/contracts/Vault.sol\n@@ -1,4 +1,14 @@\n pragma solidity ^0.8.20;\n contract Vault {\n     mapping(address => uint256) public balances;\n+    function deposit() external payable { balances[msg.sender] += msg.value; }\n+    function withdraw() external {\n+        uint256 amount = balances[msg.sender];\n+        (bool ok, ) = msg.sender.call{value: amount}(\"\");\n+        require(ok);\n+        balances[msg.sender] = 0;\n+    }\n+    function setOwner(address o) external { owner = o; }\n+    address public owner;\n }"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for LLM-routed inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 26632,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a59b99453bbb2978-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Fri, 13 Nov 2026 06:08:16 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHhjOTIxM2VjYzliNWFhYjM4NTk3ZjRhZTk4ZTY5NDRjMWY4MTQwZThiYWM5ZTg1MDFhNzAyNDliNzlkZWJmNDk2IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=N5DWTaHm1FG%2BWqJz9GVkWSm8%2BdkHnStuSpO1StSGJjgla6y9nQHAyarr0H572Uf3rJEn5xdw4PQ0osgEUefuH7iz2dCAUxLRwBVmmPQNEhweS2dj%2FH2xgfg%2FuO3HS1WaDMFCzr%2Fmgw3lVwAYt%2BzwMQ%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDY2ZjU2MzAzZDQyMmQ4NmU2YmRlZGU3YzQ3NTcwMjJlNjM1ZGQ1ZmFjMzk2YTdiZmM3MGMyZWM0NGQ4ZjVkM2EiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI0ODkzIiwiaW50ZW50IjoiQ09ERV9SRVZJRVdfR0VORVJBTCIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjIwNzksInNldHRsZW1lbnQiOiJvbmNoYWluIiwiY2hhaW4iOiJlaXAxNTU6MTExNTUxMTEiLCJ0eF9oYXNoIjoiMHhjOTIxM2VjYzliNWFhYjM4NTk3ZjRhZTk4ZTY5NDRjMWY4MTQwZThiYWM5ZTg1MDFhNzAyNDliNzlkZWJmNDk2IiwidGltZXN0YW1wIjoxNzk0NTUwMDk2fQ=="
+  },
+  "bodyText": "{\"miner_id\":\"302\",\"miner_name\":\"ChainSight — Universal Intelligence \\u0026 Data Oracle\",\"endpoint\":\"/codereview\",\"result\":{\"verdict\":\"Request changes\",\"findings\":[\"withdraw updates balances[msg.sender] after the external call → re‑entrancy vulnerability.\",\"No check that msg.sender actually has a non‑zero balance; calling withdraw with zero balance still performs a call.\",\"setOwner is unrestricted; anyone can change the contract owner, breaking access control.\",\"owner is declared after setOwner; while Solidity allows it, it's clearer to declare state variables before functions.\",\"No receive/fallback function; direct ether transfers to the contract will be rejected\"],\"summary\":null},\"result_shape\":\"intent\",\"format_version\":3,\"field_status\":{\"verdict\":\"ok\",\"findings\":\"ok\",\"summary\":\"rejected\"},\"input\":{\"code\":\"diff --git a/contracts/Vault.sol b/contracts/Vault.sol\\n@@ -1,4 +1,14 @@\\n pragma solidity ^0.8.20;\\n contract Vault {\\n     mapping(address =\\u003e uint256) public balances;\\n+    function deposit() external payable { balances[msg.sender] += msg.value; }\\n+    function withdraw() external {\\n+        uint256 amount = balances[msg.sender];\\n+        (bool ok, ) = msg.sender.call{value: amount}(\\\"\\\");\\n+        require(ok);\\n+        balances[msg.sender] = 0;\\n+    }\\n+    function setOwner(address o) external { owner = o; }\\n+    address public owner;\\n }\"},\"input_schema_version\":3,\"cost_usd\":0.01,\"duration_ms\":1807,\"timestamp\":\"2026-11-13T06:08:06.894146885Z\",\"reasoning\":\"Intent: intent given by the caller\\nMiner: The user wants a code review, and the \\\"/codereview\\\" endpoint is explicitly designed for the CODE_REVIEW_GENERAL intent. The \\\"query\\\" parameter is used to pass the code diff for review.\",\"intent\":\"CODE_REVIEW_GENERAL\",\"signal_hash\":\"0xe3347e0e2b4822bc11c8eb52705936f3b17e03ebe4abd1df2c62c714fe558e3d\"}",
+  "body": {
+    "miner_id": "302",
+    "miner_name": "ChainSight — Universal Intelligence & Data Oracle",
+    "endpoint": "/codereview",
+    "result": {
+      "verdict": "Request changes",
+      "findings": [
+        "withdraw updates balances[msg.sender] after the external call → re‑entrancy vulnerability.",
+        "No check that msg.sender actually has a non‑zero balance; calling withdraw with zero balance still performs a call.",
+        "setOwner is unrestricted; anyone can change the contract owner, breaking access control.",
+        "owner is declared after setOwner; while Solidity allows it, it's clearer to declare state variables before functions.",
+        "No receive/fallback function; direct ether transfers to the contract will be rejected"
+      ],
+      "summary": null
+    },
+    "result_shape": "intent",
+    "format_version": 3,
+    "field_status": {
+      "verdict": "ok",
+      "findings": "ok",
+      "summary": "rejected"
+    },
+    "input": {
+      "code": "diff --git a/contracts/Vault.sol b/contracts/Vault.sol\n@@ -1,4 +1,14 @@\n pragma solidity ^0.8.20;\n contract Vault {\n     mapping(address => uint256) public balances;\n+    function deposit() external payable { balances[msg.sender] += msg.value; }\n+    function withdraw() external {\n+        uint256 amount = balances[msg.sender];\n+        (bool ok, ) = msg.sender.call{value: amount}(\"\");\n+        require(ok);\n+        balances[msg.sender] = 0;\n+    }\n+    function setOwner(address o) external { owner = o; }\n+    address public owner;\n }"
+    },
+    "input_schema_version": 3,
+    "cost_usd": 0.01,
+    "duration_ms": 1807,
+    "timestamp": "2026-11-13T06:08:06.894146885Z",
+    "reasoning": "Intent: intent given by the caller\nMiner: The user wants a code review, and the \"/codereview\" endpoint is explicitly designed for the CODE_REVIEW_GENERAL intent. The \"query\" parameter is used to pass the code diff for review.",
+    "intent": "CODE_REVIEW_GENERAL",
+    "signal_hash": "0xe3347e0e2b4822bc11c8eb52705936f3b17e03ebe4abd1df2c62c714fe558e3d"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0xc9213ecc9b5aab38597f4ae98e6944c1f8140e8bac9e8501a70249b79debf496",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x66f56303d422d86e6bdede7c4757022e635dd5fac396a7bfc70c2ec44d8f5d3a",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "4893",
+    "intent": "CODE_REVIEW_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2079,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0xc9213ecc9b5aab38597f4ae98e6944c1f8140e8bac9e8501a70249b79debf496",
+    "timestamp": 1794550096
+  },
+  "charged": true
+}

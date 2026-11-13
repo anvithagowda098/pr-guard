@@ -1,0 +1,130 @@
+{
+  "captured_at": "2026-11-13T06:07:39.581Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask",
+  "request": {
+    "query": "Smart contract audit: check this Solidity change for reentrancy, access control and integer overflow issues, with severities.\ndiff --git a/contracts/Vault.sol b/contracts/Vault.sol\n@@ -1,4 +1,14 @@\n pragma solidity ^0.8.20;\n contract Vault {\n     mapping(address => uint256) public balances;\n+    function deposit() external payable { balances[msg.sender] += msg.value; }\n+    function withdraw() external {\n+        uint256 amount = balances[msg.sender];\n+        (bool ok, ) = msg.sender.call{value: amount}(\"\");\n+        require(ok);\n+        balances[msg.sender] = 0;\n+    }\n+    function setOwner(address o) external { owner = o; }\n+    address public owner;\n }"
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for LLM-routed inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 41916,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a59b98013c8e1d73-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Fri, 13 Nov 2026 06:07:38 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHhiNjU2ZjVhMzlkNGY1YjBiNmZhNWM2OWI3NmU0ZmRlOWZkNTczZTNiNzhjNzE2ZWVlYjdjZjA0NGM4YWJjYzA3IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=qZ0qg%2F1WvxQoRE8a4MEkoFka8Ijw1fdX29bVl7BcRcuX0XzqZGI3X9KJFhvVHZ%2B2NLszAnGe8vVxuZIVzzTyuSdvDg5Xc%2F23CbQB0Gy1qklj0vpo8GQ0%2Bst5emY7hHIZaIog5bljPnXMRtyX1JH4Tw%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDU3ZTFkOGY4MjJjNTk0ZDU4OGM4OTU2YzU0MWNlMDg3OWZiMmVmNzg0OGJkZDkyNTBkMmYyZjc3ODA1NmYzMjciLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI1MTc2IiwiaW50ZW50IjoiU01BUlRfQ09OVFJBQ1RfQVVESVRfR0VORVJBTCIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjIwNzksInNldHRsZW1lbnQiOiJvbmNoYWluIiwiY2hhaW4iOiJlaXAxNTU6MTExNTUxMTEiLCJ0eF9oYXNoIjoiMHhiNjU2ZjVhMzlkNGY1YjBiNmZhNWM2OWI3NmU0ZmRlOWZkNTczZTNiNzhjNzE2ZWVlYjdjZjA0NGM4YWJjYzA3IiwidGltZXN0YW1wIjoxNzk0NTUwMDU4fQ=="
+  },
+  "bodyText": "{\"miner_id\":\"20260828\",\"miner_name\":\"PREFLIGHT Infrastructure Signals\",\"endpoint\":\"/smart-contract-audit\",\"result\":{\"checked_at\":\"2026-11-13T06:07:14.233Z\",\"confidence\":0.4,\"found\":false,\"method\":\"language model\",\"model\":null,\"reason\":\"The language model did not return a usable answer in time, so the smart contract audit is not reported; nothing is guessed in its place.\",\"verdict\":\"unavailable\"},\"result_shape\":\"raw\",\"shape_error\":\"no_format\",\"cost_usd\":0.01,\"duration_ms\":24389,\"timestamp\":\"2026-11-13T06:07:38.352851034Z\",\"reasoning\":\"Intent: The user is asking for an audit of a Solidity smart contract, specifically requesting checks for reentrancy, access control, and integer overflow issues, along with their severities. This directly maps to the SMART_CONTRACT_AUDIT_GENERAL intent. As a secondary, CODE_REVIEW_GENERAL is appropriate because the query involves reviewing code for potential issues, even though it's focused on security aspects.\\nMiner: The user is asking for a smart contract audit, specifically checking for reentrancy, access control, and integer overflow issues. The PREFLIGHT Infrastructure Signals miner has an endpoint `/smart-contract-audit` which is described as a 'Smart contract security review' and explicitly lists `SMART_CONTRACT_AUDIT_GENERAL` as one of its intents. The question text is directly used as the `query` parameter for this endpoint.\",\"intent\":\"SMART_CONTRACT_AUDIT_GENERAL\",\"signal_hash\":\"0x0496a5bf03cf05478ec26329980979816dbf83cf165c0c3d38410c555ae3863c\"}",
+  "body": {
+    "miner_id": "20260828",
+    "miner_name": "PREFLIGHT Infrastructure Signals",
+    "endpoint": "/smart-contract-audit",
+    "result": {
+      "checked_at": "2026-11-13T06:07:14.233Z",
+      "confidence": 0.4,
+      "found": false,
+      "method": "language model",
+      "model": null,
+      "reason": "The language model did not return a usable answer in time, so the smart contract audit is not reported; nothing is guessed in its place.",
+      "verdict": "unavailable"
+    },
+    "result_shape": "raw",
+    "shape_error": "no_format",
+    "cost_usd": 0.01,
+    "duration_ms": 24389,
+    "timestamp": "2026-11-13T06:07:38.352851034Z",
+    "reasoning": "Intent: The user is asking for an audit of a Solidity smart contract, specifically requesting checks for reentrancy, access control, and integer overflow issues, along with their severities. This directly maps to the SMART_CONTRACT_AUDIT_GENERAL intent. As a secondary, CODE_REVIEW_GENERAL is appropriate because the query involves reviewing code for potential issues, even though it's focused on security aspects.\nMiner: The user is asking for a smart contract audit, specifically checking for reentrancy, access control, and integer overflow issues. The PREFLIGHT Infrastructure Signals miner has an endpoint `/smart-contract-audit` which is described as a 'Smart contract security review' and explicitly lists `SMART_CONTRACT_AUDIT_GENERAL` as one of its intents. The question text is directly used as the `query` parameter for this endpoint.",
+    "intent": "SMART_CONTRACT_AUDIT_GENERAL",
+    "signal_hash": "0x0496a5bf03cf05478ec26329980979816dbf83cf165c0c3d38410c555ae3863c"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0xb656f5a39d4f5b0b6fa5c69b76e4fde9fd573e3b78c716eeeb7cf044c8abcc07",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x57e1d8f822c594d588c8956c541ce0879fb2ef7848bdd9250d2f2f778056f327",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "5176",
+    "intent": "SMART_CONTRACT_AUDIT_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2079,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0xb656f5a39d4f5b0b6fa5c69b76e4fde9fd573e3b78c716eeeb7cf044c8abcc07",
+    "timestamp": 1794550058
+  },
+  "charged": true
+}

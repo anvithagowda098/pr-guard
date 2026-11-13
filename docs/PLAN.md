@@ -84,6 +84,9 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
 | Nov 2 | Hosted page, first live paid scan: expressjs/express#6100 → 🟢 SAFE, Verity #5530, $0.01 | signal `0x765e1625…` (our own test, not adoption) |
 
 | Nov 13, 05:21–05:26 | Routing tests (burner `0xd0Cd…cfB44`): canonical SECURITY_REVIEW_GENERAL ×2 → miner 77003, off-target; CODE_REVIEW_GENERAL → miner 302, usable; direct Verity #5530 → both bugs | signals `0x87fa3b8d…`, `0x9207fce2…`, `0xb0d09814…` (tx `0x44bcae92…51da`, block 12123863); fixtures in `test/fixtures/miner-responses/ROUTED/` |
+| Nov 13 | Update 1 posted on X (intro thread) | https://x.com/gowda_anvi/status/2121162244851736805 |
+| Nov 13 | Routing gap reported to Telegraph (SECURITY_REVIEW_GENERAL → miner 77003 ignores the target) | https://github.com/telegraphprotocol/bounties/issues/187 |
+| Nov 13 | Live demo scans on the public page: #1 SAFE, #2 BLOCK, #3 BLOCK, #4 CAUTION (address swap), #5 BLOCK (reentrant vault); routed CODE_REVIEW purchase tx `0xa631c7a9…3d02` (block 12124165) | report links in `demo/README.md` (our own tests, not adoption) |
 
 - The demo PRs are paid by the bot wallet `0x83b5…abcc`, whose key is in the repo secret `TELEGRAPH_PRIVATE_KEY`. They stay open as fixtures.
 - The first runs failed safely, with nothing spent: MetaMask exports keys without the 0x prefix. Fixed in `ff78842`.

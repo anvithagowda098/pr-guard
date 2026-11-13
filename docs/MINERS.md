@@ -4,21 +4,32 @@ Which Telegraph miners PR Guard buys from, how they were chosen, and how to vet 
 
 ## In use
 
-| Check | Miner | Operator | Role |
+Every check is first bought through Telegraph's routing: a canonical ask by intent (`CODE_REVIEW_GENERAL` for code, `SECURITY_REVIEW_GENERAL` for packages), and the network picks the miner. The miners below are the vetted fallbacks. One of them is called directly only when the routed answer is unusable, and the next only if that call fails.
+
+| Check | Fallback miner | Operator | Role |
 |---|---|---|---|
 | deps | #77010 deps.dev Package Review | independent | npm packages: advisories with GitHub's severity and CVSS |
 | deps | #731001 PR Guard Sentinel | **this project** | PyPI, Go and crates.io packages: OSV advisories with CVSS |
-| deps | #190048 Secrev Depsdev | independent | second opinion for every ecosystem: confirms by matching advisory ids |
-| diff | #5530 Telegraph Verity | independent | first code review of each redacted diff chunk |
-| diff | #731001 PR Guard Sentinel | **this project** | rule-based second review, asked only to confirm a high or critical finding |
+| deps | #190048 Secrev Depsdev | independent | any ecosystem, advisory ids only: unrated, so it can only give CAUTION |
+| diff | #5530 Telegraph Verity | independent | code, when the routed review is unusable or a part of the diff is over 2,000 characters |
+| diff | #731001 PR Guard Sentinel | **this project** | code, only if Verity fails |
 
-The list lives in `config/miners.json`, keyed by check, best first. One miner alone can never block a pull request: a BLOCK needs two miners to agree, or a deterministic local check.
+The list lives in `config/miners.json`, keyed by check, best first. No miner is asked to second-guess another. A BLOCK needs deterministic evidence: registry data about the exact package and version, PR Guard's local rules (the same rule set as Sentinel, run inside PR Guard for free) finding the same issue in the diff, or a local check such as a committed key.
 
 PR Guard Sentinel is our own miner (`miner/`). Its use is disclosed wherever it appears, and the case for it rests on independent tests, not on PR Guard's own purchases.
 
 ## Vetting history
 
 Every miner was tested with paid calls before it was added. The raw answers are kept as test fixtures in `test/fixtures/miner-responses/`, and every normalizer is tested against them. Newest first.
+
+### Nov 13, 2026: routing first
+
+Telegraph's team advised apps to buy through routing rather than calling several miners to cross-check each other. Canonical asks, paid, on Ethereum Sepolia:
+
+- **`CODE_REVIEW_GENERAL` with a 6-line diff** (SQL string concatenation, `eval` on input): routed to miner 302 (ChainSight), returned in the intent's format, and found both bugs. Fixture: `ROUTED/code-review-sqli-eval-diff-302-intent.json`.
+- **`SECURITY_REVIEW_GENERAL`**, once with `npm package lodash version 4.17.15` and once with the same diff: both routed to miner 77003 (GitHub Security Advisories). It returned the 100 newest advisories, none about the target, in its raw format. The intent has 32 miners and no evaluator, so there is no ranking to route by. Fixtures: `ROUTED/security-review-*-77003-off-target.json`. Reported to Telegraph.
+- **Canonical params:** each string is limited to 2,000 characters (refused with `invalid_params` above that, before payment). Routing sometimes answers 503 "could not route this question now".
+- **Direct ask to Verity (#5530)** with the same diff: both bugs at the right lines. Fixture: `SECURITY_REVIEW_GENERAL/5530-review-sqli-eval-diff-200-paid.json`.
 
 ### Nov 2, 2026: new code reviewers
 

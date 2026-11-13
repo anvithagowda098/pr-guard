@@ -12,8 +12,8 @@ PR Guard reads a pull request and buys independent security checks from miners o
 
 | Check | How | Cost |
 |---|---|---|
-| **New or upgraded dependencies** (npm, PyPI, Go, Cargo) | A miner looks up each package version for known vulnerabilities. A second miner confirms any high or critical result. | $0.01 per package, plus $0.01 to confirm |
-| **Code changes** | A miner reviews the redacted diff for vulnerabilities such as injection and `eval` on input. A second reviewer confirms any high or critical finding. | $0.01 per chunk of up to 12,000 characters |
+| **New or upgraded dependencies** (npm, PyPI, Go, Cargo) | Each package version is checked for known vulnerabilities through Telegraph (`SECURITY_REVIEW_GENERAL`). | $0.01 per package |
+| **Code changes** | The redacted diff is reviewed through Telegraph (`CODE_REVIEW_GENERAL`) for injection, `eval` on input and similar bugs. PR Guard's own rules check the same diff. | $0.01 per part of the diff |
 | **Committed secrets and keys** | Local scan of added lines | free |
 | **New install scripts** (`preinstall`, `install`, `postinstall`, `prepare` in `package.json`) | Local check | free |
 
@@ -75,6 +75,7 @@ The key stays in GitHub's secret store. The Action uses it only to sign each pay
 | `max-usd-per-call` | `0.05` | Quotes above this are refused before anything is signed (own wallet). |
 | `checks` | `deps,diff` | Paid checks to run (own wallet). The local checks always run. |
 | `service-url` | the hosted service | Used when no key is set. |
+| `routing` | `auto` | `auto` buys through Telegraph's routing first; `off` asks the vetted miners directly. |
 | `node-url` | `https://devnode.telegraphprotocol.com` | Telegraph node. |
 | `miners-config` | bundled | Path to a miners allowlist overriding [`config/miners.json`](config/miners.json). |
 
@@ -86,23 +87,39 @@ The key stays in GitHub's secret store. The Action uses it only to sign each pay
 
 ## How the verdict is decided
 
-- **BLOCK:** a confirmed high or critical finding. Confirmed means two miners agree, or a deterministic local check found it, such as a committed key. **One miner on its own can never block a pull request.**
+- **BLOCK:** a confirmed high or critical finding. **A miner's opinion on its own can never block a pull request.** Confirmed means deterministic evidence backs it:
+  - **Dependencies:** registry data (GitHub's advisories through deps.dev, or OSV) about this exact package and version.
+  - **Code:** PR Guard's own rules find the same issue in the same diff.
+  - **Local checks:** for example, a committed key.
 - **CAUTION:** any of the following:
   - a medium finding;
   - an unconfirmed high finding;
-  - miners that disagree;
+  - an issue PR Guard's rules found that the reviewer didn't;
   - a check that failed, or an answer that couldn't be read;
   - a dependency or diff check skipped because the budget or the time ran out.
 - **SAFE:** none of the above.
 
-## Miners
+## How checks are bought
 
-| Miner | Operator | Used for |
+PR Guard asks Telegraph for each check by intent and lets the network choose the miner. It doesn't hard-code a provider.
+
+1. **Routed first.** Each check is a canonical ask: `{"intent": "CODE_REVIEW_GENERAL", "params": {"code": …}}` for each part of the diff, and `{"intent": "SECURITY_REVIEW_GENERAL", "params": {"target": "npm package lodash version 4.17.15"}}` for each package. Telegraph routes it to a miner, and returns the answer in the intent's standard format.
+2. **Checked before it's trusted.** PR Guard uses a routed answer only if it's in the intent's format, or comes from a vetted miner and is about the exact package asked.
+3. **One vetted fallback.** If the routed answer can't be used, PR Guard asks one vetted miner directly and says why in the report. It then skips routing for that intent for the rest of the run; the hosted service skips it for 6 hours. No miner is ever asked just to second-guess another.
+
+Each row of the PR comment shows which miner answered, and whether Telegraph routed it or it was a fallback.
+
+**What routing does today (Nov 13, 2026):**
+- **Code reviews** route well. Miner 302 answered in the standard format and found both planted bugs.
+- **Package lookups** route to miner 77003. It ignores the request and returns the 100 newest advisories, so PR Guard falls back. The intent has no evaluator yet, so there's no ranking to route by. This is reported to Telegraph with receipts.
+- **Size limit:** canonical asks take at most 2,000 characters, so a larger part of a diff goes to the vetted reviewer directly.
+
+| Vetted fallback | Operator | Used for |
 |---|---|---|
 | #77010 deps.dev Package Review | independent | npm packages, with severity and CVSS |
-| #190048 Secrev Depsdev | independent | second opinion on advisories, every ecosystem |
-| #5530 Telegraph Verity | independent | code review of each diff chunk |
-| #731001 PR Guard Sentinel | **this project** (disclosed) | PyPI, Go and crates.io packages; confirms code findings |
+| #731001 PR Guard Sentinel | **this project** (disclosed) | PyPI, Go and crates.io packages |
+| #190048 Secrev Depsdev | independent | any ecosystem, advisory ids only (never blocks) |
+| #5530 Telegraph Verity | independent | code, when the routed review is unusable or the diff part is too big |
 
 Every miner was tested with paid calls before it was added, and its raw answers are kept as test fixtures. [docs/MINERS.md](docs/MINERS.md) covers how each one was chosen and how to vet and add another. PR Guard Sentinel is a rule-based miner with no AI model and no API key; its code is in [`miner/`](miner/).
 
@@ -110,7 +127,7 @@ Every miner was tested with paid calls before it was added, and its raw answers 
 
 - **Spending:**
   - **Before a call:** each price quote is checked against the per-call cap and reserved against the run's budget before it's signed. Calls running in parallel therefore can't overspend together.
-  - **After a call:** any call that returns a settled payment counts as spent.
+  - **After a call:** any call that returns a settled payment counts as spent, including a routed answer that couldn't be used. That costs at most $0.01 per intent per run, since routing is then skipped for that intent.
   - **When the budget runs out:** the lowest-value checks are skipped first, so the verdict says CAUTION rather than SAFE.
 - **Privacy:**
   - **What miners see:** diffs are redacted before they go to a miner. Cloud keys, tokens, private keys, URL passwords and labelled credentials are removed.
@@ -123,7 +140,7 @@ You need Node 20 or later.
 
 ```sh
 npm ci
-npm test             # 109 tests, all offline
+npm test             # 120 tests, all offline
 npm run build        # bundles dist/index.js; commit it, the Action runs from it
 npm run deploy:web   # the hosted page and API (Cloudflare Workers)
 npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)
@@ -162,6 +179,7 @@ You can try it on your own repository, report a wrong verdict, or add a miner. [
 
 - **Testnet only:** Telegraph's mainnet isn't live yet.
 - **Patch verification and URL safety are off:** no miner on Telegraph does them reliably yet (see [docs/MINERS.md](docs/MINERS.md)).
+- **Routing isn't ranked yet for package lookups:** see [How checks are bought](#how-checks-are-bought). PR Guard handles it with a fallback, and starts using routing again as soon as the answers are usable.
 - **Hosted scans are smaller:** at most 8 packages and 3 diff chunks per pull request, and the checks run one after another.
 - **zod advisory:** `npm audit` reports a high-severity advisory in zod 3, which comes in through `@x402/core`; x402 2.28 has no release that fixes it. PR Guard uses zod only to parse small payment headers.
 

@@ -32,11 +32,11 @@ curl https://pr-guard-sentinel.pr-guard.workers.dev/health
 
 The Worker publishes its own YAML at `GET /miner.yaml`, and registration commits to that URL and its SHA-256. **After registering, any change to `miner.yaml` must go through `updateMiner` with the new hash.** Otherwise nodes that re-fetch it will reject the miner. Regenerate the embedded copy with `node scripts/embed-yaml.js`; `npm run deploy:miner` does that for you.
 
-Console path (Oct 2026): https://integrate.telegraphprotocol.com/register → step **2 Register on-chain** → **Manual Input** → YAML URL `https://pr-guard-sentinel.pr-guard.workers.dev/miner.yaml` → regenerate the hash from the URL → **Requires API Key** off → validate → register. The validator rejects `accepted_fields` written as a list ("Expected: object, given: array"), although the docs show a list; ours names the allowed values in `description` instead.
+Console path (Oct 2026; since Nov 4 the console lives at https://anjoman.ai/earn and integrate.telegraphprotocol.com is deprecated): https://integrate.telegraphprotocol.com/register → step **2 Register on-chain** → **Manual Input** → YAML URL `https://pr-guard-sentinel.pr-guard.workers.dev/miner.yaml` → regenerate the hash from the URL → **Requires API Key** off → validate → register. The validator rejects `accepted_fields` written as a list ("Expected: object, given: array"), although the docs show a list; ours names the allowed values in `description` instead.
 
 1. **Check the URL:** `base_url` in `miner.yaml` must match the deployed Worker (`https://pr-guard-sentinel.pr-guard.workers.dev`).
 2. **Validate:** paste `miner.yaml` into the console at https://integrate.telegraphprotocol.com, which checks it against the live endpoints. The documented `POST /api/validate` answered 404 on 2026-10-27.
 3. **Register:** with the miner wallet, at https://integrate.telegraphprotocol.com. It pins the YAML and sends `registerMiner`. Since Oct 30, registration is on Ethereum Sepolia. It needs a little Sepolia ETH for gas and a refundable MACHINA bond ($1 for the first intent); `scripts/fund-testnet.js` gets both.
-4. **Confirm it's live:** `GET https://devnode.telegraphprotocol.com/api/miners/731001` should return the record.
+4. **Confirm it's live:** it should be listed by `GET https://devnode.telegraphprotocol.com/api/miners` and under `GET /engine/v1/intents/SECURITY_REVIEW_GENERAL`. The per-id lookup `/api/miners/{id}` has answered 404 for every miner since mid-November.
 
 PR Guard (the app) uses this miner as a second, independent opinion: rules here, an AI reviewer (ChainSight) there. That relationship is disclosed in the submission.

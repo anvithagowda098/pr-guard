@@ -2,6 +2,21 @@
 
 Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) plus the Miners track. The event runs Nov 1 to Dec 1, 2026 (23:59 UTC). Submit by Nov 29.
 
+## Design change, Nov 13: routing first
+
+The Discord digest says the team advised builders not to call several miners directly just to cross-check them: that "defeats Telegraph's purpose" and won't meet mainnet readiness. PR Guard now:
+- buys every check through routing first (canonical intent + params);
+- uses a routed answer only if it's in the intent's format, or from a vetted miner and about the exact target;
+- falls back to one vetted miner, and records why;
+- never buys a second opinion.
+
+Confirmation is now deterministic: registry data about the exact package version, or PR Guard's local rules (Sentinel's rule set, run in-process) on the same diff.
+
+Other notes from the digest:
+- Old integrate.telegraphprotocol.com is deprecated; use anjoman.ai/earn.
+- List the app at anjoman.ai/dashboard/apps.
+- Nov 14 milestone evidence (tx, request, response) goes in Discord #hackathon. Links are only allowed in the showcase channel.
+
 ## Rule changes found Nov 13 (re-read hackathon.telegraphprotocol.com/rules)
 
 - **New Apps & Agents rubric:** technical 35 (minimum 24), commercial 25, independent adoption and retention 10, integration 5, reproducibility and proof 5, and a new **organic growth, education and developer activation: 20**. This replaces 35/30/15/10/10.
@@ -59,12 +74,14 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
 | Nov 2, 18:08 | Demo PR #3 (fake key + SQL injection + eval): 🔴 BLOCK, local key scan; injection confirmed by Verity #5530 and Sentinel #731001, 32 s, $0.02 | Actions run 41497642958, signals `0x66fe812b…`, `0x997dd666…` |
 | Nov 2 | Hosted page, first live paid scan: expressjs/express#6100 → 🟢 SAFE, Verity #5530, $0.01 | signal `0x765e1625…` (our own test, not adoption) |
 
+| Nov 13, 05:21–05:26 | Routing tests (burner `0xd0Cd…cfB44`): canonical SECURITY_REVIEW_GENERAL ×2 → miner 77003, off-target; CODE_REVIEW_GENERAL → miner 302, usable; direct Verity #5530 → both bugs | signals `0x87fa3b8d…`, `0x9207fce2…`, `0xb0d09814…` (tx `0x44bcae92…51da`, block 12123863); fixtures in `test/fixtures/miner-responses/ROUTED/` |
+
 - The demo PRs are paid by the bot wallet `0x83b5…abcc`, whose key is in the repo secret `TELEGRAPH_PRIVATE_KEY`. They stay open as fixtures.
 - The first runs failed safely, with nothing spent: MetaMask exports keys without the 0x prefix. Fixed in `ff78842`.
 
 ## What works today (Nov 2)
 
-- **The Action** (`src/`), 109 tests, all offline:
+- **The Action** (`src/`), 120 tests, all offline:
   - Dependencies: deps.dev Package Review #77010 (npm), PR Guard Sentinel #731001 (PyPI, Go, crates.io), Secrev Depsdev #190048 (confirms by advisory id).
   - Code diff: Telegraph Verity #5530 first; Sentinel #731001 confirms high or critical findings.
   - Local secret and install-script scans; budget reserved at quote time; one PR comment; a purchase ledger.

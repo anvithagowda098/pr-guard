@@ -13,7 +13,7 @@ PR Guard reads a pull request and buys independent security checks from miners o
 | Check | How | Cost |
 |---|---|---|
 | **New or upgraded dependencies** (npm, PyPI, Go, Cargo) | Each package version is checked for known vulnerabilities through Telegraph (`SECURITY_REVIEW_GENERAL`). | $0.01 per package |
-| **Code changes** | The redacted diff is reviewed through Telegraph (`CODE_REVIEW_GENERAL`) for injection, `eval` on input and similar bugs. PR Guard's own rules check the same diff. | $0.01 per part of the diff |
+| **Code changes** | The redacted diff is reviewed through Telegraph (`CODE_REVIEW_GENERAL`) for injection, `eval` on input and similar bugs. Where the changed functions are used elsewhere in the repository, those call sites go with it, so a change in one file that's dangerous in another can be seen. PR Guard's own rules check the same diff. | $0.01 per part of the diff |
 | **Smart contracts** (Solidity) | The same code review. A smart-contract auditor is the fallback for `.sol` files. PR Guard's own Solidity rules check for reentrancy, missing access control, `tx.origin` auth, `delegatecall`, `selfdestruct` and unchecked calls. | $0.01 per part of the diff |
 | **New on-chain addresses** | Each address a PR adds is screened against the US OFAC, UN, EU and UK sanctions lists, and gets a risk check (GoPlus data: honeypot, hidden owner, unverified source, proxy, taxes), both bought through Telegraph before code starts sending funds there. An address swapped for another is flagged for a human to confirm. | $0.02 per address |
 | **Committed secrets and keys** | Local scan of added lines | free |
@@ -29,7 +29,7 @@ Open **https://pr-guard-app.pr-guard.workers.dev** and paste a pull request link
 - **Cost:** none to you. A sponsor wallet pays for the checks, up to $0.10 per scan.
 - **Limits:** 5 scans per visitor per day.
 - **Reports:** each one gets a permanent link.
-- **Examples:** six demo pull requests and their reports are in [demo/README.md](demo/README.md).
+- **Examples:** seven demo pull requests and their reports are in [demo/README.md](demo/README.md).
 
 ### 2. On your repository, with no setup (public repositories)
 
@@ -137,7 +137,7 @@ Every miner was tested with paid calls before it was added, and its raw answers 
   - **After a call:** any call that returns a settled payment counts as spent, including a routed answer that couldn't be used. That costs at most $0.01 per intent per run, since routing is then skipped for that intent.
   - **When the budget runs out:** the lowest-value checks are skipped first, so the verdict says CAUTION rather than SAFE.
 - **Privacy:**
-  - **What miners see:** diffs are redacted before they go to a miner. Cloud keys, tokens, private keys, URL passwords and labelled credentials are removed.
+  - **What miners see:** diffs are redacted before they go to a miner. Cloud keys, tokens, private keys, URL passwords and labelled credentials are removed. So are the call-site lines sent as context: up to 8 lines from files the PR doesn't change, never from tests, docs or generated code.
   - **Never sent:** `.env`, `*.pem`, `id_rsa` and similar files, even redacted.
   - **Skipped:** lockfiles, vendored and minified code, binaries and documentation.
 
@@ -147,7 +147,7 @@ You need Node 20 or later.
 
 ```sh
 npm ci
-npm test             # 140 tests, all offline
+npm test             # 146 tests, all offline
 npm run build        # bundles dist/index.js; commit it, the Action runs from it
 npm run deploy:web   # the hosted page and API (Cloudflare Workers)
 npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)
@@ -161,7 +161,7 @@ npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)
 | `config/` | The vetted miner list |
 | `scripts/` | Discovery, wallet, funding and first-call tools |
 | `test/` | Unit and end-to-end tests. They replay real captured miner answers against a fake payment-gated node |
-| `demo/` | A small app, a contract, and six demo pull requests (SAFE, dependency BLOCK, code BLOCK, address swap CAUTION, contract BLOCK, sanctioned payout BLOCK) |
+| `demo/` | A small app, a contract, and seven demo pull requests (SAFE, dependency BLOCK, code BLOCK, address swap CAUTION, contract BLOCK, sanctioned payout BLOCK, cross-file CAUTION) |
 
 ## Troubleshooting
 

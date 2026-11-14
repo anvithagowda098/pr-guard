@@ -5,7 +5,7 @@
 // answer that doesn't match its known shape, comes back "unknown", which the
 // policy turns into CAUTION: an unreadable answer must never pass as SAFE.
 import { maxSeverity } from "./policy.js";
-import { diffLineLocation } from "./extract.js";
+import { diffLineLocation, contextLineLocation } from "./extract.js";
 
 const GITHUB_SEVERITY = { CRITICAL: "critical", HIGH: "high", MODERATE: "medium", LOW: "low" };
 const SEVERITY_WORD = /\b(critical|high|medium|moderate|low)\b/gi;
@@ -245,9 +245,10 @@ const NORMALIZERS = {
     const findings = result?.answer?.findings;
     expect(Array.isArray(findings) && result.verdict !== "rejected", "rejected or no findings list");
     const mapped = findings.map((f) => {
-      const at = vars.diff ? diffLineLocation(vars.diff, f.line) : null;
+      // Line numbers count the text sent: the diff, then any impact context.
+      const at = (vars.diff ? diffLineLocation(vars.diff, f.line) : null) ?? (vars.review ? contextLineLocation(vars.review, f.line) : null);
       return {
-        title: f.message || f.rule_id,
+        title: `${f.message || f.rule_id}${at?.context ? " (in a call site this PR doesn't change)" : ""}`,
         severity: String(f.severity ?? "").toLowerCase(),
         ...(at?.file && { file: at.file }),
         line: at?.line ?? f.line,

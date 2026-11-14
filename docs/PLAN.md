@@ -88,6 +88,7 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
 | Nov 14 | Update 2 posted on X (milestone) and in the Discord showcase thread | https://x.com/gowda_anvi/status/2121601194942713887 |
 | Nov 14 | Counterproof's builder (Sadiq, miner 731002) suggested his sanctions miner in the showcase thread; wired in the same day, and his routed-format fix confirmed live | showcase thread; commits `94f865b`, `2e34ed8` |
 | Nov 14 | Demo PR #6 (sanctioned payout) → BLOCK via routed sanctions screen | report `5017f9be53ea` (our own test, not adoption) |
+| Nov 14 | Impact context built after a question on X (a change in file1 affecting file47). Demo PR #7: SAFE without context (`1895dcdb8382`) → CAUTION with it (`be9e180c79d7`); routed reviewer #302 cited the call sites in server.js | commits `69a7cd6` onward |
 | Nov 13 | Routing gap reported to Telegraph (SECURITY_REVIEW_GENERAL → miner 77003 ignores the target) | https://github.com/telegraphprotocol/bounties/issues/187 |
 | Nov 13 | Live demo scans on the public page: #1 SAFE, #2 BLOCK, #3 BLOCK, #4 CAUTION (address swap), #5 BLOCK (reentrant vault); routed CODE_REVIEW purchase tx `0xa631c7a9…3d02` (block 12124165) | report links in `demo/README.md` (our own tests, not adoption) |
 

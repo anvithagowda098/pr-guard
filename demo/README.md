@@ -1,6 +1,6 @@
 # PR Guard demo
 
-`demo/app` is a tiny Express API with a payments module, and `demo/contracts` holds a small vault. Six open pull requests change them, one per outcome. Each has a live report from PR Guard's public page (scanned Nov 13, 2026, on Telegraph's testnet):
+`demo/app` is a tiny Express API with a payments module, and `demo/contracts` holds a small vault. Seven open pull requests change them, one per outcome. Each has a live report from PR Guard's public page (scanned Nov 13, 2026, on Telegraph's testnet):
 
 | Pull request | What it changes | Verdict | Report |
 |---|---|---|---|
@@ -10,6 +10,7 @@
 | [#4](https://github.com/anvithagowda098/pr-guard/pull/4) `demo/address-swap` | replaces the payout address, accepts USDT | 🟡 CAUTION: the payout address changed (the address-swap attack shape); each new address gets a paid GoPlus risk check | [report](https://pr-guard-app.pr-guard.workers.dev/r/b22eec6747c4) |
 | [#5](https://github.com/anvithagowda098/pr-guard/pull/5) `demo/reentrant-vault` | adds a Solidity vault with a reentrant `withdraw` and an open `setOwner` | 🔴 BLOCK: the reviewer names both, and PR Guard's Solidity rules confirm them | [report](https://pr-guard-app.pr-guard.workers.dev/r/695b58066331) |
 | [#6](https://github.com/anvithagowda098/pr-guard/pull/6) `demo/sanctioned-payout` | points payouts at an address on the US OFAC SDN list | 🔴 BLOCK: exact sanctions match (LAZARUS GROUP), screened through Telegraph by Counterproof | [report](https://pr-guard-app.pr-guard.workers.dev/r/5017f9be53ea) |
+| [#7](https://github.com/anvithagowda098/pr-guard/pull/7) `demo/loosened-validator` | stops `sanitizeId` stripping non-digits; only `validate.js` changes | 🟡 CAUTION: PR Guard sends the reviewer the call sites in `server.js`, where the id is concatenated into SQL. Without that context the same PR [came back SAFE](https://pr-guard-app.pr-guard.workers.dev/r/1895dcdb8382) | [report](https://pr-guard-app.pr-guard.workers.dev/r/be9e180c79d7) |
 
 Each report lists every paid check, the miner that answered (routed by Telegraph, or a vetted fallback and why), what it cost, and a link to its receipt on the Telegraph node.
 

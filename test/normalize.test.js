@@ -305,3 +305,12 @@ test("Counterproof directly: the list, the entry and the official notice; a clea
   assert.deepEqual(clean, { severity: "none", findings: [], verified: true });
   assert.equal(normalize("counterproof-screen", screen("731002-screen-usdt-address-200-paid.json").body.result, lazarus).severity, "unknown", "an answer about another address is not trusted");
 });
+
+test("routed sanctions answers now name the listed party and the lists checked (Counterproof update, Nov 14)", () => {
+  const cap = screen("routed-lazarus-address-731002-intent-with-lists.json");
+  const n = normalize("sanctions-format", cap.body.result);
+  assert.equal(n.severity, "critical");
+  assert.equal(n.findings[0].title, "LAZARUS GROUP: on a sanctions list, exact match");
+  assert.match(n.findings[0].detail, /^lists checked: US OFAC SDN and non-SDN Consolidated lists \(published 2026-11-13\); UN Security Council/);
+  assert.deepEqual(normalize("sanctions-format", { matched: false, match_score: 0 }), { severity: "none", findings: [], verified: true });
+});

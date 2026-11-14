@@ -50778,15 +50778,22 @@ var NORMALIZERS = {
     return { severity, findings };
   },
   // SANCTIONS_SCREENING_MATCH_GENERAL, format v3: name, matched (bool), matches,
-  // lists, match_score. Captured Nov 14 for an OFAC-listed address: routed to
-  // Counterproof (#731002), matched true and score 1, but the node returned
-  // name, matches and lists empty. A wallet address matches exactly or not at all.
+  // lists, match_score. Routed to Counterproof (#731002), captured Nov 14: in
+  // the morning matches and lists came back empty; by the afternoon matches
+  // named the listed party and lists gave every list checked, with its date.
+  // A wallet address matches exactly or not at all.
   "sanctions-format": (result) => {
     expect(typeof result?.matched === "boolean", "no matched flag");
     if (!result.matched) return { severity: "none", findings: [], verified: true };
     const exact = Number(result.match_score) >= 0.99;
-    const lists = Array.isArray(result.lists) && result.lists.length ? ` (${result.lists.join(", ")})` : "";
-    return { severity: exact ? "critical" : "medium", findings: [{ title: `on a sanctions list${lists}${exact ? ", exact match" : ", possible match"}`, severity: exact ? "critical" : "medium" }], verified: true };
+    const severity = exact ? "critical" : "medium";
+    const party = (result.matches ?? []).map((m) => typeof m === "string" ? m : m?.name).find(Boolean);
+    const checked = Array.isArray(result.lists) && result.lists.length ? `lists checked: ${result.lists.join("; ")}` : void 0;
+    return {
+      severity,
+      findings: [{ title: `${party ? `${party}: ` : ""}on a sanctions list, ${exact ? "exact match" : "possible match"}`, severity, ...checked && { detail: checked } }],
+      verified: true
+    };
   },
   // CODE_REVIEW_GENERAL, format v3: verdict Approve | Request changes | Comment,
   // findings (free text, severity order), summary. Captured from miner 302 on

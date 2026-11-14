@@ -1,0 +1,149 @@
+{
+  "captured_at": "2026-11-14T13:46:58.892Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask",
+  "request": {
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "params": {
+      "name": "0x098B716B8Aaf21512996dC57EB0615e2383E2f96"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for LLM-routed inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 22942,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a5a676ac7995a177-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 14 Nov 2026 13:46:58 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHg3ZGJjNjZhNTA3MTc4ZjJhOTVkZGRiNTE3YzE2NTQwYTA3ZTY2NTcyZGI0YWYwNDM0ZjQ2MmVlMmZlNTEwMWI5IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=A%2F7g9VFGPq2wrxF2caSun9%2BuZq659iB2vqNTyxRrsgY691NjoIBPL6dhYt1vkG5lsvv65E2zdt9u4uBcy%2FgK6GWoKMbPHydlLfWre8nvH7pYy7XM%2FDI8Rqqv9yRwn5Ossh7CkvBJRMwS67tlYGkZ3Q%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDE2MDYzMjhkOGMyMGE5MzM4YzhkYmM2NDc4Nzc0MjA5M2FlNGVkN2VjNzY1NzFjOTE1ZmIwNGY5YTVhMzc0ZTYiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI1MjMxIiwiaW50ZW50IjoiU0FOQ1RJT05TX1NDUkVFTklOR19NQVRDSF9HRU5FUkFMIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6MjA5MCwic2V0dGxlbWVudCI6Im9uY2hhaW4iLCJjaGFpbiI6ImVpcDE1NToxMTE1NTExMSIsInR4X2hhc2giOiIweDdkYmM2NmE1MDcxNzhmMmE5NWRkZGI1MTdjMTY1NDBhMDdlNjY1NzJkYjRhZjA0MzRmNDYyZWUyZmU1MTAxYjkiLCJ0aW1lc3RhbXAiOjE3OTQ2NjQwMTh9"
+  },
+  "bodyText": "{\"miner_id\":\"731002\",\"miner_name\":\"Counterproof Sanctions Screener\",\"endpoint\":\"/screen\",\"result\":{\"name\":null,\"matched\":true,\"matches\":[\"LAZARUS GROUP\"],\"lists\":[\"US OFAC SDN and non-SDN Consolidated lists (published 2026-11-13)\",\"UN Security Council Consolidated List (published 2026-11-14)\",\"EU Consolidated Financial Sanctions List (published 2026-10-23)\",\"UK Sanctions List (published 2026-11-12)\"],\"match_score\":1},\"result_shape\":\"intent\",\"format_version\":3,\"field_status\":{\"name\":\"rejected\",\"matched\":\"ok\",\"matches\":\"ok\",\"lists\":\"ok\",\"match_score\":\"ok\"},\"input\":{\"name\":\"0x098B716B8Aaf21512996dC57EB0615e2383E2f96\"},\"input_schema_version\":3,\"cost_usd\":0.01,\"duration_ms\":518,\"timestamp\":\"2026-11-14T13:46:52.587828718Z\",\"reasoning\":\"Intent: intent given by the caller\\nMiner: request built from the miner's intent_mapping\",\"intent\":\"SANCTIONS_SCREENING_MATCH_GENERAL\",\"signal_hash\":\"0xdf7bc496876c213fc02b0ce75eb4e164328f6f87a13b2fa931ff5c3c1479bb64\"}",
+  "body": {
+    "miner_id": "731002",
+    "miner_name": "Counterproof Sanctions Screener",
+    "endpoint": "/screen",
+    "result": {
+      "name": null,
+      "matched": true,
+      "matches": [
+        "LAZARUS GROUP"
+      ],
+      "lists": [
+        "US OFAC SDN and non-SDN Consolidated lists (published 2026-11-13)",
+        "UN Security Council Consolidated List (published 2026-11-14)",
+        "EU Consolidated Financial Sanctions List (published 2026-10-23)",
+        "UK Sanctions List (published 2026-11-12)"
+      ],
+      "match_score": 1
+    },
+    "result_shape": "intent",
+    "format_version": 3,
+    "field_status": {
+      "name": "rejected",
+      "matched": "ok",
+      "matches": "ok",
+      "lists": "ok",
+      "match_score": "ok"
+    },
+    "input": {
+      "name": "0x098B716B8Aaf21512996dC57EB0615e2383E2f96"
+    },
+    "input_schema_version": 3,
+    "cost_usd": 0.01,
+    "duration_ms": 518,
+    "timestamp": "2026-11-14T13:46:52.587828718Z",
+    "reasoning": "Intent: intent given by the caller\nMiner: request built from the miner's intent_mapping",
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "signal_hash": "0xdf7bc496876c213fc02b0ce75eb4e164328f6f87a13b2fa931ff5c3c1479bb64"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x7dbc66a507178f2a95dddb517c16540a07e66572db4af0434f462ee2fe5101b9",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x1606328d8c20a9338c8dbc64787742093ae4ed7ec76571c915fb04f9a5a374e6",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "5231",
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2090,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x7dbc66a507178f2a95dddb517c16540a07e66572db4af0434f462ee2fe5101b9",
+    "timestamp": 1794664018
+  },
+  "charged": true
+}

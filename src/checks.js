@@ -71,7 +71,17 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
   // On-chain addresses the PR adds: buy the contract's risk profile before the
   // code starts sending funds there. SMART_CONTRACT_AUDIT_GENERAL has no input
   // schema, so the routed ask is a plain-language query.
-  const addresses = extractAddresses(files, { max: maxAddresses }).map((a) => ({
+  const found = extractAddresses(files, { max: maxAddresses });
+  // Each new address is also screened against the US, UN, EU and UK sanctions
+  // lists: a canonical ask Telegraph routes by ranking.
+  const sanctions = found.map((a) => ({
+    check: "sanctions",
+    intent: "SANCTIONS_SCREENING_MATCH_GENERAL",
+    target: a.address,
+    vars: { address: a.address, file: a.file, line: a.line },
+    route: { intent: "SANCTIONS_SCREENING_MATCH_GENERAL", params: { name: a.address }, normalizer: "sanctions-format" },
+  }));
+  const addresses = found.map((a) => ({
     check: "addresses",
     intent: "SMART_CONTRACT_AUDIT_GENERAL",
     target: `${a.address} on ${a.chain}${a.assumed ? " (assumed)" : ""}`,
@@ -102,7 +112,7 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
   const jobs = [];
   if (enabled.has("deps")) jobs.push(...direct);
   if (enabled.has("diff")) jobs.push(...diff);
-  if (enabled.has("addresses")) jobs.push(...addresses);
+  if (enabled.has("addresses")) jobs.push(...sanctions, ...addresses);
   if (enabled.has("deps")) jobs.push(...transitive);
   if (enabled.has("patch")) jobs.push(...patch);
   if (enabled.has("urls")) jobs.push(...urls);

@@ -267,7 +267,7 @@ test("a one-off unreadable routed answer falls back for that check only; routing
 
 test("new addresses: a plain-language routed ask, then GoPlus when the routed answer is off-target; swaps caution locally", async () => {
   const files = [{ filename: "src/pay.ts", status: "modified", patch: '@@ -1,1 +1,1 @@\n-export const PAYOUT = "0x1111111111111111111111111111111111111111";\n+export const PAYOUT = "0x2222222222222222222222222222222222222222";' }];
-  const [job] = buildJobs({ deps: [], files }, new Set(["addresses"]));
+  const job = buildJobs({ deps: [], files }, new Set(["addresses"])).find((j) => j.check === "addresses");
   assert.equal(job.target, "0x2222222222222222222222222222222222222222 on Ethereum (assumed)");
   assert.match(job.route.body.query, /^Token and contract security risk .* 0x2222222222222222222222222222222222222222 on Ethereum \(chain id 1\)$/);
   const tg = fakeTg([rawJunk, okResponse("200001")]);
@@ -289,4 +289,11 @@ test("a fallback limited to .sol files is used only for diffs that touch Solidit
   assert.deepEqual(sol.calls.map((c) => c.minerId), ["1900999007"]);
   const js = await runCheck({ tg: fakeTg([okResponse("5530")]), miners, job: job(["src/a.js"]), deadline: FAR });
   assert.deepEqual(js.calls.map((c) => c.minerId), ["5530"]);
+});
+
+test("each new address is screened for sanctions (canonical, routed) before its token risk check", () => {
+  const files = [{ filename: "src/pay.ts", patch: '@@ -1,1 +1,2 @@\n x\n+export const PAYOUT = "0x098B716B8Aaf21512996dC57EB0615e2383E2f96";' }];
+  const jobs = buildJobs({ deps: [], files }, new Set(["addresses"]));
+  assert.deepEqual(jobs.map((j) => j.check), ["sanctions", "addresses"]);
+  assert.deepEqual(jobs[0].route, { intent: "SANCTIONS_SCREENING_MATCH_GENERAL", params: { name: "0x098B716B8Aaf21512996dC57EB0615e2383E2f96" }, normalizer: "sanctions-format" });
 });

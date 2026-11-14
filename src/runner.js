@@ -76,7 +76,7 @@ export function judgeRouted(r, route, entries, vars) {
 
 /** Confirm high findings by deterministic evidence; flag local-rule hits the reviewer missed. */
 export function confirmFindings(check, answer, vars) {
-  if (check === "deps" || check === "addresses") return { ...answer, confirmed: isHigh(answer.severity) && answer.verified === true, disagreement: false };
+  if (check === "deps" || check === "addresses" || check === "sanctions") return { ...answer, confirmed: isHigh(answer.severity) && answer.verified === true, disagreement: false };
   if (check !== "diff" || !vars.diff) return { ...answer, confirmed: false, disagreement: false };
   const local = scan(vars.diff).findings.filter((f) => f.rule !== "hardcoded-secret"); // secrets: the local secret scan reports those
   const matches = (f, l) => (f.category && f.category === l.rule) || (f.file && f.line && f.file === l.file && f.line === l.line);

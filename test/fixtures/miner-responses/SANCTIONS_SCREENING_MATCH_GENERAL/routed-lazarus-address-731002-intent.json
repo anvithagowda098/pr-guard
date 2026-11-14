@@ -1,0 +1,142 @@
+{
+  "captured_at": "2026-11-14T11:01:22.647Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask",
+  "request": {
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "params": {
+      "name": "0x098B716B8Aaf21512996dC57EB0615e2383E2f96"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for LLM-routed inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 24988,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a5a584042dbe05e4-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 14 Nov 2026 11:01:21 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHhiMGVmNGIyMmVkZWZkMTkzYWE1NmRjODE4ODIwNWRhY2U3MGI0ZDgyNDhlNmZhYzRlMzc4YTU5NGZhZTM5MTFiIiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=vu6ULYRl1RzotM5guKjTooKp2t9ajC7%2BfZ4v81uwfqZsRqWw%2BP%2FEJZ%2BCRRy4fhgg7aKJGDW16%2Br0Hnrll4K4Po1gX37FTgn9pgZYiOvVITZ%2BMhbssKro7nmBYnDtOMkUCKh1cxHgoRtLWJRTcmnsEQ%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGE2NmM1MmU4NDU0NDcwNDc5YjU2Y2Y4MTMzYzM5OGI1YjBkZGU4OGZlZmViMTVlYTViZjFjMzk2YTc5NmJkMDkiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI1MjIzIiwiaW50ZW50IjoiU0FOQ1RJT05TX1NDUkVFTklOR19NQVRDSF9HRU5FUkFMIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6MjA4OSwic2V0dGxlbWVudCI6Im9uY2hhaW4iLCJjaGFpbiI6ImVpcDE1NToxMTE1NTExMSIsInR4X2hhc2giOiIweGIwZWY0YjIyZWRlZmQxOTNhYTU2ZGM4MTg4MjA1ZGFjZTcwYjRkODI0OGU2ZmFjNGUzNzhhNTk0ZmFlMzkxMWIiLCJ0aW1lc3RhbXAiOjE3OTQ2NTQwODF9"
+  },
+  "bodyText": "{\"miner_id\":\"731002\",\"miner_name\":\"Counterproof Sanctions Screener\",\"endpoint\":\"/screen\",\"result\":{\"name\":null,\"matched\":true,\"matches\":null,\"lists\":null,\"match_score\":1},\"result_shape\":\"intent\",\"format_version\":3,\"field_status\":{\"name\":\"rejected\",\"matched\":\"ok\",\"matches\":\"rejected\",\"lists\":\"missing\",\"match_score\":\"ok\"},\"input\":{\"name\":\"0x098B716B8Aaf21512996dC57EB0615e2383E2f96\"},\"input_schema_version\":3,\"cost_usd\":0.01,\"duration_ms\":685,\"timestamp\":\"2026-11-14T11:01:17.741871703Z\",\"reasoning\":\"Intent: intent given by the caller\\nMiner: request built from the miner's intent_mapping\",\"intent\":\"SANCTIONS_SCREENING_MATCH_GENERAL\",\"signal_hash\":\"0x204752a183ab354b1e7640b63b4b122107fe8b3b6233d7b5ce5df9ad7ea72e99\"}",
+  "body": {
+    "miner_id": "731002",
+    "miner_name": "Counterproof Sanctions Screener",
+    "endpoint": "/screen",
+    "result": {
+      "name": null,
+      "matched": true,
+      "matches": null,
+      "lists": null,
+      "match_score": 1
+    },
+    "result_shape": "intent",
+    "format_version": 3,
+    "field_status": {
+      "name": "rejected",
+      "matched": "ok",
+      "matches": "rejected",
+      "lists": "missing",
+      "match_score": "ok"
+    },
+    "input": {
+      "name": "0x098B716B8Aaf21512996dC57EB0615e2383E2f96"
+    },
+    "input_schema_version": 3,
+    "cost_usd": 0.01,
+    "duration_ms": 685,
+    "timestamp": "2026-11-14T11:01:17.741871703Z",
+    "reasoning": "Intent: intent given by the caller\nMiner: request built from the miner's intent_mapping",
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "signal_hash": "0x204752a183ab354b1e7640b63b4b122107fe8b3b6233d7b5ce5df9ad7ea72e99"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0xb0ef4b22edefd193aa56dc8188205dace70b4d8248e6fac4e378a594fae3911b",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0xa66c52e8454470479b56cf8133c398b5b0dde88fefeb15ea5bf1c396a796bd09",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "5223",
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2089,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0xb0ef4b22edefd193aa56dc8188205dace70b4d8248e6fac4e378a594fae3911b",
+    "timestamp": 1794654081
+  },
+  "charged": true
+}

@@ -282,3 +282,26 @@ test("CodeWire on the fixed vault: only low findings -> SAFE; no verdict -> unkn
   assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "SAFE");
   assert.equal(normalize("codewire-audit", { summary: "no structure" }).severity, "unknown");
 });
+
+// ---- Sanctions screening, captured Nov 14 ----------------------------------
+const screen = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/SANCTIONS_SCREENING_MATCH_GENERAL/${name}`, import.meta.url), "utf8"));
+const lazarus = { address: "0x098B716B8Aaf21512996dC57EB0615e2383E2f96" };
+
+test("an OFAC-listed address routed to Counterproof: exact match, critical, confirmed -> BLOCK (the node drops the list name)", () => {
+  const cap = screen("routed-lazarus-address-731002-intent.json");
+  assert.deepEqual([cap.body.result_shape, cap.body.result.lists], ["intent", null]);
+  const { answer } = judgeRouted({ ok: true, status: 200, body: cap.body }, { normalizer: "sanctions-format" }, [], lazarus);
+  const c = confirmFindings("sanctions", answer, lazarus);
+  assert.deepEqual([c.severity, c.confirmed, c.findings[0].title], ["critical", true, "on a sanctions list, exact match"]);
+  assert.equal(decide([{ check: "sanctions", target: "x", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("Counterproof directly: the list, the entry and the official notice; a clean address is CLEAR", () => {
+  const hit = normalize("counterproof-screen", screen("731002-screen-lazarus-address-200-paid.json").body.result, lazarus);
+  assert.deepEqual([hit.severity, hit.verified], ["critical", true]);
+  assert.equal(hit.findings[0].title, "LAZARUS GROUP on the US sanctions list, exact match");
+  assert.match(hit.findings[0].ref, /^https:\/\/sanctionssearch\.ofac\.treas\.gov\//);
+  const clean = normalize("counterproof-screen", screen("731002-screen-usdt-address-200-paid.json").body.result, { address: "0xdAC17F958D2ee523a2206206994597C13D831ec7" });
+  assert.deepEqual(clean, { severity: "none", findings: [], verified: true });
+  assert.equal(normalize("counterproof-screen", screen("731002-screen-usdt-address-200-paid.json").body.result, lazarus).severity, "unknown", "an answer about another address is not trusted");
+});

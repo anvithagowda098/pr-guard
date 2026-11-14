@@ -1,0 +1,152 @@
+{
+  "captured_at": "2026-11-14T11:01:51.613Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/731002",
+  "request": {
+    "method": "GET",
+    "endpoint": "/screen",
+    "payload": {
+      "name": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/731002\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/731002",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/731002"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 8043,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a5a585143bb5093a-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 14 Nov 2026 11:01:50 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHhiYWE4MmVmYzBjMmFlZWVmOWY0YzJkZjJkODFiMTZjODNmM2MzYjVhNWIzNjNjMWU5NDQxZGQ4MTdkNjg2NzM0IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=mBkgdnJQ0QVPtXylALam0%2FqH%2FEYW79ELtt8p06a05OpNwPM8vXbHoFc7ng0wA9WMHWS%2F0IjlbjF6RAFqxKtgdzrTZymFwdhDx7zxrrxjiuFNlbaNIv46PCTVPKY%2B7%2BFdf%2Fksrmvo%2FkRBIxHGGHOB7g%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDJjOGY0YmUyM2UwNTlmMzVhNDE1ZWFlZTk1YmNiZmE4N2ZkZjYzZTc3Yzk4ODQ4YzJhMzlkNjAwMTc1MzE3YmIiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI1MjIzIiwiaW50ZW50IjoiU0FOQ1RJT05TX1NDUkVFTklOR19NQVRDSF9HRU5FUkFMIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6MjA4OSwic2V0dGxlbWVudCI6Im9uY2hhaW4iLCJjaGFpbiI6ImVpcDE1NToxMTE1NTExMSIsInR4X2hhc2giOiIweGJhYTgyZWZjMGMyYWVlZWY5ZjRjMmRmMmQ4MWIxNmM4M2YzYzNiNWE1YjM2M2MxZTk0NDFkZDgxN2Q2ODY3MzQiLCJ0aW1lc3RhbXAiOjE3OTQ2NTQxMTB9"
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":519,\"miner_id\":\"731002\",\"miner_name\":\"Counterproof Sanctions Screener\",\"result\":{\"answer\":\"No match for \\\"0xdac17f958d2ee523a2206206994597c13d831ec7\\\" on the US OFAC SDN list, UN Security Council list, EU consolidated list or UK sanctions list. No sanctions-list entry closely matches \\\"0xdac17f958d2ee523a2206206994597c13d831ec7\\\" on the US, UN, EU or UK lists. Lists checked: versions dated US 2026-11-13, UN 2026-11-14, EU 2026-10-23, UK 2026-11-12; a name screen only, not full due diligence.\",\"confidence\":1,\"is_match\":false,\"label\":\"CLEAR\",\"list_versions\":{\"EU\":\"2026-10-23\",\"UK\":\"2026-11-12\",\"UN\":\"2026-11-14\",\"US\":\"2026-11-13\"},\"lists\":[\"US OFAC SDN and non-SDN Consolidated lists (published 2026-11-13)\",\"UN Security Council Consolidated List (published 2026-11-14)\",\"EU Consolidated Financial Sanctions List (published 2026-10-23)\",\"UK Sanctions List (published 2026-11-12)\"],\"match_score\":0,\"matched\":false,\"matches\":[],\"name\":\"0xdac17f958d2ee523a2206206994597c13d831ec7\",\"notice\":null,\"regimes\":{\"EU\":\"clear\",\"UK\":\"clear\",\"UN\":\"clear\",\"US\":\"clear\"},\"screened_at\":\"2026-11-14T11:01:50.301Z\",\"summary\":\"No sanctions-list entry closely matches \\\"0xdac17f958d2ee523a2206206994597c13d831ec7\\\" on the US, UN, EU or UK lists.\"},\"result_shape\":\"raw\",\"signal_hash\":\"0xe7bed5ad15b0cc4d20f8c2c8fa828bb8142a9365865978bf9b0f3e82863b88d2\",\"timestamp\":\"2026-11-14T11:01:50.429172991Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 519,
+    "miner_id": "731002",
+    "miner_name": "Counterproof Sanctions Screener",
+    "result": {
+      "answer": "No match for \"0xdac17f958d2ee523a2206206994597c13d831ec7\" on the US OFAC SDN list, UN Security Council list, EU consolidated list or UK sanctions list. No sanctions-list entry closely matches \"0xdac17f958d2ee523a2206206994597c13d831ec7\" on the US, UN, EU or UK lists. Lists checked: versions dated US 2026-11-13, UN 2026-11-14, EU 2026-10-23, UK 2026-11-12; a name screen only, not full due diligence.",
+      "confidence": 1,
+      "is_match": false,
+      "label": "CLEAR",
+      "list_versions": {
+        "EU": "2026-10-23",
+        "UK": "2026-11-12",
+        "UN": "2026-11-14",
+        "US": "2026-11-13"
+      },
+      "lists": [
+        "US OFAC SDN and non-SDN Consolidated lists (published 2026-11-13)",
+        "UN Security Council Consolidated List (published 2026-11-14)",
+        "EU Consolidated Financial Sanctions List (published 2026-10-23)",
+        "UK Sanctions List (published 2026-11-12)"
+      ],
+      "match_score": 0,
+      "matched": false,
+      "matches": [],
+      "name": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      "notice": null,
+      "regimes": {
+        "EU": "clear",
+        "UK": "clear",
+        "UN": "clear",
+        "US": "clear"
+      },
+      "screened_at": "2026-11-14T11:01:50.301Z",
+      "summary": "No sanctions-list entry closely matches \"0xdac17f958d2ee523a2206206994597c13d831ec7\" on the US, UN, EU or UK lists."
+    },
+    "result_shape": "raw",
+    "signal_hash": "0xe7bed5ad15b0cc4d20f8c2c8fa828bb8142a9365865978bf9b0f3e82863b88d2",
+    "timestamp": "2026-11-14T11:01:50.429172991Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0xbaa82efc0c2aeeef9f4c2df2d81b16c83f3c3b5a5b363c1e9441dd817d686734",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x2c8f4be23e059f35a415eaee95bcbfa87fdf63e77c98848c2a39d600175317bb",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "5223",
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2089,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0xbaa82efc0c2aeeef9f4c2df2d81b16c83f3c3b5a5b363c1e9441dd817d686734",
+    "timestamp": 1794654110
+  },
+  "charged": true
+}

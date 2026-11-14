@@ -107,6 +107,20 @@
       "_note": "Independent operator, proxying GoPlus. Token risk flags for an address (honeypot, owner powers, proxy, verified source). Vetted Nov 13 with USDT. Sourcify Verified Contracts (#200002) was tried for source verification, but its /contract endpoint passes every parameter through as a query string and Sourcify rejects them."
     }
   ],
+  "sanctions": [
+    {
+      "minerId": "731002",
+      "name": "Counterproof Sanctions Screener",
+      "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+      "method": "GET",
+      "endpoint": "/screen",
+      "payload": {
+        "name": "{{address}}"
+      },
+      "normalizer": "counterproof-screen",
+      "_note": "Independent operator (suggested by its builder on Nov 13). Screens an address against US OFAC, UN, EU and UK lists; exact match for wallet addresses. Vetted Nov 14: the Lazarus Group's Ronin wallet is BLOCK on the US list, USDT's contract is CLEAR. Routed canonical asks also reach it, but the node returns the match without the list name."
+    }
+  ],
   "patch": [],
   "urls": []
 }

@@ -50589,7 +50589,15 @@ function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrl
       ...!routable && { routeSkipped: `over the ${ROUTE_MAX_CHARS.toLocaleString("en-US")}-character limit for canonical asks` }
     };
   });
-  const addresses = extractAddresses(files, { max: maxAddresses }).map((a) => ({
+  const found = extractAddresses(files, { max: maxAddresses });
+  const sanctions = found.map((a) => ({
+    check: "sanctions",
+    intent: "SANCTIONS_SCREENING_MATCH_GENERAL",
+    target: a.address,
+    vars: { address: a.address, file: a.file, line: a.line },
+    route: { intent: "SANCTIONS_SCREENING_MATCH_GENERAL", params: { name: a.address }, normalizer: "sanctions-format" }
+  }));
+  const addresses = found.map((a) => ({
     check: "addresses",
     intent: "SMART_CONTRACT_AUDIT_GENERAL",
     target: `${a.address} on ${a.chain}${a.assumed ? " (assumed)" : ""}`,
@@ -50615,7 +50623,7 @@ function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrl
   const jobs = [];
   if (enabled.has("deps")) jobs.push(...direct);
   if (enabled.has("diff")) jobs.push(...diff);
-  if (enabled.has("addresses")) jobs.push(...addresses);
+  if (enabled.has("addresses")) jobs.push(...sanctions, ...addresses);
   if (enabled.has("deps")) jobs.push(...transitive);
   if (enabled.has("patch")) jobs.push(...patch);
   if (enabled.has("urls")) jobs.push(...urls);
@@ -50769,6 +50777,17 @@ var NORMALIZERS = {
     const findings = issues.length ? issues.map((id) => ({ id, title: id, severity, ...advisoryRef(id) && { ref: advisoryRef(id) } })) : [{ title: String(result.summary || verdict).slice(0, 200), severity }];
     return { severity, findings };
   },
+  // SANCTIONS_SCREENING_MATCH_GENERAL, format v3: name, matched (bool), matches,
+  // lists, match_score. Captured Nov 14 for an OFAC-listed address: routed to
+  // Counterproof (#731002), matched true and score 1, but the node returned
+  // name, matches and lists empty. A wallet address matches exactly or not at all.
+  "sanctions-format": (result) => {
+    expect(typeof result?.matched === "boolean", "no matched flag");
+    if (!result.matched) return { severity: "none", findings: [], verified: true };
+    const exact = Number(result.match_score) >= 0.99;
+    const lists = Array.isArray(result.lists) && result.lists.length ? ` (${result.lists.join(", ")})` : "";
+    return { severity: exact ? "critical" : "medium", findings: [{ title: `on a sanctions list${lists}${exact ? ", exact match" : ", possible match"}`, severity: exact ? "critical" : "medium" }], verified: true };
+  },
   // CODE_REVIEW_GENERAL, format v3: verdict Approve | Request changes | Comment,
   // findings (free text, severity order), summary. Captured from miner 302 on
   // Nov 13. Only findings that name a security category count above "low".
@@ -50798,6 +50817,21 @@ var NORMALIZERS = {
       return { title: `${m[1].trim()} (affects ${m[2].trim()})`.slice(0, 200), severity: SEV[m[3].toLowerCase()], ...cat && { category: cat.id } };
     });
     return { severity: maxSeverity(findings), findings };
+  },
+  // Counterproof Sanctions Screener (#731002) GET /screen {name}: an address
+  // screened against the US OFAC, UN, EU and UK lists; label CLEAR | REVIEW |
+  // BLOCK, matches per list, and a link to the official notice. Captured Nov 14.
+  "counterproof-screen": (result, vars) => {
+    expect(["CLEAR", "REVIEW", "BLOCK"].includes(result?.label), "no label");
+    expect(!vars.address || same(result.name, vars.address), "answer is for a different name");
+    if (result.label === "CLEAR") return { severity: "none", findings: [], verified: true };
+    const severity = result.label === "BLOCK" ? "critical" : "medium";
+    const findings = (result.matches ?? []).map((m) => ({
+      title: `${m.name} on the ${m.list} sanctions list${m.score >= 0.99 ? ", exact match" : ""}`,
+      severity: m.verdict === "BLOCK" ? "critical" : "medium",
+      ...result.notice && { ref: result.notice }
+    }));
+    return { severity, findings: findings.length ? findings : [{ title: result.summary ?? "sanctions-list match", severity }], verified: true };
   },
   // GoPlus Security (#200001) GET /token-security {chain_id, contract_addresses}:
   // GoPlus's token risk flags ("1" / "0" strings), keyed by the lower-cased
@@ -51206,7 +51240,7 @@ function judgeRouted(r, route, entries, vars) {
   return text ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false } : { reject: `miner ${id} answered in its own format, and not about this target`, systematic: true };
 }
 function confirmFindings(check, answer, vars) {
-  if (check === "deps" || check === "addresses") return { ...answer, confirmed: isHigh2(answer.severity) && answer.verified === true, disagreement: false };
+  if (check === "deps" || check === "addresses" || check === "sanctions") return { ...answer, confirmed: isHigh2(answer.severity) && answer.verified === true, disagreement: false };
   if (check !== "diff" || !vars.diff) return { ...answer, confirmed: false, disagreement: false };
   const local2 = scan(vars.diff).findings.filter((f) => f.rule !== "hardcoded-secret");
   const matches2 = (f, l) => f.category && f.category === l.rule || f.file && f.line && f.file === l.file && f.line === l.line;
@@ -51585,6 +51619,20 @@ var miners_default = {
       },
       normalizer: "goplus-token-security",
       _note: "Independent operator, proxying GoPlus. Token risk flags for an address (honeypot, owner powers, proxy, verified source). Vetted Nov 13 with USDT. Sourcify Verified Contracts (#200002) was tried for source verification, but its /contract endpoint passes every parameter through as a query string and Sourcify rejects them."
+    }
+  ],
+  sanctions: [
+    {
+      minerId: "731002",
+      name: "Counterproof Sanctions Screener",
+      intent: "SANCTIONS_SCREENING_MATCH_GENERAL",
+      method: "GET",
+      endpoint: "/screen",
+      payload: {
+        name: "{{address}}"
+      },
+      normalizer: "counterproof-screen",
+      _note: "Independent operator (suggested by its builder on Nov 13). Screens an address against US OFAC, UN, EU and UK lists; exact match for wallet addresses. Vetted Nov 14: the Lazarus Group's Ronin wallet is BLOCK on the US list, USDT's contract is CLEAR. Routed canonical asks also reach it, but the node returns the match without the list name."
     }
   ],
   patch: [],

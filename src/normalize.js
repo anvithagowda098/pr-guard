@@ -90,6 +90,18 @@ const NORMALIZERS = {
     return { severity, findings };
   },
 
+  // SANCTIONS_SCREENING_MATCH_GENERAL, format v3: name, matched (bool), matches,
+  // lists, match_score. Captured Nov 14 for an OFAC-listed address: routed to
+  // Counterproof (#731002), matched true and score 1, but the node returned
+  // name, matches and lists empty. A wallet address matches exactly or not at all.
+  "sanctions-format": (result) => {
+    expect(typeof result?.matched === "boolean", "no matched flag");
+    if (!result.matched) return { severity: "none", findings: [], verified: true };
+    const exact = Number(result.match_score) >= 0.99;
+    const lists = Array.isArray(result.lists) && result.lists.length ? ` (${result.lists.join(", ")})` : "";
+    return { severity: exact ? "critical" : "medium", findings: [{ title: `on a sanctions list${lists}${exact ? ", exact match" : ", possible match"}`, severity: exact ? "critical" : "medium" }], verified: true };
+  },
+
   // CODE_REVIEW_GENERAL, format v3: verdict Approve | Request changes | Comment,
   // findings (free text, severity order), summary. Captured from miner 302 on
   // Nov 13. Only findings that name a security category count above "low".
@@ -122,6 +134,22 @@ const NORMALIZERS = {
       return { title: `${m[1].trim()} (affects ${m[2].trim()})`.slice(0, 200), severity: SEV[m[3].toLowerCase()], ...(cat && { category: cat.id }) };
     });
     return { severity: maxSeverity(findings), findings };
+  },
+
+  // Counterproof Sanctions Screener (#731002) GET /screen {name}: an address
+  // screened against the US OFAC, UN, EU and UK lists; label CLEAR | REVIEW |
+  // BLOCK, matches per list, and a link to the official notice. Captured Nov 14.
+  "counterproof-screen": (result, vars) => {
+    expect(["CLEAR", "REVIEW", "BLOCK"].includes(result?.label), "no label");
+    expect(!vars.address || same(result.name, vars.address), "answer is for a different name");
+    if (result.label === "CLEAR") return { severity: "none", findings: [], verified: true };
+    const severity = result.label === "BLOCK" ? "critical" : "medium";
+    const findings = (result.matches ?? []).map((m) => ({
+      title: `${m.name} on the ${m.list} sanctions list${m.score >= 0.99 ? ", exact match" : ""}`,
+      severity: m.verdict === "BLOCK" ? "critical" : "medium",
+      ...(result.notice && { ref: result.notice }),
+    }));
+    return { severity, findings: findings.length ? findings : [{ title: result.summary ?? "sanctions-list match", severity }], verified: true };
   },
 
   // GoPlus Security (#200001) GET /token-security {chain_id, contract_addresses}:

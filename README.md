@@ -15,7 +15,7 @@ PR Guard reads a pull request and buys independent security checks from miners o
 | **New or upgraded dependencies** (npm, PyPI, Go, Cargo) | Each package version is checked for known vulnerabilities through Telegraph (`SECURITY_REVIEW_GENERAL`). | $0.01 per package |
 | **Code changes** | The redacted diff is reviewed through Telegraph (`CODE_REVIEW_GENERAL`) for injection, `eval` on input and similar bugs. PR Guard's own rules check the same diff. | $0.01 per part of the diff |
 | **Smart contracts** (Solidity) | The same code review. A smart-contract auditor is the fallback for `.sol` files. PR Guard's own Solidity rules check for reentrancy, missing access control, `tx.origin` auth, `delegatecall`, `selfdestruct` and unchecked calls. | $0.01 per part of the diff |
-| **New on-chain addresses** | Each address a PR adds gets a risk check through Telegraph (GoPlus data: honeypot, hidden owner, unverified source, proxy, taxes) before code starts sending funds there. An address swapped for another is flagged for a human to confirm. | $0.01 per address |
+| **New on-chain addresses** | Each address a PR adds is screened against the US OFAC, UN, EU and UK sanctions lists, and gets a risk check (GoPlus data: honeypot, hidden owner, unverified source, proxy, taxes), both bought through Telegraph before code starts sending funds there. An address swapped for another is flagged for a human to confirm. | $0.02 per address |
 | **Committed secrets and keys** | Local scan of added lines | free |
 | **New install scripts** (`preinstall`, `install`, `postinstall`, `prepare` in `package.json`) | Local check | free |
 
@@ -29,7 +29,7 @@ Open **https://pr-guard-app.pr-guard.workers.dev** and paste a pull request link
 - **Cost:** none to you. A sponsor wallet pays for the checks, up to $0.10 per scan.
 - **Limits:** 5 scans per visitor per day.
 - **Reports:** each one gets a permanent link.
-- **Examples:** five demo pull requests and their reports are in [demo/README.md](demo/README.md).
+- **Examples:** six demo pull requests and their reports are in [demo/README.md](demo/README.md).
 
 ### 2. On your repository, with no setup (public repositories)
 
@@ -92,7 +92,7 @@ The key stays in GitHub's secret store. The Action uses it only to sign each pay
 
 - **BLOCK:** a confirmed high or critical finding. **A miner's opinion on its own can never block a pull request.** Confirmed means deterministic evidence backs it:
   - **Dependencies:** registry data (GitHub's advisories through deps.dev, or OSV) about this exact package and version.
-  - **Addresses:** GoPlus's risk data about that exact address, such as a honeypot or a hidden owner.
+  - **Addresses:** an exact match on a sanctions list, or GoPlus's risk data about that exact address, such as a honeypot or a hidden owner.
   - **Code:** PR Guard's own rules find the same issue in the same diff. When both name it, the higher of the two severities counts.
   - **Local checks:** for example, a committed key.
 - **CAUTION:** any of the following:
@@ -125,7 +125,8 @@ Each row of the PR comment shows which miner answered, and whether Telegraph rou
 | #190048 Secrev Depsdev | independent | any ecosystem, advisory ids only (never blocks) |
 | #5530 Telegraph Verity | independent | code, when the routed review is unusable or the diff part is too big |
 | #1900999007 CodeWire Smart Contract Audit | independent | Solidity, before Verity, for diffs that touch `.sol` files |
-| #200001 GoPlus Security | independent | new on-chain addresses |
+| #200001 GoPlus Security | independent | new on-chain addresses: token and contract risk |
+| #731002 Counterproof Sanctions Screener | independent | new on-chain addresses: sanctions screening (suggested by its builder) |
 
 Every miner was tested with paid calls before it was added, and its raw answers are kept as test fixtures. [docs/MINERS.md](docs/MINERS.md) covers how each one was chosen and how to vet and add another. PR Guard Sentinel is a rule-based miner with no AI model and no API key; its code is in [`miner/`](miner/).
 
@@ -146,7 +147,7 @@ You need Node 20 or later.
 
 ```sh
 npm ci
-npm test             # 136 tests, all offline
+npm test             # 140 tests, all offline
 npm run build        # bundles dist/index.js; commit it, the Action runs from it
 npm run deploy:web   # the hosted page and API (Cloudflare Workers)
 npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)
@@ -160,7 +161,7 @@ npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)
 | `config/` | The vetted miner list |
 | `scripts/` | Discovery, wallet, funding and first-call tools |
 | `test/` | Unit and end-to-end tests. They replay real captured miner answers against a fake payment-gated node |
-| `demo/` | A small app, a contract, and five demo pull requests (SAFE, dependency BLOCK, code BLOCK, address swap CAUTION, contract BLOCK) |
+| `demo/` | A small app, a contract, and six demo pull requests (SAFE, dependency BLOCK, code BLOCK, address swap CAUTION, contract BLOCK, sanctioned payout BLOCK) |
 
 ## Troubleshooting
 

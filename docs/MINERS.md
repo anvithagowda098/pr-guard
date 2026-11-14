@@ -15,6 +15,7 @@ Every check is first bought through Telegraph's routing: a canonical ask by inte
 | diff | #731001 PR Guard Sentinel | **this project** | code, only if Verity fails |
 | diff | #1900999007 CodeWire Smart Contract Audit | independent | Solidity: first fallback for diffs that touch `.sol` files |
 | addresses | #200001 GoPlus Security | independent | risk flags for each new on-chain address (honeypot, owner powers, verified source, proxy, taxes) |
+| sanctions | #731002 Counterproof Sanctions Screener | independent | each new on-chain address against the US OFAC, UN, EU and UK lists |
 
 The list lives in `config/miners.json`, keyed by check, best first. No miner is asked to second-guess another. A BLOCK needs deterministic evidence: registry data about the exact package and version, PR Guard's local rules (the same rule set as Sentinel, run inside PR Guard for free) finding the same issue in the diff, or a local check such as a committed key.
 
@@ -23,6 +24,13 @@ PR Guard Sentinel is our own miner (`miner/`). Its use is disclosed wherever it 
 ## Vetting history
 
 Every miner was tested with paid calls before it was added. The raw answers are kept as test fixtures in `test/fixtures/miner-responses/`, and every normalizer is tested against them. Newest first.
+
+### Nov 14, 2026: sanctions screening
+
+- **Counterproof's builder suggested the miner** for the address check, in PR Guard's showcase thread.
+- **A canonical `SANCTIONS_SCREENING_MATCH_GENERAL` ask** (`{"name": "<address>"}`) for the Lazarus Group's Ronin wallet routed to #731002. It matched with score 1, but in the morning the node returned `name`, `matches` and `lists` empty.
+- **After the builder's update that afternoon,** routed answers carry the matched party (`matches: ["LAZARUS GROUP"]`) and every list checked, with its publication date.
+- **Direct `/screen`** returns label BLOCK, the matching entry on the US list, and the official OFAC notice. USDT's contract came back CLEAR.
 
 ### Nov 13, 2026: smart contracts and addresses (mission 14)
 

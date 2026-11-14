@@ -85,7 +85,7 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
 
 | Nov 13, 05:21–05:26 | Routing tests (burner `0xd0Cd…cfB44`): canonical SECURITY_REVIEW_GENERAL ×2 → miner 77003, off-target; CODE_REVIEW_GENERAL → miner 302, usable; direct Verity #5530 → both bugs | signals `0x87fa3b8d…`, `0x9207fce2…`, `0xb0d09814…` (tx `0x44bcae92…51da`, block 12123863); fixtures in `test/fixtures/miner-responses/ROUTED/` |
 | Nov 13 | Update 1 posted on X (intro thread) | https://x.com/gowda_anvi/status/2121162244851736805 |
-| Nov 14 | Update 2 posted on X (milestone) and in the Discord showcase thread | X link to add |
+| Nov 14 | Update 2 posted on X (milestone) and in the Discord showcase thread | https://x.com/gowda_anvi/status/2121601194942713887 |
 | Nov 14 | Counterproof's builder (Sadiq, miner 731002) suggested his sanctions miner in the showcase thread; wired in the same day, and his routed-format fix confirmed live | showcase thread; commits `94f865b`, `2e34ed8` |
 | Nov 14 | Demo PR #6 (sanctioned payout) → BLOCK via routed sanctions screen | report `5017f9be53ea` (our own test, not adoption) |
 | Nov 13 | Routing gap reported to Telegraph (SECURITY_REVIEW_GENERAL → miner 77003 ignores the target) | https://github.com/telegraphprotocol/bounties/issues/187 |

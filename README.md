@@ -33,7 +33,9 @@ Open **https://pr-guard-app.pr-guard.workers.dev** and paste a pull request link
 
 ### 2. On your repository, with no setup (public repositories)
 
-Add this file as `.github/workflows/pr-guard.yml` (also in [`examples/pr-guard.yml`](examples/pr-guard.yml)):
+**One click:** type your repository's name under "Check every pull request automatically" on [the page](https://pr-guard-app.pr-guard.workers.dev). GitHub opens with the file below already filled in; commit it.
+
+Or add this file yourself as `.github/workflows/pr-guard.yml` (also in [`examples/pr-guard.yml`](examples/pr-guard.yml)):
 
 ```yaml
 name: PR Guard

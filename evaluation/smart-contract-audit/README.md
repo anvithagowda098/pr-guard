@@ -35,6 +35,13 @@ python3 -I build_rows.py smartbugs-curated rows.jsonl
 sha256sum rows.jsonl   # c0cce4310c85e97b0457987374f35ed0c0afa23b82a85d844d9438316f4debf2
 ```
 
+## Uploaded
+
+Nov 14, 2026, on Anjoman, from wallet `0x83b5A31d89a976Ec607C3064078fd0f7EB34abcc`:
+- **Admitted:** 103.
+- **Rejected:** 2, as near-duplicates of questions already in the pool.
+- **Contributors to the intent:** 2, up from 1.
+
 ## Upload
 
 On [Anjoman](https://anjoman.ai/dashboard/eval?intent=SMART_CONTRACT_AUDIT_GENERAL), with the contributor's wallet connected. Or sign and post it to `/api/evalpool/submissions` as described in [Contribute Evaluation Data](https://anjoman.ai/docs/scoring/contribute-evaluation-data).

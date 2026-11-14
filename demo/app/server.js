@@ -16,4 +16,10 @@ app.get("/users", async (req, res) => {
   res.json(_.uniqBy(rows, "id"));
 });
 
+app.get("/users/search", async (req, res) => {
+  const pattern = `%${String(req.query.q ?? "").slice(0, 64)}%`;
+  const { rows } = await db.query("SELECT id, name FROM users WHERE name ILIKE $1 LIMIT 20", [pattern]);
+  res.json(rows);
+});
+
 app.listen(process.env.PORT ?? 3000);

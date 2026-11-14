@@ -25,7 +25,8 @@ const DEFAULTS = {
   usdPerScan: 0.1,
   usdPerCall: 0.05,
 };
-const LIMITS = { maxDeps: 8, maxChunks: 3, maxChars: 12_000, maxAddresses: 3 };
+// maxContextFiles stays small: each read is a subrequest (50 per request on the free plan).
+const LIMITS = { maxDeps: 8, maxChunks: 3, maxChars: 12_000, maxAddresses: 3, maxContextFiles: 10 };
 const MAX_FILES = 100;
 const SCAN_TTL = 60 * 60 * 24 * 90; // keep reports 90 days
 const ROUTE_RETRY_SECONDS = 6 * 60 * 60; // try routing an intent again after an unusable answer
@@ -106,6 +107,7 @@ async function createScan(request, env, deps) {
     baseSha,
     headSha: pull.head.sha,
     getText,
+    listPaths: () => gh.paths(headRepo, pull.head.sha),
     checks: new Set(["deps", "diff", "addresses"]),
     limits: LIMITS,
   });

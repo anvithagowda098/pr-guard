@@ -182,6 +182,17 @@ test("the page is served with a strict content security policy", async () => {
   }
 });
 
+test("the page's one-click install opens GitHub with the no-key workflow, the same as the example", async () => {
+  const { app, env } = world();
+  const html = await (await call(app, env, "GET", "/")).text();
+  assert.match(html, /<form id="add">/);
+  const yaml = JSON.parse(html.match(/var WORKFLOW = ("(?:[^"\\]|\\.)*");/)[1]);
+  const example = readFileSync(new URL("../examples/pr-guard.yml", import.meta.url), "utf8");
+  const body = (text) => text.slice(text.indexOf("name: PR Guard")).replace(/ #.*$/gm, "");
+  assert.equal(body(yaml), body(example));
+  assert.match(html, /"https:\/\/github\.com\/" \+ repo \+ "\/new\/"/);
+});
+
 // The Action without a wallet: src/hosted.js driving this same service.
 const hostedFetch = (app, env) => (url, init) => app(new Request(url, { ...init, headers: { ...init?.headers, "cf-connecting-ip": "20.1.2.3" } }), env);
 

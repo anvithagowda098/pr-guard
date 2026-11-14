@@ -227,3 +227,11 @@ test("hosted mode: a dropped connection mid-check is retried without paying twic
   assert.equal(scan.verdict, "BLOCK");
   assert.deepEqual(asks.map((a) => a.miner), ["routed:SECURITY_REVIEW_GENERAL", "77010", "routed:CODE_REVIEW_GENERAL"], "each call paid once");
 });
+
+test("the sponsor wallet is public: its address, today's spend and the limits", async () => {
+  const { app, env } = world();
+  await call(app, env, "POST", "/api/scan", { url: "https://github.com/o/r/pull/8" });
+  const r = await (await call(app, env, "GET", "/api/sponsor")).json();
+  assert.match(r.address, /^0x[0-9a-fA-F]{40}$/);
+  assert.deepEqual([r.today.scans, r.limits.usdPerScan], [1, 0.1]);
+});

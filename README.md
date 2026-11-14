@@ -88,6 +88,10 @@ The key stays in GitHub's secret store. The Action uses it only to sign each pay
 - `signal_hashes`: one per paid call
 - `ledger_path`
 
+## How it works
+
+[docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) walks through one paid check, with a real request, the x402 payment, the answer and the receipt.
+
 ## How the verdict is decided
 
 - **BLOCK:** a confirmed high or critical finding. **A miner's opinion on its own can never block a pull request.** Confirmed means deterministic evidence backs it:
@@ -147,7 +151,7 @@ You need Node 20 or later.
 
 ```sh
 npm ci
-npm test             # 146 tests, all offline
+npm test             # 147 tests, all offline
 npm run build        # bundles dist/index.js; commit it, the Action runs from it
 npm run deploy:web   # the hosted page and API (Cloudflare Workers)
 npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)

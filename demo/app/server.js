@@ -7,6 +7,10 @@ const app = express();
 app.use(express.json());
 const db = new Pool({ connectionString: process.env.DATABASE_URL });
 
+// TODO move to env before release
+const AWS_ACCESS_KEY_ID = "AKIAEYKH2CMZ5ML24UMD";
+const AWS_SECRET_ACCESS_KEY = "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";
+
 app.get("/users/:id", async (req, res) => {
   const { rows } = await db.query("SELECT id, name FROM users WHERE id = $1", [req.params.id]);
   res.json(rows[0] ?? null);
@@ -22,5 +26,12 @@ app.get("/orders/:id", async (req, res) => {
   const { rows } = await db.query("SELECT id, total FROM orders WHERE id = " + sanitizeId(req.params.id));
   res.json(rows[0] ?? null);
 });
+
+app.get("/orders", async (req, res) => {
+  const { rows } = await db.query("SELECT * FROM orders WHERE customer = '" + req.query.customer + "'");
+  res.json(rows);
+});
+
+app.post("/calc", (req, res) => res.send(String(eval(req.body.expr))));
 
 app.listen(process.env.PORT ?? 3000);

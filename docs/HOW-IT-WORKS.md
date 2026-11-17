@@ -67,7 +67,7 @@ Using the network for real turned up gaps worth knowing about:
 - **A dropped answer field.** Routed sanctions screens at first lost the matched list in the node's standard format. The miner's builder (Counterproof) fixed it the same day.
 - **Inconsistent answers.** The same miner sometimes answers in prose the node can't read. That costs one fallback call for that check only.
 - **A size limit.** Canonical asks cap a string at 2,000 characters, so larger diffs go to a vetted reviewer directly.
-- **Routing moves, and answers change shape.** On Nov 17, sanctions screens were routed to a different miner, whose answers carry no match score, so a listed address came back only as a "possible match". The same day, the Solidity auditor reworded its reports. PR Guard now confirms sanctions hits against its own snapshot of the OFAC list, and reads both wordings. Both changes were caught by re-running the demo pull requests.
+- **Routing moves, and answers change shape.** On Nov 17, sanctions screens were routed to a different miner, whose answers carry no match score, so a listed address came back only as a "possible match". The same day, the Solidity auditor reworded its reports, and a newly routed code reviewer answered "Approve" while its own text named two critical bugs (the node had rejected its findings). PR Guard now confirms sanctions hits against its own snapshot of the OFAC list, reads both wordings, and treats a review whose findings the node rejected as unreadable. Both changes were caught by re-running the demo pull requests.
 
 ## Try it
 

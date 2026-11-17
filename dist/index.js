@@ -51506,11 +51506,14 @@ var isHigh2 = (s) => s === "high" || s === "critical";
 var rankOf = (s) => SEVERITIES.indexOf(s);
 var isEmpty = (n) => n.severity === "unknown" && !n.findings.length;
 var isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(r.bodyText ?? "");
+var ESSENTIAL_FIELDS = { "code-review-format": ["findings"], "security-review-format": ["issues"] };
 function judgeRouted(r, route, entries, vars) {
   if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})`, systematic: false };
   const id = r.body?.miner_id ?? "?";
   const vetted = entries.find((e) => String(e.minerId) === String(id));
   if (r.body?.result_shape === "intent") {
+    const lost = (ESSENTIAL_FIELDS[route.normalizer] ?? []).filter((k) => r.body.field_status?.[k] === "rejected");
+    if (lost.length) return { reject: `the node couldn't read miner ${id}'s ${lost.join(" and ")}`, systematic: false };
     const n = normalize(route.normalizer, r.body.result, vars);
     return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false } : { answer: n };
   }

@@ -44,6 +44,13 @@ export function createGitHub({ token, fetch: fetchImpl = (...a) => fetch(...a) }
       }
     },
 
+    /** Every file path at a commit (for impact context). */
+    async paths(fullName, sha) {
+      const [owner, repo] = fullName.split("/");
+      const data = await api(`/repos/${owner}/${repo}/git/trees/${sha}?recursive=1`);
+      return (data.tree ?? []).filter((t) => t.type === "blob").map((t) => t.path);
+    },
+
     /** File text at a commit of a public repository, or null if absent. */
     async rawText(fullName, ref, path) {
       const url = `https://raw.githubusercontent.com/${fullName}/${ref}/${path.split("/").map(encodeURIComponent).join("/")}`;

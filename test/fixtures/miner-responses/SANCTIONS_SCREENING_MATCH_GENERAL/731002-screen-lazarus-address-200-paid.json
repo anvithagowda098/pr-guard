@@ -1,0 +1,159 @@
+{
+  "captured_at": "2026-11-14T11:01:42.267Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/731002",
+  "request": {
+    "method": "GET",
+    "endpoint": "/screen",
+    "payload": {
+      "name": "0x098B716B8Aaf21512996dC57EB0615e2383E2f96"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask/731002\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask/731002",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for direct subnet inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask/731002"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 18365,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a5a58497fe7bcf69-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 14 Nov 2026 11:01:41 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHhkYWM2NmE0MDk3ODQyNDYzNzdhZDEyYmU5YjcyYmMwMWI5NWQ3ODI3NjY4OWQ4Mzg3OGUyNDYzYzY0NTQxYTQ3IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=x7Q7ObAry2%2B14yhbPaX%2BNx9RtsjPnM1M0oSPuEDhK9pmnFe3QvlxH6LoWoL5yEsaMEgVVheG%2BzTjXPn3WqcnOqyVXCUEfny3N5lvr5E85i9g5mI8IBJXyORcDG8c%2FuYbv3sQId%2Bxb6IQmDSZWDblIw%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweGNiMjRiNDAzODkxOWE1MTY3ZGJmMjIyYzM3YjcyZGIxODY5NDFkZDIyYjk5YTM2ZDBjNjBhZDk5MDBmOWNlN2YiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI1MjIzIiwiaW50ZW50IjoiU0FOQ1RJT05TX1NDUkVFTklOR19NQVRDSF9HRU5FUkFMIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6MjA4OSwic2V0dGxlbWVudCI6Im9uY2hhaW4iLCJjaGFpbiI6ImVpcDE1NToxMTE1NTExMSIsInR4X2hhc2giOiIweGRhYzY2YTQwOTc4NDI0NjM3N2FkMTJiZTliNzJiYzAxYjk1ZDc4Mjc2Njg5ZDgzODc4ZTI0NjNjNjQ1NDFhNDciLCJ0aW1lc3RhbXAiOjE3OTQ2NTQxMDF9"
+  },
+  "bodyText": "{\"cost_usd\":0.01,\"duration_ms\":689,\"miner_id\":\"731002\",\"miner_name\":\"Counterproof Sanctions Screener\",\"result\":{\"answer\":\"Match: \\\"0x098b716b8aaf21512996dc57eb0615e2383e2f96\\\" matches \\\"LAZARUS GROUP\\\" on the US OFAC SDN list (score 1). Not found on the UN Security Council list, EU consolidated list or UK sanctions list. Match: \\\"LAZARUS GROUP\\\" on the US list (EVM address 0x098b716b8aaf21512996dc57eb0615e2383e2f96 appears verbatim on the US list). Verify against the official notice. Under US sanctions, its property in US jurisdiction is blocked and US persons are generally prohibited from dealing with it.\",\"confidence\":1,\"is_match\":true,\"label\":\"BLOCK\",\"list_versions\":{\"EU\":\"2026-10-23\",\"UK\":\"2026-11-12\",\"UN\":\"2026-11-14\",\"US\":\"2026-11-13\"},\"lists\":[\"US OFAC SDN and non-SDN Consolidated lists (published 2026-11-13)\",\"UN Security Council Consolidated List (published 2026-11-14)\",\"EU Consolidated Financial Sanctions List (published 2026-10-23)\",\"UK Sanctions List (published 2026-11-12)\"],\"match_score\":1,\"matched\":true,\"matches\":[{\"list\":\"US\",\"name\":\"LAZARUS GROUP\",\"score\":1,\"verdict\":\"BLOCK\"}],\"name\":\"0x098b716b8aaf21512996dc57eb0615e2383e2f96\",\"notice\":\"https://sanctionssearch.ofac.treas.gov/Details.aspx?id=27307\",\"regimes\":{\"EU\":\"clear\",\"UK\":\"clear\",\"UN\":\"clear\",\"US\":\"match\"},\"screened_at\":\"2026-11-14T11:01:40.835Z\",\"summary\":\"Match: \\\"LAZARUS GROUP\\\" on the US list (EVM address 0x098b716b8aaf21512996dc57eb0615e2383e2f96 appears verbatim on the US list). Verify against the official notice.\"},\"result_shape\":\"raw\",\"signal_hash\":\"0x8796dd9b812fdea37d14025d7a10ad70ca13752e1095240125065468eee77170\",\"timestamp\":\"2026-11-14T11:01:41.013499916Z\"}",
+  "body": {
+    "cost_usd": 0.01,
+    "duration_ms": 689,
+    "miner_id": "731002",
+    "miner_name": "Counterproof Sanctions Screener",
+    "result": {
+      "answer": "Match: \"0x098b716b8aaf21512996dc57eb0615e2383e2f96\" matches \"LAZARUS GROUP\" on the US OFAC SDN list (score 1). Not found on the UN Security Council list, EU consolidated list or UK sanctions list. Match: \"LAZARUS GROUP\" on the US list (EVM address 0x098b716b8aaf21512996dc57eb0615e2383e2f96 appears verbatim on the US list). Verify against the official notice. Under US sanctions, its property in US jurisdiction is blocked and US persons are generally prohibited from dealing with it.",
+      "confidence": 1,
+      "is_match": true,
+      "label": "BLOCK",
+      "list_versions": {
+        "EU": "2026-10-23",
+        "UK": "2026-11-12",
+        "UN": "2026-11-14",
+        "US": "2026-11-13"
+      },
+      "lists": [
+        "US OFAC SDN and non-SDN Consolidated lists (published 2026-11-13)",
+        "UN Security Council Consolidated List (published 2026-11-14)",
+        "EU Consolidated Financial Sanctions List (published 2026-10-23)",
+        "UK Sanctions List (published 2026-11-12)"
+      ],
+      "match_score": 1,
+      "matched": true,
+      "matches": [
+        {
+          "list": "US",
+          "name": "LAZARUS GROUP",
+          "score": 1,
+          "verdict": "BLOCK"
+        }
+      ],
+      "name": "0x098b716b8aaf21512996dc57eb0615e2383e2f96",
+      "notice": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=27307",
+      "regimes": {
+        "EU": "clear",
+        "UK": "clear",
+        "UN": "clear",
+        "US": "match"
+      },
+      "screened_at": "2026-11-14T11:01:40.835Z",
+      "summary": "Match: \"LAZARUS GROUP\" on the US list (EVM address 0x098b716b8aaf21512996dc57eb0615e2383e2f96 appears verbatim on the US list). Verify against the official notice."
+    },
+    "result_shape": "raw",
+    "signal_hash": "0x8796dd9b812fdea37d14025d7a10ad70ca13752e1095240125065468eee77170",
+    "timestamp": "2026-11-14T11:01:41.013499916Z"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0xdac66a409784246377ad12be9b72bc01b95d78276689d83878e2463c64541a47",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0xcb24b4038919a5167dbf222c37b72db186941dd22b99a36d0c60ad9900f9ce7f",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "5223",
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2089,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0xdac66a409784246377ad12be9b72bc01b95d78276689d83878e2463c64541a47",
+    "timestamp": 1794654101
+  },
+  "charged": true
+}

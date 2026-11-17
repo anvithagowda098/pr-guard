@@ -98,7 +98,7 @@ The key stays in GitHub's secret store. The Action uses it only to sign each pay
 
 - **BLOCK:** a confirmed high or critical finding. **A miner's opinion on its own can never block a pull request.** Confirmed means deterministic evidence backs it:
   - **Dependencies:** registry data (GitHub's advisories through deps.dev, or OSV) about this exact package and version.
-  - **Addresses:** an exact match on a sanctions list, or GoPlus's risk data about that exact address, such as a honeypot or a hidden owner.
+  - **Addresses:** the exact address on the US OFAC sanctions list (PR Guard ships a snapshot of the official list, refreshed with `node scripts/update-ofac.js`; it overrules a screening miner that misses a listed address), an exact match reported by a sanctions screener, or GoPlus's risk data about that exact address, such as a honeypot or a hidden owner.
   - **Code:** PR Guard's own rules find the same issue in the same diff. When both name it, the higher of the two severities counts.
   - **Local checks:** for example, a committed key.
 - **CAUTION:** any of the following:

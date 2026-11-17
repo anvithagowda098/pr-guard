@@ -30,7 +30,7 @@ export const SECURITY_CATEGORIES = [
   { id: "selfdestruct", severity: "medium", re: /self-?destruct/i },
   { id: "unchecked-call", severity: "medium", re: /unchecked (low-level )?(call|send)|return value[^.]{0,40}(not checked|ignored|unchecked)/i },
   // General
-  { id: "sql-injection", severity: "high", re: /sql[\s-]*injection|\bsqli\b/i },
+  { id: "sql-injection", severity: "high", re: /sql[\s-]*injection|\bsqli\b|\binject(s|ed|ing)?\s+(arbitrary\s+|malicious\s+)?sql\b/i },
   { id: "command-injection", severity: "high", re: /(command|shell)[\s-]*injection|os command/i },
   { id: "code-injection", severity: "high", re: /code[\s-]*(injection|execution)|remote code execution|\brce\b|\beval\b/i },
   { id: "unsafe-deserialization", severity: "high", re: /deserializ/i },
@@ -41,9 +41,13 @@ export const SECURITY_CATEGORIES = [
   { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)/i },
   { id: "tls-verification-disabled", severity: "medium", re: /(tls|ssl|certificate) (verification|validation)|rejectunauthorized/i },
   { id: "weak-hash", severity: "medium", re: /\bmd5\b|\bsha-?1\b|weak hash/i },
+  // A change that weakens a check other code relies on ("removes the digit-only
+  // filtering", "no longer strips non-digit characters").
+  { id: "weakened-validation", severity: "medium", re: /\b(no longer|removes?|removed|removing|drops?|dropped|weakens?|weakened|loosens?|loosened)\b[^.;]{0,50}\b(validat\w*|sanitiz\w*|filter\w*|escap\w*|strips?)\b/i },
 ];
 // "No SQL injection risk here" names a category without reporting it.
-const NEGATED = /\b(no|not|never|without|isn't|prevents?|protect(s|ed)? against|safe from|free of|mitigat\w*|parameteri[sz]ed)\b[^.;:!?]*$/i;
+// ("No longer strips" reports a regression, not an absence.)
+const NEGATED = /\b(no(?!\s+longer)|not|never|without|isn't|prevents?|protect(s|ed)? against|safe from|free of|mitigat\w*|parameteri[sz]ed)\b[^.;:!?]*$/i;
 export function securityCategory(text) {
   // Miners write "hard‑coded" and "server‑side" with Unicode hyphens too.
   const t = String(text ?? "").replace(/[\u2010-\u2015\u2212]/g, "-");
@@ -129,17 +133,42 @@ const NORMALIZERS = {
   // ---- Vetted miners, called directly as the fallback ----------------------
 
   // CodeWire Smart Contract Audit (#1900999007) GET /contract-audit {contract}:
-  // a language-model audit as prose: "Overall risk verdict: ...", then
-  // "Finding 1: Reentrancy, affects `withdraw()`, severity critical. ..."
-  // (or "Finding 1, ..."). Captured Nov 13 for a vulnerable and a fixed vault.
+  // a language-model audit as prose, an overall verdict then one paragraph per
+  // finding. Its wording changes from one answer to the next:
+  //   "Finding 1: Reentrancy, affects `withdraw()`, severity critical." (Nov 13)
+  //   "Finding 1: Reentrancy affects withdraw() and has critical severity." (Nov 17)
+  //   "The `withdraw` function is affected by a critical reentrancy
+  //    vulnerability." (Nov 17, later)
+  // Each paragraph's first sentence gives the issue and its severity. An audit
+  // with no finding PR Guard can read is unknown, never clean, unless it says
+  // outright that it found nothing.
   "codewire-audit": (result) => {
     const text = String(result?.summary ?? "");
-    expect(/overall risk verdict/i.test(text), "no overall verdict");
+    expect(/overall risk/i.test(text), "no overall verdict");
     const SEV = { critical: "critical", high: "high", medium: "medium", moderate: "medium", low: "low", informational: "low", info: "low", none: "none" };
-    const findings = [...text.matchAll(/Finding\s+\d+\s*[:,]\s*(.+?),\s*affects\s+(.+?),\s*severity\s+(critical|high|medium|moderate|low|informational|info|none)\b/gi)].map((m) => {
-      const cat = securityCategory(m[1]);
-      return { title: `${m[1].trim()} (affects ${m[2].trim()})`.slice(0, 200), severity: SEV[m[3].toLowerCase()], ...(cat && { category: cat.id }) };
-    });
+    const L = "(critical|high|medium|moderate|low|informational|info|none)";
+    const LEVEL = new RegExp(`\\bseverity\\s+${L}\\b|\\b${L}[\\s-]+severity\\b|\\b(?:an?|the)\\s+${L}\\b(?=[^.]*\\b(?:vulnerab|issue|flaw|bug|weakness|risk))`, "i");
+    const [overall, ...paragraphs] = text.split(/\n\s*\n/);
+    const findings = paragraphs.map((p) => {
+      const head = p.trim().match(/^(.+?)(?:\.(?=\s|$)|$)/s)?.[1] ?? "";
+      const sev = head.match(LEVEL);
+      if (!sev || /^(no|none|nothing|there (is|are|were) no)\b/i.test(head)) return null; // "No high severity issues were found."
+      const severity = SEV[(sev[1] ?? sev[2] ?? sev[3]).toLowerCase()];
+      const numbered = head.match(/^Finding\s+\d+\s*[:,]\s*(.+)$/i);
+      let title, where;
+      if (numbered) {
+        const [t, affects] = numbered[1].split(/,?\s+affects\s+/i);
+        title = t.trim();
+        where = affects?.replace(/(,\s*severity\b|\s+and\s+has\b|,).*$/i, "").trim();
+      } else {
+        where = head.match(/^The\s+(`?[\w$.()]+`?)\s+function\b/i)?.[1];
+        title = head.replace(/^The\s+`?[\w$.()]+`?\s+function\s+(is\s+)?(affected by|has|contains)\s+(an?\s+)?/i, "").trim();
+      }
+      const cat = securityCategory(head);
+      return { title: `${title.charAt(0).toUpperCase()}${title.slice(1)}${where ? ` (affects ${where})` : ""}`.slice(0, 200), severity, ...(cat && { category: cat.id }) };
+    }).filter(Boolean);
+    const saysNone = /\bno (significant |material |security )?(vulnerabilit|issues?\b|findings?\b)|\bappears safe\b|\bis safe\b/i.test(overall);
+    expect(findings.length || saysNone, "findings not readable");
     return { severity: maxSeverity(findings), findings };
   },
 

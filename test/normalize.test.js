@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { normalize } from "../src/normalize.js";
+import { normalize, securityCategory } from "../src/normalize.js";
 import { decide } from "../src/policy.js";
 import { confirmFindings, judgeRouted } from "../src/runner.js";
 
@@ -160,6 +160,38 @@ test("local rules catch what a reviewer misses: CAUTION, never a silent SAFE", (
 const routed = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/ROUTED/${name}`, import.meta.url), "utf8"));
 const asRecord = (cap) => ({ ok: cap.ok, status: cap.status, body: cap.body, costUsd: cap.costUsd });
 
+test("a routed review whose findings the node rejected is unreadable, not an Approve (TxLens #9002, Nov 17)", () => {
+  const cap = routed("code-review-solidity-reentrancy-9002-approve-findings-rejected.json");
+  assert.deepEqual([cap.body.result.verdict, cap.body.result.findings, cap.body.field_status.findings], ["Approve", null, "rejected"]);
+  const route = { intent: "CODE_REVIEW_GENERAL", params: cap.request.params, normalizer: "code-review-format" };
+  const judged = judgeRouted(asRecord(cap), route, [], { diff: cap.request.params.code });
+  assert.deepEqual(judged, { reject: "the node couldn't read miner 9002's findings", systematic: false });
+  // A rejected summary alone is harmless: miner 302's review of the same vault is used.
+  const ok = routed("code-review-solidity-reentrancy-302-intent.json");
+  assert.equal(ok.body.field_status.summary, "rejected");
+  assert.ok(judgeRouted(asRecord(ok), route, [], { diff: ok.request.params.code }).answer);
+});
+
+test("the loosened validator (demo #7) routed to TxLens #9002: 'inject SQL' is SQL injection, unconfirmed -> CAUTION", () => {
+  const cap = routed("code-review-loosened-validator-9002-intent.json");
+  const diff = cap.request.params.code;
+  const { answer } = judgeRouted(asRecord(cap), { normalizer: "code-review-format" }, [], { diff });
+  assert.deepEqual(answer.findings.map((f) => [f.category, f.severity]), [["sql-injection", "high"]]);
+  const c = confirmFindings("diff", answer, { diff });
+  assert.equal(c.confirmed, false, "the concatenation is in server.js, outside the diff");
+  assert.equal(decide([{ check: "diff", target: "validate.js", status: "ok", calls: [], ...c }]).verdict, "CAUTION");
+  // Another answer to the same diff kept only its first sentence: still a weakened check, not SAFE.
+  const short = normalize("code-review-format", { verdict: "Request changes", findings: ["The change to `sanitizeId` in `demo/app/validate.js` removes the digit-only filtering, allowing arbitrary characters to pass through."] });
+  assert.deepEqual([short.findings[0].category, short.severity], ["weakened-validation", "medium"]);
+});
+
+test("negations: 'no SQL injection' isn't a finding, 'no longer strips' is", () => {
+  assert.equal(securityCategory("No SQL injection risk here."), null);
+  assert.equal(securityCategory("Queries are parameterized, so SQL injection is not possible."), null);
+  assert.equal(securityCategory("sanitizeId no longer strips non-digits, so an attacker could inject SQL.")?.id, "sql-injection");
+  assert.equal(securityCategory("Removed an unused import."), null);
+});
+
 test("routed CODE_REVIEW_GENERAL (miner 302, intent format): security findings rated, style notes low", () => {
   const cap = routed("code-review-sqli-eval-diff-302-intent.json");
   const diff = cap.request.params.code;
@@ -273,6 +305,36 @@ test("CodeWire on the demo vault: reentrancy critical, missing access control hi
   assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
 });
 
+test("CodeWire's Nov 17 wording ('Overall risk is critical', 'Reentrancy affects withdraw() and has critical severity') reads the same -> BLOCK", () => {
+  const n = normalize("codewire-audit", codewire("1900999007-audit-reentrant-vault-nov17-format.json").body.result);
+  assert.deepEqual(n.findings.map((f) => [f.title, f.category, f.severity]), [
+    ["Reentrancy (affects withdraw())", "reentrancy", "critical"],
+    ["Missing access control (affects setOwner())", "access-control", "high"],
+  ]);
+  const diff = codewire("1900999007-audit-reentrant-vault-200-paid.json").request.payload.contract; // the same vault
+  const c = confirmFindings("diff", n, { diff });
+  assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+  // Findings it lists but that can't be read must not pass as SAFE.
+  assert.equal(normalize("codewire-audit", { summary: "Overall risk is high.\n\nFinding 1 - something unusual." }).severity, "unknown");
+});
+
+test("CodeWire's prose wording ('The `withdraw` function is affected by a critical reentrancy vulnerability') -> BLOCK", () => {
+  const n = normalize("codewire-audit", codewire("1900999007-audit-reentrant-vault-prose-format.json").body.result);
+  assert.deepEqual(n.findings.map((f) => [f.title, f.category, f.severity]), [
+    ["Critical reentrancy vulnerability (affects `withdraw`)", "reentrancy", "critical"],
+    ["High-severity missing access control vulnerability (affects `setOwner`)", "access-control", "high"],
+  ]);
+  const c = confirmFindings("diff", n, { diff: codewire("1900999007-audit-reentrant-vault-200-paid.json").request.payload.contract });
+  assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("CodeWire: an audit with no finding PR Guard can read is unknown, unless it says it found nothing", () => {
+  assert.equal(normalize("codewire-audit", { summary: "Overall risk verdict: the contract is unsafe.\n\nSomething odd happens in withdraw." }).severity, "unknown");
+  assert.deepEqual(normalize("codewire-audit", { summary: "Overall risk verdict: no vulnerabilities were found in the supplied code." }), { severity: "none", findings: [] });
+  const n = normalize("codewire-audit", { summary: "Overall risk verdict: low.\n\nNo critical or high severity issues were found.\n\nThe `pause` function has a low-severity missing event issue." });
+  assert.deepEqual(n.findings.map((f) => f.severity), ["low"]);
+});
+
 test("CodeWire on the fixed vault: only low findings -> SAFE; no verdict -> unknown", () => {
   const cap = codewire("1900999007-audit-fixed-vault-200-paid.json");
   const n = normalize("codewire-audit", cap.body.result);
@@ -292,7 +354,8 @@ test("an OFAC-listed address routed to Counterproof: exact match, critical, conf
   assert.deepEqual([cap.body.result_shape, cap.body.result.lists], ["intent", null]);
   const { answer } = judgeRouted({ ok: true, status: 200, body: cap.body }, { normalizer: "sanctions-format" }, [], lazarus);
   const c = confirmFindings("sanctions", answer, lazarus);
-  assert.deepEqual([c.severity, c.confirmed, c.findings[0].title], ["critical", true, "on a sanctions list, exact match"]);
+  assert.deepEqual([c.severity, c.confirmed, c.disagreement], ["critical", true, false]);
+  assert.equal(c.findings[0].title, "LAZARUS GROUP: this exact address is on the US OFAC SDN list (DPRK3)");
   assert.equal(decide([{ check: "sanctions", target: "x", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
 });
 
@@ -313,4 +376,36 @@ test("routed sanctions answers now name the listed party and the lists checked (
   assert.equal(n.findings[0].title, "LAZARUS GROUP: on a sanctions list, exact match");
   assert.match(n.findings[0].detail, /^lists checked: US OFAC SDN and non-SDN Consolidated lists \(published 2026-11-13\); UN Security Council/);
   assert.deepEqual(normalize("sanctions-format", { matched: false, match_score: 0 }), { severity: "none", findings: [], verified: true });
+});
+
+// ---- Sanctions: the exact address on OFAC's list confirms (Nov 17) ---------
+// Routing moved sanctions screens to miner 302, whose answers carry no match
+// score; and #208 reports it answering "not matched" for a listed address.
+test("routed to miner 302 (no match score): a 'possible match' alone; the OFAC list makes it exact -> BLOCK", () => {
+  const cap = screen("routed-lazarus-address-302-intent-no-score.json");
+  assert.deepEqual([cap.body.miner_id, cap.body.result.match_score], ["302", null]);
+  const { answer } = judgeRouted({ ok: true, status: 200, body: cap.body }, { normalizer: "sanctions-format" }, [], lazarus);
+  assert.equal(answer.severity, "medium");
+  const c = confirmFindings("sanctions", answer, lazarus);
+  assert.deepEqual([c.severity, c.confirmed, c.disagreement], ["critical", true, false]);
+  assert.match(c.findings[0].detail, /^ETH address in OFAC's list as of \d{4}-\d{2}-\d{2}; the screening miner reported a match too$/);
+  assert.equal(decide([{ check: "sanctions", target: "x", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("a miner that says 'not matched' for a listed address is overruled, and the report says they disagree", () => {
+  const c = confirmFindings("sanctions", normalize("sanctions-format", { matched: false, match_score: 0 }), lazarus);
+  assert.deepEqual([c.severity, c.confirmed, c.disagreement], ["critical", true, true]);
+  assert.match(c.findings[0].detail, /the screening miner reported no match$/);
+  // Mixed case and an unreadable answer change nothing.
+  const u = confirmFindings("sanctions", { severity: "unknown", findings: [] }, { address: lazarus.address.toLowerCase() });
+  assert.deepEqual([u.severity, u.confirmed], ["critical", true]);
+});
+
+test("an address not on OFAC's list: a 'possible match' stays CAUTION; a verified exact match still blocks", () => {
+  const other = { address: "0x1111111111111111111111111111111111111111" };
+  const possible = confirmFindings("sanctions", normalize("sanctions-format", { matched: true, matches: [other.address], match_score: null }), other);
+  assert.deepEqual([possible.severity, possible.confirmed], ["medium", false]);
+  assert.equal(decide([{ check: "sanctions", target: "x", status: "ok", calls: [], ...possible }]).verdict, "CAUTION");
+  const exact = confirmFindings("sanctions", normalize("sanctions-format", { matched: true, matches: ["X"], match_score: 1 }), other);
+  assert.deepEqual([exact.severity, exact.confirmed], ["critical", true]);
 });

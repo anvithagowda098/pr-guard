@@ -23,6 +23,6 @@ Two ways, neither needs a wallet:
    - To see a fresh paid run, use a pull request nobody has scanned yet, or push a new commit to one.
 2. **On your own repository.** Add the [one-file workflow](../examples/pr-guard.yml) to a public repository and open a pull request. PR Guard comments within about a minute. The checks run on your repository's GitHub Actions and are paid by PR Guard's sponsor wallet.
 
-GitHub Actions in this repository are paused for now: a billing lock on the owner's GitHub account (GitHub Free, nothing billable) is with GitHub Support. The demo pull requests above therefore show their results on the report pages rather than as PR comments. Earlier PR comments from Nov 2 are still on the pull requests.
+Each pull request also carries PR Guard's comment from the GitHub Action, last re-run on Nov 17 (Actions were paused Nov 3–16 by a GitHub billing lock, since lifted by GitHub Support). That re-run found routing had moved to different miners since Nov 13, and caught three ways their answers could be misread; see [What we found along the way](../docs/HOW-IT-WORKS.md#what-we-found-along-the-way).
 
 The AWS key in the demo is fake (it was never issued) and exists only to show detection.

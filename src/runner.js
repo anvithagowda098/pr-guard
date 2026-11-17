@@ -9,6 +9,7 @@ import { normalize } from "./normalize.js";
 import { maxSeverity, SEVERITIES } from "./policy.js";
 import { ledgerEntry } from "./ledger.js";
 import { scan } from "../miner/rules.js";
+import { OFAC_ADDRESSES, OFAC_SNAPSHOT_DATE } from "./ofac-addresses.js";
 
 const MAX_ATTEMPTS = 3; // fallback miners tried in turn when one fails (failover, not a second opinion)
 
@@ -76,7 +77,8 @@ export function judgeRouted(r, route, entries, vars) {
 
 /** Confirm high findings by deterministic evidence; flag local-rule hits the reviewer missed. */
 export function confirmFindings(check, answer, vars) {
-  if (check === "deps" || check === "addresses" || check === "sanctions") return { ...answer, confirmed: isHigh(answer.severity) && answer.verified === true, disagreement: false };
+  if (check === "sanctions") return confirmSanctions(answer, vars);
+  if (check === "deps" || check === "addresses") return { ...answer, confirmed: isHigh(answer.severity) && answer.verified === true, disagreement: false };
   if (check !== "diff" || !vars.diff) return { ...answer, confirmed: false, disagreement: false };
   const local = scan(vars.diff).findings.filter((f) => f.rule !== "hardcoded-secret"); // secrets: the local secret scan reports those
   const matches = (f, l) => (f.category && f.category === l.rule) || (f.file && f.line && f.file === l.file && f.line === l.line);
@@ -101,6 +103,29 @@ export function confirmFindings(check, answer, vars) {
     ...(!corroborated && { severity: missed.length && !isHigh(answer.severity) && answer.severity !== "medium" ? "medium" : answer.severity }),
     confirmed: corroborated,
     disagreement: missed.length > 0,
+  };
+}
+
+// A screening miner's answer alone doesn't block. The exact address on OFAC's
+// SDN list (a snapshot shipped with PR Guard, scripts/update-ofac.js) does,
+// whatever the miner said: miners have answered "possible match" and even "not
+// matched" for listed addresses (telegraphprotocol/bounties#208).
+function confirmSanctions(answer, vars) {
+  const listed = OFAC_ADDRESSES[String(vars.address ?? "").toLowerCase()];
+  if (!listed) return { ...answer, confirmed: isHigh(answer.severity) && answer.verified === true, disagreement: false };
+  const [party, program, currency] = listed;
+  const minerSays = answer.severity === "none" ? "the screening miner reported no match" : answer.severity === "unknown" ? "the screening miner's answer couldn't be read" : "the screening miner reported a match too";
+  return {
+    ...answer,
+    severity: "critical",
+    findings: [{
+      title: `${party}: this exact address is on the US OFAC SDN list (${program})`,
+      severity: "critical",
+      detail: `${currency} address in OFAC's list as of ${OFAC_SNAPSHOT_DATE}; ${minerSays}`,
+      ref: "https://sanctionssearch.ofac.treas.gov/",
+    }],
+    confirmed: true,
+    disagreement: answer.severity === "none",
   };
 }
 

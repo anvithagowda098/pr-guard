@@ -13,9 +13,9 @@ PR Guard reads a pull request and buys independent security checks from miners o
 | Check | How | Cost |
 |---|---|---|
 | **New or upgraded dependencies** (npm, PyPI, Go, Cargo) | Each package version is checked for known vulnerabilities through Telegraph (`SECURITY_REVIEW_GENERAL`). | $0.01 per package |
-| **Code changes** | The redacted diff is reviewed through Telegraph (`CODE_REVIEW_GENERAL`) for injection, `eval` on input and similar bugs. PR Guard's own rules check the same diff. | $0.01 per part of the diff |
+| **Code changes** | The redacted diff is reviewed through Telegraph (`CODE_REVIEW_GENERAL`) for injection, `eval` on input and similar bugs. Where the changed functions are used elsewhere in the repository, those call sites go with it, so a change in one file that's dangerous in another can be seen. PR Guard's own rules check the same diff. | $0.01 per part of the diff |
 | **Smart contracts** (Solidity) | The same code review. A smart-contract auditor is the fallback for `.sol` files. PR Guard's own Solidity rules check for reentrancy, missing access control, `tx.origin` auth, `delegatecall`, `selfdestruct` and unchecked calls. | $0.01 per part of the diff |
-| **New on-chain addresses** | Each address a PR adds gets a risk check through Telegraph (GoPlus data: honeypot, hidden owner, unverified source, proxy, taxes) before code starts sending funds there. An address swapped for another is flagged for a human to confirm. | $0.01 per address |
+| **New on-chain addresses** | Each address a PR adds is screened against the US OFAC, UN, EU and UK sanctions lists, and gets a risk check (GoPlus data: honeypot, hidden owner, unverified source, proxy, taxes), both bought through Telegraph before code starts sending funds there. An address swapped for another is flagged for a human to confirm. | $0.02 per address |
 | **Committed secrets and keys** | Local scan of added lines | free |
 | **New install scripts** (`preinstall`, `install`, `postinstall`, `prepare` in `package.json`) | Local check | free |
 
@@ -29,11 +29,13 @@ Open **https://pr-guard-app.pr-guard.workers.dev** and paste a pull request link
 - **Cost:** none to you. A sponsor wallet pays for the checks, up to $0.10 per scan.
 - **Limits:** 5 scans per visitor per day.
 - **Reports:** each one gets a permanent link.
-- **Examples:** five demo pull requests and their reports are in [demo/README.md](demo/README.md).
+- **Examples:** seven demo pull requests and their reports are in [demo/README.md](demo/README.md).
 
 ### 2. On your repository, with no setup (public repositories)
 
-Add this file as `.github/workflows/pr-guard.yml` (also in [`examples/pr-guard.yml`](examples/pr-guard.yml)):
+**One click:** type your repository's name under "Check every pull request automatically" on [the page](https://pr-guard-app.pr-guard.workers.dev). GitHub opens with the file below already filled in; commit it.
+
+Or add this file yourself as `.github/workflows/pr-guard.yml` (also in [`examples/pr-guard.yml`](examples/pr-guard.yml)):
 
 ```yaml
 name: PR Guard
@@ -88,11 +90,15 @@ The key stays in GitHub's secret store. The Action uses it only to sign each pay
 - `signal_hashes`: one per paid call
 - `ledger_path`
 
+## How it works
+
+[docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) walks through one paid check, with a real request, the x402 payment, the answer and the receipt.
+
 ## How the verdict is decided
 
 - **BLOCK:** a confirmed high or critical finding. **A miner's opinion on its own can never block a pull request.** Confirmed means deterministic evidence backs it:
   - **Dependencies:** registry data (GitHub's advisories through deps.dev, or OSV) about this exact package and version.
-  - **Addresses:** GoPlus's risk data about that exact address, such as a honeypot or a hidden owner.
+  - **Addresses:** an exact match on a sanctions list, or GoPlus's risk data about that exact address, such as a honeypot or a hidden owner.
   - **Code:** PR Guard's own rules find the same issue in the same diff. When both name it, the higher of the two severities counts.
   - **Local checks:** for example, a committed key.
 - **CAUTION:** any of the following:
@@ -125,7 +131,8 @@ Each row of the PR comment shows which miner answered, and whether Telegraph rou
 | #190048 Secrev Depsdev | independent | any ecosystem, advisory ids only (never blocks) |
 | #5530 Telegraph Verity | independent | code, when the routed review is unusable or the diff part is too big |
 | #1900999007 CodeWire Smart Contract Audit | independent | Solidity, before Verity, for diffs that touch `.sol` files |
-| #200001 GoPlus Security | independent | new on-chain addresses |
+| #200001 GoPlus Security | independent | new on-chain addresses: token and contract risk |
+| #731002 Counterproof Sanctions Screener | independent | new on-chain addresses: sanctions screening (suggested by its builder) |
 
 Every miner was tested with paid calls before it was added, and its raw answers are kept as test fixtures. [docs/MINERS.md](docs/MINERS.md) covers how each one was chosen and how to vet and add another. PR Guard Sentinel is a rule-based miner with no AI model and no API key; its code is in [`miner/`](miner/).
 
@@ -136,7 +143,7 @@ Every miner was tested with paid calls before it was added, and its raw answers 
   - **After a call:** any call that returns a settled payment counts as spent, including a routed answer that couldn't be used. That costs at most $0.01 per intent per run, since routing is then skipped for that intent.
   - **When the budget runs out:** the lowest-value checks are skipped first, so the verdict says CAUTION rather than SAFE.
 - **Privacy:**
-  - **What miners see:** diffs are redacted before they go to a miner. Cloud keys, tokens, private keys, URL passwords and labelled credentials are removed.
+  - **What miners see:** diffs are redacted before they go to a miner. Cloud keys, tokens, private keys, URL passwords and labelled credentials are removed. So are the call-site lines sent as context: up to 8 lines from files the PR doesn't change, never from tests, docs or generated code.
   - **Never sent:** `.env`, `*.pem`, `id_rsa` and similar files, even redacted.
   - **Skipped:** lockfiles, vendored and minified code, binaries and documentation.
 
@@ -146,7 +153,7 @@ You need Node 20 or later.
 
 ```sh
 npm ci
-npm test             # 136 tests, all offline
+npm test             # 147 tests, all offline
 npm run build        # bundles dist/index.js; commit it, the Action runs from it
 npm run deploy:web   # the hosted page and API (Cloudflare Workers)
 npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)
@@ -160,7 +167,7 @@ npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)
 | `config/` | The vetted miner list |
 | `scripts/` | Discovery, wallet, funding and first-call tools |
 | `test/` | Unit and end-to-end tests. They replay real captured miner answers against a fake payment-gated node |
-| `demo/` | A small app, a contract, and five demo pull requests (SAFE, dependency BLOCK, code BLOCK, address swap CAUTION, contract BLOCK) |
+| `demo/` | A small app, a contract, and seven demo pull requests (SAFE, dependency BLOCK, code BLOCK, address swap CAUTION, contract BLOCK, sanctioned payout BLOCK, cross-file CAUTION) |
 
 ## Troubleshooting
 

@@ -50336,6 +50336,14 @@ function diffLineLocation(text, n) {
   }
   return null;
 }
+function contextLineLocation(text, n) {
+  const lines = String(text ?? "").split("\n");
+  for (const i of [n - 1, n - 2]) {
+    const m = lines[i]?.match(/^# (\S+):(\d+) uses /);
+    if (m) return { file: m[1], line: Number(m[2]), context: true };
+  }
+  return null;
+}
 var URL_RE = /https?:\/\/[^\s"'`<>()[\]{}\\]+/g;
 var IGNORED_HOSTS = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|(.+\.)?example\.(com|org|net)|.+\.(test|local|invalid|example)|www\.w3\.org|schemas\.[^/]+)$/i;
 function extractUrls(files, { max = 10 } = {}) {
@@ -50524,6 +50532,114 @@ function scanSecrets(files) {
   return findings;
 }
 
+// src/context.js
+var CODE_FILE = /\.(js|mjs|cjs|jsx|ts|tsx|py|go|rs|rb|php|java|kt|cs|sol|vy)$/i;
+var TEST_FILE = /(^|\/)(test|tests|__tests__|spec|specs|fixtures?|mocks?)\/|\.(test|spec)\.\w+$|_test\.(go|py)$/i;
+var DEFINITION = [
+  /\b(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(/,
+  // JS/TS, Solidity
+  /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/,
+  // JS arrow or function expression
+  /\bclass\s+([A-Za-z_$][\w$]*)/,
+  // JS/TS, Python, PHP, Java
+  /^\s*(?:async\s+)?def\s+([A-Za-z_]\w*)\s*\(/,
+  // Python
+  /^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)\s*\(/,
+  // Go
+  /^\s*(?:pub(?:\([^)]*\))?\s+)?fn\s+([A-Za-z_]\w*)/,
+  // Rust
+  /\bmodifier\s+([A-Za-z_]\w*)/,
+  // Solidity
+  /^\s*(?:abstract\s+)?(?:contract|interface|library)\s+([A-Za-z_]\w*)/,
+  // Solidity
+  /^\s*(?:export\s+)?(?:const|let|var)\s+([A-Z][A-Z0-9_]{2,})\s*=/
+  // exported constants (CONFIG_VALUE = ...)
+];
+var STOP = /* @__PURE__ */ new Set(["main", "init", "run", "get", "set", "app", "handler", "index", "default", "constructor", "render", "test", "setup", "data", "value", "config", "module", "exports", "require", "self", "this", "new", "fn", "cb", "next", "err", "res", "req"]);
+function definedIn(text) {
+  for (const re of DEFINITION) {
+    const m = text.match(re);
+    if (m && m[1].length >= 3 && !STOP.has(m[1].toLowerCase())) return m[1];
+  }
+  return null;
+}
+function changedSymbols(files, { max = 8 } = {}) {
+  const out = /* @__PURE__ */ new Map();
+  for (const f of files) {
+    if (!f.patch || !CODE_FILE.test(f.filename) || shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
+    let enclosing = null;
+    const add = (name) => {
+      if (name && !out.has(name)) out.set(name, { name, file: f.filename });
+    };
+    for (const raw of f.patch.split("\n")) {
+      const hunk = raw.match(/^@@ [^@]+ @@\s?(.*)$/);
+      if (hunk) {
+        enclosing = definedIn(hunk[1]);
+        continue;
+      }
+      if (/^(\+\+\+|---)/.test(raw)) continue;
+      const changed = /^[+-]/.test(raw);
+      const name = definedIn(changed || raw.startsWith(" ") ? raw.slice(1) : raw);
+      if (name) enclosing = name;
+      if (changed) add(name ?? enclosing);
+    }
+  }
+  return [...out.values()].slice(0, max);
+}
+var dirOf = (p) => p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "";
+function closeness(path, changed) {
+  let best = 0;
+  for (const c of changed) {
+    const a = dirOf(path).split("/");
+    const b = dirOf(c).split("/");
+    let n = 0;
+    while (n < a.length && n < b.length && a[n] === b[n]) n++;
+    best = Math.max(best, n);
+  }
+  return best;
+}
+async function findUsages({ symbols, paths, read, changed, maxFiles = 30, perSymbol = 3, maxSites = 8 }) {
+  if (!symbols.length) return [];
+  const skip = new Set(changed);
+  const candidates = paths.filter((p) => CODE_FILE.test(p) && !skip.has(p) && !shouldSkipFile(p) && !isDocFile(p) && !TEST_FILE.test(p)).map((p, i) => [p, closeness(p, changed), i]).sort((a, b) => b[1] - a[1] || a[2] - b[2]).slice(0, maxFiles).map(([p]) => p);
+  const patterns = symbols.map((s) => ({ ...s, re: new RegExp(`(?<![\\w$])${s.name.replace(/\$/g, "\\$")}(?![\\w$])`) }));
+  const count = /* @__PURE__ */ new Map();
+  const sites = [];
+  const texts = [];
+  for (let i = 0; i < candidates.length && texts.length < candidates.length; i += 5) {
+    const batch = candidates.slice(i, i + 5);
+    texts.push(...await Promise.all(batch.map(async (path) => {
+      try {
+        return [path, await read(path)];
+      } catch {
+        return [path, null];
+      }
+    })));
+  }
+  for (const [path, text] of texts) {
+    if (sites.length >= maxSites) break;
+    if (!text) continue;
+    const lines = text.split("\n");
+    for (let i = 0; i < lines.length && sites.length < maxSites; i++) {
+      const line = lines[i];
+      if (line.length > 400) continue;
+      for (const s of patterns) {
+        if ((count.get(s.name) ?? 0) >= perSymbol || !s.re.test(line) || definedIn(line) === s.name) continue;
+        count.set(s.name, (count.get(s.name) ?? 0) + 1);
+        sites.push({ symbol: s.name, from: s.file, path, line: i + 1, text: redact(line.trim()).text.slice(0, 160) });
+        break;
+      }
+    }
+  }
+  return sites;
+}
+function contextBlock(sites) {
+  if (!sites.length) return "";
+  const lines = ["", "# Read-only context, not part of this change: where code changed above is used elsewhere in the repository."];
+  for (const s of sites) lines.push(`# ${s.path}:${s.line} uses ${s.symbol} (changed in ${s.from})`, `#   ${s.text}`);
+  return lines.join("\n") + "\n";
+}
+
 // src/policy.js
 var SEVERITIES = ["none", "low", "medium", "high", "critical"];
 var rank = (s) => SEVERITIES.indexOf(s);
@@ -50566,7 +50682,7 @@ function rankDeps(deps, title = "") {
   const rank2 = (d) => d.direct ? 0 : named2.has(d.name.toLowerCase()) ? 1 : d.from ? 2 : 3;
   return deps.map((d, i) => [d, i]).sort((a, b) => rank2(a[0]) - rank2(b[0]) || a[1] - b[1]).map(([d]) => d);
 }
-function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxAddresses = 5, maxChars = 12e3, maxChunks = Infinity } = {}) {
+function buildJobs({ deps, files, title, body, usages = [] }, enabled, { maxDeps = 25, maxUrls = 10, maxAddresses = 5, maxChars = 12e3, maxChunks = Infinity } = {}) {
   const depJob = (d) => ({
     check: "deps",
     intent: "SECURITY_REVIEW_GENERAL",
@@ -50579,14 +50695,22 @@ function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrl
   const transitive = resolvable.filter((d) => !d.direct).map(depJob);
   const chunks = chunkDiff(files, { maxChars }).slice(0, maxChunks);
   const diff = chunks.map((c, i) => {
+    const sites = usages.filter((u) => c.files.includes(u.from));
+    const review = c.text + contextBlock(sites);
     const routable = c.text.length <= ROUTE_MAX_CHARS;
+    const withContext = review.length <= ROUTE_MAX_CHARS;
+    const notes = [];
+    if (sites.length) {
+      notes.push(`Context: ${sites.length} call site${sites.length === 1 ? "" : "s"} of changed code in ${new Set(sites.map((s) => s.path)).size} other file${new Set(sites.map((s) => s.path)).size === 1 ? "" : "s"} sent with the diff${routable && !withContext ? ", except in the routed ask (2,000-character limit)" : ""}.`);
+    }
     return {
       check: "diff",
       intent: routable ? "CODE_REVIEW_GENERAL" : "SECURITY_REVIEW_GENERAL",
       target: chunks.length > 1 ? `chunk ${i + 1}/${chunks.length}: ${c.files.join(", ")}` : c.files.join(", "),
-      vars: { diff: c.text, files: c.files, chunk_index: i + 1, chunk_count: chunks.length },
-      route: routable ? { intent: "CODE_REVIEW_GENERAL", params: { code: c.text }, normalizer: "code-review-format" } : null,
-      ...!routable && { routeSkipped: `over the ${ROUTE_MAX_CHARS.toLocaleString("en-US")}-character limit for canonical asks` }
+      vars: { diff: c.text, review, files: c.files, chunk_index: i + 1, chunk_count: chunks.length },
+      route: routable ? { intent: "CODE_REVIEW_GENERAL", params: { code: withContext ? review : c.text }, normalizer: "code-review-format" } : null,
+      ...!routable && { routeSkipped: `over the ${ROUTE_MAX_CHARS.toLocaleString("en-US")}-character limit for canonical asks` },
+      ...notes.length && { notes }
     };
   });
   const found = extractAddresses(files, { max: maxAddresses });
@@ -50697,10 +50821,11 @@ async function collectDependencies(getText2, files, baseSha, headSha) {
   }
   return { deps: mergeDependencyChanges(deps), installScripts, errors };
 }
-async function planScan({ pr, rawFiles, baseSha, headSha, getText: getText2, checks, limits }) {
+async function planScan({ pr, rawFiles, baseSha, headSha, getText: getText2, checks, limits = {}, listPaths: listPaths2 }) {
   const { deps, installScripts, errors } = await collectDependencies(getText2, rawFiles, baseSha, headSha);
   const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
-  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, checks, limits);
+  const usages = checks.has("diff") && listPaths2 ? await impactContext({ rawFiles, headSha, getText: getText2, listPaths: listPaths2, maxFiles: limits.maxContextFiles }) : [];
+  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body, usages }, checks, limits);
   const local2 = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps)];
   const notes = [];
   const changed = deps.filter((d) => d.to).length;
@@ -50709,6 +50834,16 @@ async function planScan({ pr, rawFiles, baseSha, headSha, getText: getText2, che
     notes.push(`${changed - checked} of ${changed} changed packages were not checked (limit ${checked}): direct dependencies and packages named in the title go first.`);
   }
   return { jobs, local: local2, errors, notes };
+}
+async function impactContext({ rawFiles, headSha, getText: getText2, listPaths: listPaths2, maxFiles = 30 }) {
+  try {
+    const symbols = changedSymbols(rawFiles);
+    if (!symbols.length) return [];
+    const paths = await listPaths2();
+    return await findUsages({ symbols, paths, read: (path) => getText2({ path, ref: headSha }), changed: rawFiles.map((f) => f.filename), maxFiles });
+  } catch {
+    return [];
+  }
 }
 
 // src/normalize.js
@@ -50921,9 +51056,9 @@ var NORMALIZERS = {
     const findings = result?.answer?.findings;
     expect(Array.isArray(findings) && result.verdict !== "rejected", "rejected or no findings list");
     const mapped = findings.map((f) => {
-      const at = vars.diff ? diffLineLocation(vars.diff, f.line) : null;
+      const at = (vars.diff ? diffLineLocation(vars.diff, f.line) : null) ?? (vars.review ? contextLineLocation(vars.review, f.line) : null);
       return {
-        title: f.message || f.rule_id,
+        title: `${f.message || f.rule_id}${at?.context ? " (in a call site this PR doesn't change)" : ""}`,
         severity: String(f.severity ?? "").toLowerCase(),
         ...at?.file && { file: at.file },
         line: at?.line ?? f.line,
@@ -51275,7 +51410,7 @@ async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "
   const { check, intent, target, vars, route } = job;
   const entries = (miners[check] ?? []).filter((e) => e.enabled !== false && (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)) && (!e.files || (vars.files ?? []).some((f) => new RegExp(e.files, "i").test(f))));
   const calls = [...priorCalls];
-  const notes = [...priorNotes];
+  const notes = priorNotes.length ? [...priorNotes] : [...job.notes ?? []];
   const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls, notes };
   const ledger = (r, minerId, askedIntent) => onCall?.(ledgerEntry({ check, target, intent: askedIntent, minerId }, r));
   const health = routing.health ?? {};
@@ -51311,7 +51446,7 @@ async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "
         break;
       }
       const entry = entries[i];
-      const r = await tg.askMiner(entry.minerId, { method: entry.method ?? "POST", endpoint: entry.endpoint, payload: fillTemplate(entry.payload, vars) });
+      const r = await tg.askMiner(entry.minerId, { method: entry.method ?? "POST", endpoint: entry.endpoint, payload: fillTemplate(entry.payload, { review: vars.diff, ...vars }) });
       calls.push(callSummary(r, { via: "direct", entry }));
       await ledger(r, entry.minerId, entry.intent);
       if (r.ok) {
@@ -51434,6 +51569,10 @@ function listPrFiles(octokit, { owner, repo, pull_number }) {
 async function mergeBase(octokit, { owner, repo, base, head }) {
   const { data } = await octokit.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: `${base}...${head}`, per_page: 1 });
   return data.merge_base_commit.sha;
+}
+async function listPaths(octokit, { owner, repo, sha }) {
+  const { data } = await octokit.rest.git.getTree({ owner, repo, tree_sha: sha, recursive: "true" });
+  return data.tree.filter((t) => t.type === "blob").map((t) => t.path);
 }
 async function getText(octokit, { owner, repo, path, ref }) {
   try {
@@ -51579,7 +51718,7 @@ var miners_default = {
       method: "GET",
       endpoint: "/contract-audit",
       payload: {
-        contract: "{{diff}}"
+        contract: "{{review}}"
       },
       normalizer: "codewire-audit",
       files: "\\.sol$",
@@ -51594,7 +51733,7 @@ var miners_default = {
       payload: {
         intent: "SECURITY_REVIEW",
         input: {
-          code: "{{diff}}"
+          code: "{{review}}"
         }
       },
       normalizer: "verity-security",
@@ -51607,7 +51746,7 @@ var miners_default = {
       method: "POST",
       endpoint: "/review",
       payload: {
-        diff: "{{diff}}"
+        diff: "{{review}}"
       },
       normalizer: "sentinel-review",
       _note: "Our own rule-based miner (disclosed), used only if Verity fails."
@@ -51732,7 +51871,15 @@ async function run() {
   const rawFiles = await listPrFiles(octokit, { ...repoRef, pull_number: pr.number });
   const base = await mergeBase(octokit, { ...repoRef, base: pr.base.sha, head: pr.head.sha });
   const getFileText = ({ path, ref }) => getText(octokit, { ...repoRef, path, ref });
-  const { jobs, local: local2, errors, notes } = await planScan({ pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks });
+  const { jobs, local: local2, errors, notes } = await planScan({
+    pr,
+    rawFiles,
+    baseSha: base,
+    headSha: pr.head.sha,
+    getText: getFileText,
+    checks: cfg.checks,
+    listPaths: () => listPaths(octokit, { ...repoRef, sha: pr.head.sha })
+  });
   for (const e of errors) warning(`could not read ${e.file}: ${e.error}`);
   const budget = new Budget(cfg.maxUsdPerPr);
   const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 45e3 });

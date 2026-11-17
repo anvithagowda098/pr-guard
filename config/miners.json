@@ -58,7 +58,7 @@
       "method": "GET",
       "endpoint": "/contract-audit",
       "payload": {
-        "contract": "{{diff}}"
+        "contract": "{{review}}"
       },
       "normalizer": "codewire-audit",
       "files": "\\.sol$",
@@ -73,7 +73,7 @@
       "payload": {
         "intent": "SECURITY_REVIEW",
         "input": {
-          "code": "{{diff}}"
+          "code": "{{review}}"
         }
       },
       "normalizer": "verity-security",
@@ -86,7 +86,7 @@
       "method": "POST",
       "endpoint": "/review",
       "payload": {
-        "diff": "{{diff}}"
+        "diff": "{{review}}"
       },
       "normalizer": "sentinel-review",
       "_note": "Our own rule-based miner (disclosed), used only if Verity fails."

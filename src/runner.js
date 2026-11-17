@@ -123,7 +123,7 @@ export async function runCheck({ tg, miners, job, deadline, onCall, routing = { 
     (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)) &&
     (!e.files || (vars.files ?? []).some((f) => new RegExp(e.files, "i").test(f))));
   const calls = [...priorCalls];
-  const notes = [...priorNotes];
+  const notes = priorNotes.length ? [...priorNotes] : [...(job.notes ?? [])];
   const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls, notes };
   const ledger = (r, minerId, askedIntent) => onCall?.(ledgerEntry({ check, target, intent: askedIntent, minerId }, r));
   const health = routing.health ?? {};
@@ -161,7 +161,8 @@ export async function runCheck({ tg, miners, job, deadline, onCall, routing = { 
     for (let i = 0; i < Math.min(MAX_ATTEMPTS, entries.length); i++) {
       if (Date.now() > deadline) { lastReason = "time limit"; break; }
       const entry = entries[i];
-      const r = await tg.askMiner(entry.minerId, { method: entry.method ?? "POST", endpoint: entry.endpoint, payload: fillTemplate(entry.payload, vars) });
+      // Scans planned before impact context existed carry no `review`: the diff alone.
+      const r = await tg.askMiner(entry.minerId, { method: entry.method ?? "POST", endpoint: entry.endpoint, payload: fillTemplate(entry.payload, { review: vars.diff, ...vars }) });
       calls.push(callSummary(r, { via: "direct", entry }));
       await ledger(r, entry.minerId, entry.intent);
       if (r.ok) { answer = normalize(entry.normalizer, r.body?.result, vars); break; }

@@ -153,7 +153,7 @@ You need Node 20 or later.
 
 ```sh
 npm ci
-npm test             # 147 tests, all offline
+npm test             # 160 tests, all offline
 npm run build        # bundles dist/index.js; commit it, the Action runs from it
 npm run deploy:web   # the hosted page and API (Cloudflare Workers)
 npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)

@@ -77,7 +77,7 @@ Maintained by Anvitha (`anvithagowda098`).
 3. **Inspect the Telegraph request.** On any report, open a "receipt" link: the Telegraph node's public record of that request, its miner and its settlement transaction. The transaction is on Ethereum Sepolia.
 4. **Break it.** Paste a pull request from a private repository, a link that isn't a pull request, or the sanctioned-payout demo (https://github.com/anvithagowda098/pr-guard/pull/6). Each gives a clear error or verdict.
 5. **On your own repository.** Add [`examples/pr-guard.yml`](../examples/pr-guard.yml) to a public repository and open a pull request. PR Guard comments within about a minute. No key needed.
-6. **Reproduce offline.** `npm ci && npm test` runs 147 tests with no network. The end-to-end tests replay real captured miner answers against a fake payment-gated node.
+6. **Reproduce offline.** `npm ci && npm test` runs 160 tests with no network. The end-to-end tests replay real captured miner answers against a fake payment-gated node.
 
 | | |
 |---|---|
@@ -100,15 +100,15 @@ Maintained by Anvitha (`anvithagowda098`).
 
 **Live demo reports.** These are our own tests, not adoption. Each check links to its Telegraph receipt.
 
-| Demo | Verdict | Report | One settlement transaction |
-|---|---|---|---|
-| #1 clean change | 🟢 SAFE | [91f1fd167b70](https://pr-guard-app.pr-guard.workers.dev/r/91f1fd167b70) | routed `CODE_REVIEW_GENERAL` → #302: `0xe67503ab6f968b34da5b0f54de2a6f3b23191c774561a1f8091ae4f14237cacc` |
-| #2 lodash 4.17.15 | 🔴 BLOCK | [d6c6983b423b](https://pr-guard-app.pr-guard.workers.dev/r/d6c6983b423b) | #77010 deps.dev: `0x92452a2a5affed8c81504cf2f5bd3554512829d1de2c9194304fb94d67a6da03` |
-| #3 leaked key + injection | 🔴 BLOCK | [bc66dc5c844e](https://pr-guard-app.pr-guard.workers.dev/r/bc66dc5c844e) | #5530 Verity: `0x585214cbe4e9419ce22422fca3c9922e3dd1014dec970fb53179a92b8b04414e` |
-| #4 address swap | 🟡 CAUTION | [b22eec6747c4](https://pr-guard-app.pr-guard.workers.dev/r/b22eec6747c4) | #200001 GoPlus: `0x3a4c59e68884ea1d1a5d7eeb50fb8e8d8d568ed5234cdd94ab02e0f5ed88989c` |
-| #5 reentrant vault | 🔴 BLOCK | [695b58066331](https://pr-guard-app.pr-guard.workers.dev/r/695b58066331) | routed `CODE_REVIEW_GENERAL` → #302: `0xa631c7a9176c0e77a96e2f85212bd8562704fb1b155a60236dbd5a104da33d02` |
-| #6 sanctioned payout | 🔴 BLOCK | [5017f9be53ea](https://pr-guard-app.pr-guard.workers.dev/r/5017f9be53ea) | routed `SANCTIONS_SCREENING_MATCH_GENERAL` → #731002: `0xad0c1162113cea488a26bdd15d504335b4c87668db6fe33f26c8c70dc9f92a32` |
-| #7 loosened validator | 🟡 CAUTION (SAFE [without context](https://pr-guard-app.pr-guard.workers.dev/r/1895dcdb8382)) | [be9e180c79d7](https://pr-guard-app.pr-guard.workers.dev/r/be9e180c79d7) | routed `CODE_REVIEW_GENERAL` → #302: `0xf5eda69d808eb852a54d3195769a81360097294c258e102934c19290b77a5ade` |
+| Demo | Verdict | Report (Nov 13) | One settlement transaction (Nov 13) | Re-run (Nov 17) |
+|---|---|---|---|---|
+| #1 clean change | 🟢 SAFE | [91f1fd167b70](https://pr-guard-app.pr-guard.workers.dev/r/91f1fd167b70) | routed `CODE_REVIEW_GENERAL` → #302: `0xe67503ab6f968b34da5b0f54de2a6f3b23191c774561a1f8091ae4f14237cacc` | [8fee1e820713](https://pr-guard-app.pr-guard.workers.dev/r/8fee1e820713) |
+| #2 lodash 4.17.15 | 🔴 BLOCK | [d6c6983b423b](https://pr-guard-app.pr-guard.workers.dev/r/d6c6983b423b) | #77010 deps.dev: `0x92452a2a5affed8c81504cf2f5bd3554512829d1de2c9194304fb94d67a6da03` | [4969f5b82cd2](https://pr-guard-app.pr-guard.workers.dev/r/4969f5b82cd2) |
+| #3 leaked key + injection | 🔴 BLOCK | [bc66dc5c844e](https://pr-guard-app.pr-guard.workers.dev/r/bc66dc5c844e) | #5530 Verity: `0x585214cbe4e9419ce22422fca3c9922e3dd1014dec970fb53179a92b8b04414e` | [22f928ab84bd](https://pr-guard-app.pr-guard.workers.dev/r/22f928ab84bd) |
+| #4 address swap | 🟡 CAUTION | [b22eec6747c4](https://pr-guard-app.pr-guard.workers.dev/r/b22eec6747c4) | #200001 GoPlus: `0x3a4c59e68884ea1d1a5d7eeb50fb8e8d8d568ed5234cdd94ab02e0f5ed88989c` | [9b631798ba2b](https://pr-guard-app.pr-guard.workers.dev/r/9b631798ba2b) |
+| #5 reentrant vault | 🔴 BLOCK | [695b58066331](https://pr-guard-app.pr-guard.workers.dev/r/695b58066331) | routed `CODE_REVIEW_GENERAL` → #302: `0xa631c7a9176c0e77a96e2f85212bd8562704fb1b155a60236dbd5a104da33d02` | [6d50f28e950d](https://pr-guard-app.pr-guard.workers.dev/r/6d50f28e950d) |
+| #6 sanctioned payout | 🔴 BLOCK | [5017f9be53ea](https://pr-guard-app.pr-guard.workers.dev/r/5017f9be53ea) | routed `SANCTIONS_SCREENING_MATCH_GENERAL` → #731002: `0xad0c1162113cea488a26bdd15d504335b4c87668db6fe33f26c8c70dc9f92a32` | [f0d17cbef465](https://pr-guard-app.pr-guard.workers.dev/r/f0d17cbef465) |
+| #7 loosened validator | 🟡 CAUTION (SAFE [without context](https://pr-guard-app.pr-guard.workers.dev/r/1895dcdb8382)) | [be9e180c79d7](https://pr-guard-app.pr-guard.workers.dev/r/be9e180c79d7) | routed `CODE_REVIEW_GENERAL` → #302: `0xf5eda69d808eb852a54d3195769a81360097294c258e102934c19290b77a5ade` | [d228be4ce003](https://pr-guard-app.pr-guard.workers.dev/r/d228be4ce003) |
 
 **Other records**
 - **All hosted scans** with every call, receipt and transaction: [evidence/hosted-scans.json](evidence/hosted-scans.json) (20 scans, 43 paid calls, $0.39, Nov 2–14).
@@ -116,6 +116,8 @@ Maintained by Anvitha (`anvithagowda098`).
   - 41497627143: SAFE, $0.01.
   - 41497634721: BLOCK, $0.03.
   - 41497642958: BLOCK, $0.02.
+
+- **GitHub Action runs on the demo pull requests (Nov 17),** after GitHub lifted the billing lock: each demo PR carries PR Guard's comment, with the same verdicts as the reports above. The first re-run caught routing changes that had turned BLOCKs into CAUTION; the fixes, and the answers that exposed them, are in the commits of Nov 17 and in [HOW-IT-WORKS.md](HOW-IT-WORKS.md#what-we-found-along-the-way).
 
   Purchase ledgers are attached to each run.
 - **Vetting probes:** each miner's real answers are kept in [`test/fixtures/miner-responses/`](../test/fixtures/miner-responses/), each with its payment proof and receipt. The vetting history is in [MINERS.md](MINERS.md).

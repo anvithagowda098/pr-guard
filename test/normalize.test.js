@@ -298,6 +298,23 @@ test("CodeWire's Nov 17 wording ('Overall risk is critical', 'Reentrancy affects
   assert.equal(normalize("codewire-audit", { summary: "Overall risk is high.\n\nFinding 1 - something unusual." }).severity, "unknown");
 });
 
+test("CodeWire's prose wording ('The `withdraw` function is affected by a critical reentrancy vulnerability') -> BLOCK", () => {
+  const n = normalize("codewire-audit", codewire("1900999007-audit-reentrant-vault-prose-format.json").body.result);
+  assert.deepEqual(n.findings.map((f) => [f.title, f.category, f.severity]), [
+    ["Critical reentrancy vulnerability (affects `withdraw`)", "reentrancy", "critical"],
+    ["High-severity missing access control vulnerability (affects `setOwner`)", "access-control", "high"],
+  ]);
+  const c = confirmFindings("diff", n, { diff: codewire("1900999007-audit-reentrant-vault-200-paid.json").request.payload.contract });
+  assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("CodeWire: an audit with no finding PR Guard can read is unknown, unless it says it found nothing", () => {
+  assert.equal(normalize("codewire-audit", { summary: "Overall risk verdict: the contract is unsafe.\n\nSomething odd happens in withdraw." }).severity, "unknown");
+  assert.deepEqual(normalize("codewire-audit", { summary: "Overall risk verdict: no vulnerabilities were found in the supplied code." }), { severity: "none", findings: [] });
+  const n = normalize("codewire-audit", { summary: "Overall risk verdict: low.\n\nNo critical or high severity issues were found.\n\nThe `pause` function has a low-severity missing event issue." });
+  assert.deepEqual(n.findings.map((f) => f.severity), ["low"]);
+});
+
 test("CodeWire on the fixed vault: only low findings -> SAFE; no verdict -> unknown", () => {
   const cap = codewire("1900999007-audit-fixed-vault-200-paid.json");
   const n = normalize("codewire-audit", cap.body.result);

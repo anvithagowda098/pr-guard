@@ -50947,27 +50947,42 @@ var NORMALIZERS = {
   },
   // ---- Vetted miners, called directly as the fallback ----------------------
   // CodeWire Smart Contract Audit (#1900999007) GET /contract-audit {contract}:
-  // a language-model audit as prose. Its wording changes between captures:
-  //   Nov 13: "Overall risk verdict: ..." then "Finding 1: Reentrancy, affects
-  //           `withdraw()`, severity critical." (or "Finding 1, ...")
-  //   Nov 17: "Overall risk is critical because ..." then "Finding 1: Reentrancy
-  //           affects withdraw() and has critical severity."
-  // Each finding's first sentence gives its title, location and severity.
+  // a language-model audit as prose, an overall verdict then one paragraph per
+  // finding. Its wording changes from one answer to the next:
+  //   "Finding 1: Reentrancy, affects `withdraw()`, severity critical." (Nov 13)
+  //   "Finding 1: Reentrancy affects withdraw() and has critical severity." (Nov 17)
+  //   "The `withdraw` function is affected by a critical reentrancy
+  //    vulnerability." (Nov 17, later)
+  // Each paragraph's first sentence gives the issue and its severity. An audit
+  // with no finding PR Guard can read is unknown, never clean, unless it says
+  // outright that it found nothing.
   "codewire-audit": (result) => {
     const text = String(result?.summary ?? "");
     expect(/overall risk/i.test(text), "no overall verdict");
     const SEV = { critical: "critical", high: "high", medium: "medium", moderate: "medium", low: "low", informational: "low", info: "low", none: "none" };
-    const LEVEL = "(critical|high|medium|moderate|low|informational|info|none)";
-    const findings = [...text.matchAll(/Finding\s+\d+\s*[:,]\s*(.+?)(?:\.(?=\s|$)|\n)/g)].map((m) => {
-      const head = m[1];
-      const sev = head.match(new RegExp(`\\bseverity\\s+${LEVEL}\\b|\\b${LEVEL}\\s+severity\\b`, "i"));
-      if (!sev) return null;
-      const [title, affects] = head.split(/,?\s+affects\s+/i);
-      const where = affects?.replace(/(,\s*severity\b|\s+and\s+has\b|,).*$/i, "").trim();
-      const cat = securityCategory(title);
-      return { title: `${title.trim()}${where ? ` (affects ${where})` : ""}`.slice(0, 200), severity: SEV[(sev[1] ?? sev[2]).toLowerCase()], ...cat && { category: cat.id } };
+    const L = "(critical|high|medium|moderate|low|informational|info|none)";
+    const LEVEL = new RegExp(`\\bseverity\\s+${L}\\b|\\b${L}[\\s-]+severity\\b|\\b(?:an?|the)\\s+${L}\\b(?=[^.]*\\b(?:vulnerab|issue|flaw|bug|weakness|risk))`, "i");
+    const [overall2, ...paragraphs] = text.split(/\n\s*\n/);
+    const findings = paragraphs.map((p) => {
+      const head = p.trim().match(/^(.+?)(?:\.(?=\s|$)|$)/s)?.[1] ?? "";
+      const sev = head.match(LEVEL);
+      if (!sev || /^(no|none|nothing|there (is|are|were) no)\b/i.test(head)) return null;
+      const severity = SEV[(sev[1] ?? sev[2] ?? sev[3]).toLowerCase()];
+      const numbered = head.match(/^Finding\s+\d+\s*[:,]\s*(.+)$/i);
+      let title, where;
+      if (numbered) {
+        const [t, affects] = numbered[1].split(/,?\s+affects\s+/i);
+        title = t.trim();
+        where = affects?.replace(/(,\s*severity\b|\s+and\s+has\b|,).*$/i, "").trim();
+      } else {
+        where = head.match(/^The\s+(`?[\w$.()]+`?)\s+function\b/i)?.[1];
+        title = head.replace(/^The\s+`?[\w$.()]+`?\s+function\s+(is\s+)?(affected by|has|contains)\s+(an?\s+)?/i, "").trim();
+      }
+      const cat = securityCategory(head);
+      return { title: `${title.charAt(0).toUpperCase()}${title.slice(1)}${where ? ` (affects ${where})` : ""}`.slice(0, 200), severity, ...cat && { category: cat.id } };
     }).filter(Boolean);
-    expect(findings.length || !/Finding\s+\d/i.test(text), "findings not readable");
+    const saysNone = /\bno (significant |material |security )?(vulnerabilit|issues?\b|findings?\b)|\bappears safe\b|\bis safe\b/i.test(overall2);
+    expect(findings.length || saysNone, "findings not readable");
     return { severity: maxSeverity(findings), findings };
   },
   // Counterproof Sanctions Screener (#731002) GET /screen {name}: an address

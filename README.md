@@ -173,6 +173,7 @@ npm run deploy:miner # PR Guard Sentinel (Cloudflare Workers)
 
 | What you see | Why | What to do |
 |---|---|---|
+| ❌ The PR Guard check failed on a pull request | Working as intended: the verdict was BLOCK, and `fail-on: block` fails the check so the PR can't merge unnoticed. The failure message lists what was found. | Read the PR comment, fix the issue, push. To only comment, set `fail-on: never`; to fail on CAUTION too, `fail-on: caution`. |
 | ⚪ SKIPPED: "this repository is private" | Free hosted scans read the PR through GitHub's public API, so they cover public repositories only. | Use your own wallet: [option 3](#3-with-your-own-wallet-private-repositories-your-own-budget). |
 | ⚪ SKIPPED: "used its 20 free hosted scans for today" | Each repository gets 20 hosted scans a day. They reset at 00:00 UTC. | Wait for the reset, or use your own wallet. |
 | ⚪ SKIPPED: "Today's free scans are used up" | The sponsor wallet's daily cap across all users has been reached. | Try again after 00:00 UTC, or use your own wallet. |

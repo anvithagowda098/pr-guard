@@ -7,7 +7,7 @@ import { Telegraph, Budget, DEFAULT_NODE_URL } from "./telegraph.js";
 import { DEFAULT_CHECKS } from "./checks.js";
 import { planScan } from "./plan.js";
 import { runCheck, runAll } from "./runner.js";
-import { decide, shouldFail } from "./policy.js";
+import { decide, shouldFail, failMessage } from "./policy.js";
 import { renderComment } from "./report.js";
 import { appendLedger } from "./ledger.js";
 import { listPrFiles, mergeBase, getText, listPaths, upsertComment } from "./github.js";
@@ -70,12 +70,12 @@ async function run() {
     }
   };
 
-  const finish = async ({ verdict, spentUsd, signalHashes = [], ledgerPath = "" }) => {
+  const finish = async ({ verdict, reasons = [], spentUsd, signalHashes = [], ledgerPath = "" }) => {
     core.setOutput("verdict", verdict);
     core.setOutput("cost_usd", spentUsd.toFixed(6));
     core.setOutput("signal_hashes", signalHashes.join(","));
     core.setOutput("ledger_path", ledgerPath);
-    if (shouldFail(verdict, cfg.failOn)) core.setFailed(`PR Guard verdict: ${verdict}`);
+    if (shouldFail(verdict, cfg.failOn)) core.setFailed(failMessage(verdict, reasons, cfg.failOn));
   };
 
   if (!cfg.privateKey) {
@@ -100,7 +100,7 @@ async function run() {
     ].join(" ");
     await post(renderComment({ verdict, reasons, outcomes: scan.outcomes, spentUsd: scan.spentUsd, budgetUsd: scan.budgetUsd, nodeUrl: scan.nodeUrl, runUrl, note }));
     const signalHashes = scan.outcomes.flatMap((o) => o.calls.map((c) => c.signalHash)).filter(Boolean);
-    return finish({ verdict, spentUsd: scan.spentUsd, signalHashes });
+    return finish({ verdict, reasons, spentUsd: scan.spentUsd, signalHashes });
   }
 
   const deadline = Date.now() + RUN_DEADLINE_MS;
@@ -130,7 +130,7 @@ async function run() {
   await post(renderComment({ verdict, reasons, outcomes, spentUsd, budgetUsd: cfg.maxUsdPerPr, nodeUrl: cfg.nodeUrl, runUrl, note: notes.join(" ") || undefined }));
 
   const signalHashes = outcomes.flatMap((o) => o.calls.map((c) => c.signalHash)).filter(Boolean);
-  await finish({ verdict, spentUsd, signalHashes, ledgerPath: LEDGER_PATH });
+  await finish({ verdict, reasons, spentUsd, signalHashes, ledgerPath: LEDGER_PATH });
 }
 
 run().catch(async (err) => {

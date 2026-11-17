@@ -52,3 +52,9 @@ export function shouldFail(verdict, failOn = "block") {
 export function maxSeverity(findings) {
   return findings.reduce((acc, f) => (rank(f.severity) > rank(acc) ? f.severity : acc), "none");
 }
+
+// A failed check reads as "broken" unless it says it failed on purpose.
+export function failMessage(verdict, reasons, failOn) {
+  const why = reasons.length ? `: ${reasons.slice(0, 3).join("; ")}${reasons.length > 3 ? "; …" : ""}` : "";
+  return `PR Guard verdict: ${verdict}${why}. This check fails on purpose (fail-on: ${failOn}) so the pull request can't be merged unnoticed; the PR comment and this job's summary have the details and receipts.`;
+}

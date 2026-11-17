@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decide, shouldFail, maxSeverity } from "../src/policy.js";
+import { decide, shouldFail, maxSeverity, failMessage } from "../src/policy.js";
 
 const o = (over) => ({ check: "deps", target: "x@1", status: "ok", severity: "none", findings: [], confirmed: false, disagreement: false, calls: [], ...over });
 
@@ -42,4 +42,11 @@ test("fail-on modes", () => {
 test("maxSeverity", () => {
   assert.equal(maxSeverity([]), "none");
   assert.equal(maxSeverity([{ severity: "low" }, { severity: "high" }, { severity: "medium" }]), "high");
+});
+
+test("a failing check says it fails on purpose, and why", () => {
+  const m = failMessage("BLOCK", ["sanctions: 0x098B… — critical", "address-changes: payments.js:4 — medium"], "block");
+  assert.match(m, /^PR Guard verdict: BLOCK: sanctions: 0x098B… — critical; address-changes: payments.js:4 — medium\. This check fails on purpose \(fail-on: block\)/);
+  assert.match(failMessage("CAUTION", ["a", "b", "c", "d"], "caution"), /: a; b; c; …\. /);
+  assert.match(failMessage("BLOCK", [], "block"), /^PR Guard verdict: BLOCK\. This check/);
 });

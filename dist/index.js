@@ -50672,6 +50672,10 @@ function shouldFail(verdict, failOn = "block") {
 function maxSeverity(findings) {
   return findings.reduce((acc, f) => rank(f.severity) > rank(acc) ? f.severity : acc, "none");
 }
+function failMessage(verdict, reasons, failOn) {
+  const why = reasons.length ? `: ${reasons.slice(0, 3).join("; ")}${reasons.length > 3 ? "; \u2026" : ""}` : "";
+  return `PR Guard verdict: ${verdict}${why}. This check fails on purpose (fail-on: ${failOn}) so the pull request can't be merged unnoticed; the PR comment and this job's summary have the details and receipts.`;
+}
 
 // src/checks.js
 var DEFAULT_CHECKS = ["deps", "diff", "addresses"];
@@ -52016,12 +52020,12 @@ async function run() {
       warning(`could not write the job summary: ${err.message}`);
     }
   };
-  const finish = async ({ verdict: verdict2, spentUsd: spentUsd2, signalHashes: signalHashes2 = [], ledgerPath = "" }) => {
+  const finish = async ({ verdict: verdict2, reasons: reasons2 = [], spentUsd: spentUsd2, signalHashes: signalHashes2 = [], ledgerPath = "" }) => {
     setOutput("verdict", verdict2);
     setOutput("cost_usd", spentUsd2.toFixed(6));
     setOutput("signal_hashes", signalHashes2.join(","));
     setOutput("ledger_path", ledgerPath);
-    if (shouldFail(verdict2, cfg.failOn)) setFailed(`PR Guard verdict: ${verdict2}`);
+    if (shouldFail(verdict2, cfg.failOn)) setFailed(failMessage(verdict2, reasons2, cfg.failOn));
   };
   if (!cfg.privateKey) {
     if (context3.payload.repository?.private) {
@@ -52044,7 +52048,7 @@ async function run() {
     ].join(" ");
     await post(renderComment({ verdict: verdict2, reasons: reasons2, outcomes: scan2.outcomes, spentUsd: scan2.spentUsd, budgetUsd: scan2.budgetUsd, nodeUrl: scan2.nodeUrl, runUrl, note }));
     const signalHashes2 = scan2.outcomes.flatMap((o) => o.calls.map((c) => c.signalHash)).filter(Boolean);
-    return finish({ verdict: verdict2, spentUsd: scan2.spentUsd, signalHashes: signalHashes2 });
+    return finish({ verdict: verdict2, reasons: reasons2, spentUsd: scan2.spentUsd, signalHashes: signalHashes2 });
   }
   const deadline = Date.now() + RUN_DEADLINE_MS;
   const miners = cfg.minersConfig ? JSON.parse(await readFile(cfg.minersConfig, "utf8")) : miners_default;
@@ -52071,7 +52075,7 @@ async function run() {
   const spentUsd = Number(budget.spent) / 1e6;
   await post(renderComment({ verdict, reasons, outcomes, spentUsd, budgetUsd: cfg.maxUsdPerPr, nodeUrl: cfg.nodeUrl, runUrl, note: notes.join(" ") || void 0 }));
   const signalHashes = outcomes.flatMap((o) => o.calls.map((c) => c.signalHash)).filter(Boolean);
-  await finish({ verdict, spentUsd, signalHashes, ledgerPath: LEDGER_PATH });
+  await finish({ verdict, reasons, spentUsd, signalHashes, ledgerPath: LEDGER_PATH });
 }
 run().catch(async (err) => {
   error(err.stack ?? String(err));

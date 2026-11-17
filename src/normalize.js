@@ -30,7 +30,7 @@ export const SECURITY_CATEGORIES = [
   { id: "selfdestruct", severity: "medium", re: /self-?destruct/i },
   { id: "unchecked-call", severity: "medium", re: /unchecked (low-level )?(call|send)|return value[^.]{0,40}(not checked|ignored|unchecked)/i },
   // General
-  { id: "sql-injection", severity: "high", re: /sql[\s-]*injection|\bsqli\b/i },
+  { id: "sql-injection", severity: "high", re: /sql[\s-]*injection|\bsqli\b|\binject(s|ed|ing)?\s+(arbitrary\s+|malicious\s+)?sql\b/i },
   { id: "command-injection", severity: "high", re: /(command|shell)[\s-]*injection|os command/i },
   { id: "code-injection", severity: "high", re: /code[\s-]*(injection|execution)|remote code execution|\brce\b|\beval\b/i },
   { id: "unsafe-deserialization", severity: "high", re: /deserializ/i },
@@ -41,9 +41,13 @@ export const SECURITY_CATEGORIES = [
   { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)/i },
   { id: "tls-verification-disabled", severity: "medium", re: /(tls|ssl|certificate) (verification|validation)|rejectunauthorized/i },
   { id: "weak-hash", severity: "medium", re: /\bmd5\b|\bsha-?1\b|weak hash/i },
+  // A change that weakens a check other code relies on ("removes the digit-only
+  // filtering", "no longer strips non-digit characters").
+  { id: "weakened-validation", severity: "medium", re: /\b(no longer|removes?|removed|removing|drops?|dropped|weakens?|weakened|loosens?|loosened)\b[^.;]{0,50}\b(validat\w*|sanitiz\w*|filter\w*|escap\w*|strips?)\b/i },
 ];
 // "No SQL injection risk here" names a category without reporting it.
-const NEGATED = /\b(no|not|never|without|isn't|prevents?|protect(s|ed)? against|safe from|free of|mitigat\w*|parameteri[sz]ed)\b[^.;:!?]*$/i;
+// ("No longer strips" reports a regression, not an absence.)
+const NEGATED = /\b(no(?!\s+longer)|not|never|without|isn't|prevents?|protect(s|ed)? against|safe from|free of|mitigat\w*|parameteri[sz]ed)\b[^.;:!?]*$/i;
 export function securityCategory(text) {
   // Miners write "hard‑coded" and "server‑side" with Unicode hyphens too.
   const t = String(text ?? "").replace(/[\u2010-\u2015\u2212]/g, "-");

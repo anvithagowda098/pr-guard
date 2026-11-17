@@ -1,0 +1,140 @@
+{
+  "captured_at": "2026-11-17T06:07:43.800Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask",
+  "request": {
+    "intent": "CODE_REVIEW_GENERAL",
+    "params": {
+      "code": "diff --git a/demo/app/validate.js b/demo/app/validate.js\n@@ -1,8 +1,8 @@\n // Input helpers for the demo app.\n \n-/** Keep only digits, so an id can be put into a query safely. */\n+/** Normalise an id. */\n function sanitizeId(raw) {\n-  return String(raw).replace(/[^0-9]/g, \"\");\n+  return String(raw).trim();\n }\n \n module.exports = { sanitizeId };\n\n# Read-only context, not part of this change: where code changed above is used elsewhere in the repository.\n# demo/app/server.js:4 uses sanitizeId (changed in demo/app/validate.js)\n#   const { sanitizeId } = require(\"./validate\");\n# demo/app/server.js:20 uses sanitizeId (changed in demo/app/validate.js)\n#   // Relies on sanitizeId keeping the id numeric.\n# demo/app/server.js:22 uses sanitizeId (changed in demo/app/validate.js)\n#   const { rows } = await db.query(\"SELECT id, total FROM orders WHERE id = \" + sanitizeId(req.params.id));\n"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for LLM-routed inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 15576,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a5bc8e38282905d1-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 17 Nov 2026 06:07:42 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHgzZDJhYWZhMTc2MzI0OTQ5MDczZTY5OThiOGE4NDY4MWM0ZWE2M2QxZGUyZDNjMTM0NDM4NzE5MWQ3ZWZlNjE1IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=yKvNGIpViufVX%2FgoU81Ae3PHKapC0Fo%2FxkuqKf4vcTxbNgjrUqdPUA5%2BlOO7oRjCXZLH2%2BEI5lvi5iqrvWJlSsDkqq0l9iPZU1CwOGlGZYq8xFa4ReFCgR7x%2FN81SWK%2BVOJK4HcEm7ltHCctkUQnRw%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDMzYmE4MmU5YTA1NzZmNmU1NjBkZjNkOTEwZjA1ZWE4OGMyNWU3MTI0MDQwZWQ2MzE3NzFjNjMzY2I0MWZkYjciLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI1MjAyIiwiaW50ZW50IjoiQ09ERV9SRVZJRVdfR0VORVJBTCIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjIxMTEsInNldHRsZW1lbnQiOiJvbmNoYWluIiwiY2hhaW4iOiJlaXAxNTU6MTExNTUxMTEiLCJ0eF9oYXNoIjoiMHgzZDJhYWZhMTc2MzI0OTQ5MDczZTY5OThiOGE4NDY4MWM0ZWE2M2QxZGUyZDNjMTM0NDM4NzE5MWQ3ZWZlNjE1IiwidGltZXN0YW1wIjoxNzk0ODk1NjYyfQ=="
+  },
+  "bodyText": "{\"miner_id\":\"9002\",\"miner_name\":\"TxLens\",\"endpoint\":\"/code-review\",\"result\":{\"verdict\":\"Request changes\",\"findings\":[\"The new sanitizeId no longer removes non‑digit characters, so an attacker could inject SQL via req.params.id.\"],\"summary\":null},\"result_shape\":\"intent\",\"format_version\":3,\"field_status\":{\"verdict\":\"ok\",\"findings\":\"ok\",\"summary\":\"rejected\"},\"input\":{\"code\":\"diff --git a/demo/app/validate.js b/demo/app/validate.js\\n@@ -1,8 +1,8 @@\\n // Input helpers for the demo app.\\n \\n-/** Keep only digits, so an id can be put into a query safely. */\\n+/** Normalise an id. */\\n function sanitizeId(raw) {\\n-  return String(raw).replace(/[^0-9]/g, \\\"\\\");\\n+  return String(raw).trim();\\n }\\n \\n module.exports = { sanitizeId };\\n\\n# Read-only context, not part of this change: where code changed above is used elsewhere in the repository.\\n# demo/app/server.js:4 uses sanitizeId (changed in demo/app/validate.js)\\n#   const { sanitizeId } = require(\\\"./validate\\\");\\n# demo/app/server.js:20 uses sanitizeId (changed in demo/app/validate.js)\\n#   // Relies on sanitizeId keeping the id numeric.\\n# demo/app/server.js:22 uses sanitizeId (changed in demo/app/validate.js)\\n#   const { rows } = await db.query(\\\"SELECT id, total FROM orders WHERE id = \\\" + sanitizeId(req.params.id));\\n\"},\"input_schema_version\":3,\"cost_usd\":0.01,\"duration_ms\":749,\"timestamp\":\"2026-11-17T06:07:38.428570507Z\",\"reasoning\":\"Intent: intent given by the caller\\nMiner: The user is asking for a code review, and the TxLens miner has a /code-review endpoint that explicitly serves the CODE_REVIEW_GENERAL intent. The question includes a code diff and associated context, which is directly usable by this endpoint. The 'query' parameter is the only parameter for this endpoint and is used to pass the entire user question verbatim.\",\"intent\":\"CODE_REVIEW_GENERAL\",\"signal_hash\":\"0xcd5e5db1e8620a75120f0def8d2917c5cadb976dc2e2b3bd776c2f63e62aff86\"}",
+  "body": {
+    "miner_id": "9002",
+    "miner_name": "TxLens",
+    "endpoint": "/code-review",
+    "result": {
+      "verdict": "Request changes",
+      "findings": [
+        "The new sanitizeId no longer removes non‑digit characters, so an attacker could inject SQL via req.params.id."
+      ],
+      "summary": null
+    },
+    "result_shape": "intent",
+    "format_version": 3,
+    "field_status": {
+      "verdict": "ok",
+      "findings": "ok",
+      "summary": "rejected"
+    },
+    "input": {
+      "code": "diff --git a/demo/app/validate.js b/demo/app/validate.js\n@@ -1,8 +1,8 @@\n // Input helpers for the demo app.\n \n-/** Keep only digits, so an id can be put into a query safely. */\n+/** Normalise an id. */\n function sanitizeId(raw) {\n-  return String(raw).replace(/[^0-9]/g, \"\");\n+  return String(raw).trim();\n }\n \n module.exports = { sanitizeId };\n\n# Read-only context, not part of this change: where code changed above is used elsewhere in the repository.\n# demo/app/server.js:4 uses sanitizeId (changed in demo/app/validate.js)\n#   const { sanitizeId } = require(\"./validate\");\n# demo/app/server.js:20 uses sanitizeId (changed in demo/app/validate.js)\n#   // Relies on sanitizeId keeping the id numeric.\n# demo/app/server.js:22 uses sanitizeId (changed in demo/app/validate.js)\n#   const { rows } = await db.query(\"SELECT id, total FROM orders WHERE id = \" + sanitizeId(req.params.id));\n"
+    },
+    "input_schema_version": 3,
+    "cost_usd": 0.01,
+    "duration_ms": 749,
+    "timestamp": "2026-11-17T06:07:38.428570507Z",
+    "reasoning": "Intent: intent given by the caller\nMiner: The user is asking for a code review, and the TxLens miner has a /code-review endpoint that explicitly serves the CODE_REVIEW_GENERAL intent. The question includes a code diff and associated context, which is directly usable by this endpoint. The 'query' parameter is the only parameter for this endpoint and is used to pass the entire user question verbatim.",
+    "intent": "CODE_REVIEW_GENERAL",
+    "signal_hash": "0xcd5e5db1e8620a75120f0def8d2917c5cadb976dc2e2b3bd776c2f63e62aff86"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x3d2aafa176324949073e6998b8a84681c4ea63d1de2d3c1344387191d7efe615",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x33ba82e9a0576f6e560df3d910f05ea88c25e7124040ed631771c633cb41fdb7",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "5202",
+    "intent": "CODE_REVIEW_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2111,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x3d2aafa176324949073e6998b8a84681c4ea63d1de2d3c1344387191d7efe615",
+    "timestamp": 1794895662
+  },
+  "charged": true
+}

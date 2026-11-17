@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { normalize } from "../src/normalize.js";
+import { normalize, securityCategory } from "../src/normalize.js";
 import { decide } from "../src/policy.js";
 import { confirmFindings, judgeRouted } from "../src/runner.js";
 
@@ -170,6 +170,26 @@ test("a routed review whose findings the node rejected is unreadable, not an App
   const ok = routed("code-review-solidity-reentrancy-302-intent.json");
   assert.equal(ok.body.field_status.summary, "rejected");
   assert.ok(judgeRouted(asRecord(ok), route, [], { diff: ok.request.params.code }).answer);
+});
+
+test("the loosened validator (demo #7) routed to TxLens #9002: 'inject SQL' is SQL injection, unconfirmed -> CAUTION", () => {
+  const cap = routed("code-review-loosened-validator-9002-intent.json");
+  const diff = cap.request.params.code;
+  const { answer } = judgeRouted(asRecord(cap), { normalizer: "code-review-format" }, [], { diff });
+  assert.deepEqual(answer.findings.map((f) => [f.category, f.severity]), [["sql-injection", "high"]]);
+  const c = confirmFindings("diff", answer, { diff });
+  assert.equal(c.confirmed, false, "the concatenation is in server.js, outside the diff");
+  assert.equal(decide([{ check: "diff", target: "validate.js", status: "ok", calls: [], ...c }]).verdict, "CAUTION");
+  // Another answer to the same diff kept only its first sentence: still a weakened check, not SAFE.
+  const short = normalize("code-review-format", { verdict: "Request changes", findings: ["The change to `sanitizeId` in `demo/app/validate.js` removes the digit-only filtering, allowing arbitrary characters to pass through."] });
+  assert.deepEqual([short.findings[0].category, short.severity], ["weakened-validation", "medium"]);
+});
+
+test("negations: 'no SQL injection' isn't a finding, 'no longer strips' is", () => {
+  assert.equal(securityCategory("No SQL injection risk here."), null);
+  assert.equal(securityCategory("Queries are parameterized, so SQL injection is not possible."), null);
+  assert.equal(securityCategory("sanitizeId no longer strips non-digits, so an attacker could inject SQL.")?.id, "sql-injection");
+  assert.equal(securityCategory("Removed an unused import."), null);
 });
 
 test("routed CODE_REVIEW_GENERAL (miner 302, intent format): security findings rated, style notes low", () => {

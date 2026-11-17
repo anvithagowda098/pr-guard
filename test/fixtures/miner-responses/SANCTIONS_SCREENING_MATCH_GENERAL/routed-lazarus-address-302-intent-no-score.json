@@ -1,0 +1,144 @@
+{
+  "captured_at": "2026-11-17T05:58:55.040Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask",
+  "request": {
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "params": {
+      "name": "0x098B716B8Aaf21512996dC57EB0615e2383E2f96"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for LLM-routed inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 18461,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a5bc8142ce091342-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 17 Nov 2026 05:58:53 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHg2MzQ4MDQyYTQ5YWQ4OTUzNzI5MzI5ZTZjOTU2NDY4YjAwZmViMmE0OTk1YTI2ZTQxOGJjODI2NWQxMzNkYTM1IiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=035sQKneibstlfNypB%2B6J8qNGgoqcikjxRvj6vz8uBdOx8aLrLJ0ioZq%2FKvr5xsvXBMieAfm%2F7Y0dnDXAxn6g0VFI3%2Fcq0W7bU5KIU0z8dsSk0%2B9ZgNc%2FPgtGoTfHdOL%2BbPi72kkgKzDgVWON5rG9A%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDhkMjI3MjczMjQ1MjNlZDE3YzVlMjAwNDlkYmIxMDViMGI4NTUxMTM2YTc2ZDA4YzhkMTAxZDI0NTBmZmVmNjgiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI0ODkzIiwiaW50ZW50IjoiU0FOQ1RJT05TX1NDUkVFTklOR19NQVRDSF9HRU5FUkFMIiwiYW1vdW50X3V1c2RjIjoiMTAwMDAiLCJlcG9jaF9pZCI6MjExMSwic2V0dGxlbWVudCI6Im9uY2hhaW4iLCJjaGFpbiI6ImVpcDE1NToxMTE1NTExMSIsInR4X2hhc2giOiIweDYzNDgwNDJhNDlhZDg5NTM3MjkzMjllNmM5NTY0NjhiMDBmZWIyYTQ5OTVhMjZlNDE4YmM4MjY1ZDEzM2RhMzUiLCJ0aW1lc3RhbXAiOjE3OTQ4OTUxMzN9"
+  },
+  "bodyText": "{\"miner_id\":\"302\",\"miner_name\":\"ChainSight — Universal Intelligence \\u0026 Data Oracle\",\"endpoint\":\"/sanctions\",\"result\":{\"name\":\"0x098B716B8Aaf21512996dC57EB0615e2383E2f96\",\"matched\":true,\"matches\":[\"0x098B716B8Aaf21512996dC57EB0615e2383E2f96\"],\"lists\":null,\"match_score\":null},\"result_shape\":\"intent\",\"format_version\":3,\"field_status\":{\"name\":\"ok\",\"matched\":\"ok\",\"matches\":\"ok\",\"lists\":\"rejected\",\"match_score\":\"missing\"},\"input\":{\"name\":\"0x098B716B8Aaf21512996dC57EB0615e2383E2f96\"},\"input_schema_version\":3,\"cost_usd\":0.01,\"duration_ms\":895,\"timestamp\":\"2026-11-17T05:58:53.872583968Z\",\"reasoning\":\"Intent: intent given by the caller\\nMiner: The user has provided a question that has been classified with the intent SANCTIONS_SCREENING_MATCH_GENERAL. The ChainSight miner has an endpoint at /sanctions that is specifically designed for this intent, described as 'Sanctions screening of a person/entity against OFAC SDN. Route here for sanctions check, OFAC, watchlist screening (matched true/false)'. The query parameter is required for this endpoint and will be populated with the exact text provided in the user's question, including the parameters specified.\",\"intent\":\"SANCTIONS_SCREENING_MATCH_GENERAL\",\"signal_hash\":\"0xe43574ed6ce10019233e563bba3c3f42d58b8a83cfe2b12c522d83dd56929db8\"}",
+  "body": {
+    "miner_id": "302",
+    "miner_name": "ChainSight — Universal Intelligence & Data Oracle",
+    "endpoint": "/sanctions",
+    "result": {
+      "name": "0x098B716B8Aaf21512996dC57EB0615e2383E2f96",
+      "matched": true,
+      "matches": [
+        "0x098B716B8Aaf21512996dC57EB0615e2383E2f96"
+      ],
+      "lists": null,
+      "match_score": null
+    },
+    "result_shape": "intent",
+    "format_version": 3,
+    "field_status": {
+      "name": "ok",
+      "matched": "ok",
+      "matches": "ok",
+      "lists": "rejected",
+      "match_score": "missing"
+    },
+    "input": {
+      "name": "0x098B716B8Aaf21512996dC57EB0615e2383E2f96"
+    },
+    "input_schema_version": 3,
+    "cost_usd": 0.01,
+    "duration_ms": 895,
+    "timestamp": "2026-11-17T05:58:53.872583968Z",
+    "reasoning": "Intent: intent given by the caller\nMiner: The user has provided a question that has been classified with the intent SANCTIONS_SCREENING_MATCH_GENERAL. The ChainSight miner has an endpoint at /sanctions that is specifically designed for this intent, described as 'Sanctions screening of a person/entity against OFAC SDN. Route here for sanctions check, OFAC, watchlist screening (matched true/false)'. The query parameter is required for this endpoint and will be populated with the exact text provided in the user's question, including the parameters specified.",
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "signal_hash": "0xe43574ed6ce10019233e563bba3c3f42d58b8a83cfe2b12c522d83dd56929db8"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x6348042a49ad8953729329e6c956468b00feb2a4995a26e418bc8265d133da35",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x8d22727324523ed17c5e20049dbb105b0b8551136a76d08c8d101d2450ffef68",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "4893",
+    "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2111,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x6348042a49ad8953729329e6c956468b00feb2a4995a26e418bc8265d133da35",
+    "timestamp": 1794895133
+  },
+  "charged": true
+}

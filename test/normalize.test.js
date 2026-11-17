@@ -273,6 +273,19 @@ test("CodeWire on the demo vault: reentrancy critical, missing access control hi
   assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
 });
 
+test("CodeWire's Nov 17 wording ('Overall risk is critical', 'Reentrancy affects withdraw() and has critical severity') reads the same -> BLOCK", () => {
+  const n = normalize("codewire-audit", codewire("1900999007-audit-reentrant-vault-nov17-format.json").body.result);
+  assert.deepEqual(n.findings.map((f) => [f.title, f.category, f.severity]), [
+    ["Reentrancy (affects withdraw())", "reentrancy", "critical"],
+    ["Missing access control (affects setOwner())", "access-control", "high"],
+  ]);
+  const diff = codewire("1900999007-audit-reentrant-vault-200-paid.json").request.payload.contract; // the same vault
+  const c = confirmFindings("diff", n, { diff });
+  assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+  // Findings it lists but that can't be read must not pass as SAFE.
+  assert.equal(normalize("codewire-audit", { summary: "Overall risk is high.\n\nFinding 1 - something unusual." }).severity, "unknown");
+});
+
 test("CodeWire on the fixed vault: only low findings -> SAFE; no verdict -> unknown", () => {
   const cap = codewire("1900999007-audit-fixed-vault-200-paid.json");
   const n = normalize("codewire-audit", cap.body.result);
@@ -292,7 +305,8 @@ test("an OFAC-listed address routed to Counterproof: exact match, critical, conf
   assert.deepEqual([cap.body.result_shape, cap.body.result.lists], ["intent", null]);
   const { answer } = judgeRouted({ ok: true, status: 200, body: cap.body }, { normalizer: "sanctions-format" }, [], lazarus);
   const c = confirmFindings("sanctions", answer, lazarus);
-  assert.deepEqual([c.severity, c.confirmed, c.findings[0].title], ["critical", true, "on a sanctions list, exact match"]);
+  assert.deepEqual([c.severity, c.confirmed, c.disagreement], ["critical", true, false]);
+  assert.equal(c.findings[0].title, "LAZARUS GROUP: this exact address is on the US OFAC SDN list (DPRK3)");
   assert.equal(decide([{ check: "sanctions", target: "x", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
 });
 
@@ -313,4 +327,36 @@ test("routed sanctions answers now name the listed party and the lists checked (
   assert.equal(n.findings[0].title, "LAZARUS GROUP: on a sanctions list, exact match");
   assert.match(n.findings[0].detail, /^lists checked: US OFAC SDN and non-SDN Consolidated lists \(published 2026-11-13\); UN Security Council/);
   assert.deepEqual(normalize("sanctions-format", { matched: false, match_score: 0 }), { severity: "none", findings: [], verified: true });
+});
+
+// ---- Sanctions: the exact address on OFAC's list confirms (Nov 17) ---------
+// Routing moved sanctions screens to miner 302, whose answers carry no match
+// score; and #208 reports it answering "not matched" for a listed address.
+test("routed to miner 302 (no match score): a 'possible match' alone; the OFAC list makes it exact -> BLOCK", () => {
+  const cap = screen("routed-lazarus-address-302-intent-no-score.json");
+  assert.deepEqual([cap.body.miner_id, cap.body.result.match_score], ["302", null]);
+  const { answer } = judgeRouted({ ok: true, status: 200, body: cap.body }, { normalizer: "sanctions-format" }, [], lazarus);
+  assert.equal(answer.severity, "medium");
+  const c = confirmFindings("sanctions", answer, lazarus);
+  assert.deepEqual([c.severity, c.confirmed, c.disagreement], ["critical", true, false]);
+  assert.match(c.findings[0].detail, /^ETH address in OFAC's list as of \d{4}-\d{2}-\d{2}; the screening miner reported a match too$/);
+  assert.equal(decide([{ check: "sanctions", target: "x", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("a miner that says 'not matched' for a listed address is overruled, and the report says they disagree", () => {
+  const c = confirmFindings("sanctions", normalize("sanctions-format", { matched: false, match_score: 0 }), lazarus);
+  assert.deepEqual([c.severity, c.confirmed, c.disagreement], ["critical", true, true]);
+  assert.match(c.findings[0].detail, /the screening miner reported no match$/);
+  // Mixed case and an unreadable answer change nothing.
+  const u = confirmFindings("sanctions", { severity: "unknown", findings: [] }, { address: lazarus.address.toLowerCase() });
+  assert.deepEqual([u.severity, u.confirmed], ["critical", true]);
+});
+
+test("an address not on OFAC's list: a 'possible match' stays CAUTION; a verified exact match still blocks", () => {
+  const other = { address: "0x1111111111111111111111111111111111111111" };
+  const possible = confirmFindings("sanctions", normalize("sanctions-format", { matched: true, matches: [other.address], match_score: null }), other);
+  assert.deepEqual([possible.severity, possible.confirmed], ["medium", false]);
+  assert.equal(decide([{ check: "sanctions", target: "x", status: "ok", calls: [], ...possible }]).verdict, "CAUTION");
+  const exact = confirmFindings("sanctions", normalize("sanctions-format", { matched: true, matches: ["X"], match_score: 1 }), other);
+  assert.deepEqual([exact.severity, exact.confirmed], ["critical", true]);
 });

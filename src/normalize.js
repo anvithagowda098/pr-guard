@@ -129,17 +129,28 @@ const NORMALIZERS = {
   // ---- Vetted miners, called directly as the fallback ----------------------
 
   // CodeWire Smart Contract Audit (#1900999007) GET /contract-audit {contract}:
-  // a language-model audit as prose: "Overall risk verdict: ...", then
-  // "Finding 1: Reentrancy, affects `withdraw()`, severity critical. ..."
-  // (or "Finding 1, ..."). Captured Nov 13 for a vulnerable and a fixed vault.
+  // a language-model audit as prose. Its wording changes between captures:
+  //   Nov 13: "Overall risk verdict: ..." then "Finding 1: Reentrancy, affects
+  //           `withdraw()`, severity critical." (or "Finding 1, ...")
+  //   Nov 17: "Overall risk is critical because ..." then "Finding 1: Reentrancy
+  //           affects withdraw() and has critical severity."
+  // Each finding's first sentence gives its title, location and severity.
   "codewire-audit": (result) => {
     const text = String(result?.summary ?? "");
-    expect(/overall risk verdict/i.test(text), "no overall verdict");
+    expect(/overall risk/i.test(text), "no overall verdict");
     const SEV = { critical: "critical", high: "high", medium: "medium", moderate: "medium", low: "low", informational: "low", info: "low", none: "none" };
-    const findings = [...text.matchAll(/Finding\s+\d+\s*[:,]\s*(.+?),\s*affects\s+(.+?),\s*severity\s+(critical|high|medium|moderate|low|informational|info|none)\b/gi)].map((m) => {
-      const cat = securityCategory(m[1]);
-      return { title: `${m[1].trim()} (affects ${m[2].trim()})`.slice(0, 200), severity: SEV[m[3].toLowerCase()], ...(cat && { category: cat.id }) };
-    });
+    const LEVEL = "(critical|high|medium|moderate|low|informational|info|none)";
+    const findings = [...text.matchAll(/Finding\s+\d+\s*[:,]\s*(.+?)(?:\.(?=\s|$)|\n)/g)].map((m) => {
+      const head = m[1];
+      const sev = head.match(new RegExp(`\\bseverity\\s+${LEVEL}\\b|\\b${LEVEL}\\s+severity\\b`, "i"));
+      if (!sev) return null;
+      const [title, affects] = head.split(/,?\s+affects\s+/i);
+      const where = affects?.replace(/(,\s*severity\b|\s+and\s+has\b|,).*$/i, "").trim();
+      const cat = securityCategory(title);
+      return { title: `${title.trim()}${where ? ` (affects ${where})` : ""}`.slice(0, 200), severity: SEV[(sev[1] ?? sev[2]).toLowerCase()], ...(cat && { category: cat.id }) };
+    }).filter(Boolean);
+    // Findings it lists but that can't be read must not pass as none.
+    expect(findings.length || !/Finding\s+\d/i.test(text), "findings not readable");
     return { severity: maxSeverity(findings), findings };
   },
 

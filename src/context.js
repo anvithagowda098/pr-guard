@@ -41,13 +41,19 @@ export function changedSymbols(files, { max = 8 } = {}) {
   const out = new Map();
   for (const f of files) {
     if (!f.patch || !CODE_FILE.test(f.filename) || shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
-    const lines = f.patch.split("\n");
-    for (const raw of lines) {
+    // A changed line counts for the definition it's on, or else the nearest
+    // definition above it in the hunk (an unchanged `function` line, or the
+    // enclosing function git names in the hunk header).
+    let enclosing = null;
+    const add = (name) => { if (name && !out.has(name)) out.set(name, { name, file: f.filename }); };
+    for (const raw of f.patch.split("\n")) {
       const hunk = raw.match(/^@@ [^@]+ @@\s?(.*)$/);
-      const text = hunk ? hunk[1] : /^[+-]/.test(raw) && !/^(\+\+\+|---)/.test(raw) ? raw.slice(1) : null;
-      if (text == null) continue;
-      const name = definedIn(text);
-      if (name && !out.has(name)) out.set(name, { name, file: f.filename });
+      if (hunk) { enclosing = definedIn(hunk[1]); continue; }
+      if (/^(\+\+\+|---)/.test(raw)) continue;
+      const changed = /^[+-]/.test(raw);
+      const name = definedIn(changed || raw.startsWith(" ") ? raw.slice(1) : raw);
+      if (name) enclosing = name;
+      if (changed) add(name ?? enclosing);
     }
   }
   return [...out.values()].slice(0, max);

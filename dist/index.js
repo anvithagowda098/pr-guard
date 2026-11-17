@@ -50336,6 +50336,14 @@ function diffLineLocation(text, n) {
   }
   return null;
 }
+function contextLineLocation(text, n) {
+  const lines = String(text ?? "").split("\n");
+  for (const i of [n - 1, n - 2]) {
+    const m = lines[i]?.match(/^# (\S+):(\d+) uses /);
+    if (m) return { file: m[1], line: Number(m[2]), context: true };
+  }
+  return null;
+}
 var URL_RE = /https?:\/\/[^\s"'`<>()[\]{}\\]+/g;
 var IGNORED_HOSTS = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|(.+\.)?example\.(com|org|net)|.+\.(test|local|invalid|example)|www\.w3\.org|schemas\.[^/]+)$/i;
 function extractUrls(files, { max = 10 } = {}) {
@@ -50559,13 +50567,21 @@ function changedSymbols(files, { max = 8 } = {}) {
   const out = /* @__PURE__ */ new Map();
   for (const f of files) {
     if (!f.patch || !CODE_FILE.test(f.filename) || shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
-    const lines = f.patch.split("\n");
-    for (const raw of lines) {
-      const hunk = raw.match(/^@@ [^@]+ @@\s?(.*)$/);
-      const text = hunk ? hunk[1] : /^[+-]/.test(raw) && !/^(\+\+\+|---)/.test(raw) ? raw.slice(1) : null;
-      if (text == null) continue;
-      const name = definedIn(text);
+    let enclosing = null;
+    const add = (name) => {
       if (name && !out.has(name)) out.set(name, { name, file: f.filename });
+    };
+    for (const raw of f.patch.split("\n")) {
+      const hunk = raw.match(/^@@ [^@]+ @@\s?(.*)$/);
+      if (hunk) {
+        enclosing = definedIn(hunk[1]);
+        continue;
+      }
+      if (/^(\+\+\+|---)/.test(raw)) continue;
+      const changed = /^[+-]/.test(raw);
+      const name = definedIn(changed || raw.startsWith(" ") ? raw.slice(1) : raw);
+      if (name) enclosing = name;
+      if (changed) add(name ?? enclosing);
     }
   }
   return [...out.values()].slice(0, max);
@@ -51040,9 +51056,9 @@ var NORMALIZERS = {
     const findings = result?.answer?.findings;
     expect(Array.isArray(findings) && result.verdict !== "rejected", "rejected or no findings list");
     const mapped = findings.map((f) => {
-      const at = vars.diff ? diffLineLocation(vars.diff, f.line) : null;
+      const at = (vars.diff ? diffLineLocation(vars.diff, f.line) : null) ?? (vars.review ? contextLineLocation(vars.review, f.line) : null);
       return {
-        title: f.message || f.rule_id,
+        title: `${f.message || f.rule_id}${at?.context ? " (in a call site this PR doesn't change)" : ""}`,
         severity: String(f.severity ?? "").toLowerCase(),
         ...at?.file && { file: at.file },
         line: at?.line ?? f.line,

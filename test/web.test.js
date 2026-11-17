@@ -182,6 +182,17 @@ test("the page is served with a strict content security policy", async () => {
   }
 });
 
+test("the page's one-click install opens GitHub with the no-key workflow, the same as the example", async () => {
+  const { app, env } = world();
+  const html = await (await call(app, env, "GET", "/")).text();
+  assert.match(html, /<form id="add">/);
+  const yaml = JSON.parse(html.match(/var WORKFLOW = ("(?:[^"\\]|\\.)*");/)[1]);
+  const example = readFileSync(new URL("../examples/pr-guard.yml", import.meta.url), "utf8");
+  const body = (text) => text.slice(text.indexOf("name: PR Guard")).replace(/ #.*$/gm, "");
+  assert.equal(body(yaml), body(example));
+  assert.match(html, /"https:\/\/github\.com\/" \+ repo \+ "\/new\/"/);
+});
+
 // The Action without a wallet: src/hosted.js driving this same service.
 const hostedFetch = (app, env) => (url, init) => app(new Request(url, { ...init, headers: { ...init?.headers, "cf-connecting-ip": "20.1.2.3" } }), env);
 
@@ -226,4 +237,12 @@ test("hosted mode: a dropped connection mid-check is retried without paying twic
   const scan = await scanHosted({ serviceUrl: "https://web.test", prUrl: "https://github.com/o/r/pull/7", deadline: Date.now() + 60_000, fetch: flaky, sleep: async () => {} });
   assert.equal(scan.verdict, "BLOCK");
   assert.deepEqual(asks.map((a) => a.miner), ["routed:SECURITY_REVIEW_GENERAL", "77010", "routed:CODE_REVIEW_GENERAL"], "each call paid once");
+});
+
+test("the sponsor wallet is public: its address, today's spend and the limits", async () => {
+  const { app, env } = world();
+  await call(app, env, "POST", "/api/scan", { url: "https://github.com/o/r/pull/8" });
+  const r = await (await call(app, env, "GET", "/api/sponsor")).json();
+  assert.match(r.address, /^0x[0-9a-fA-F]{40}$/);
+  assert.deepEqual([r.today.scans, r.limits.usdPerScan], [1, 0.1]);
 });

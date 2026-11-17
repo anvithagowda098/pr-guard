@@ -9,7 +9,8 @@
 //
 // One paid check per request keeps each invocation inside the Workers free
 // plan's CPU limit (signing a payment costs ~3.5 ms). State lives in KV.
-import { Telegraph, Budget, atomicToUsd, DEFAULT_NODE_URL } from "../src/telegraph.js";
+import { Telegraph, Budget, atomicToUsd, DEFAULT_NODE_URL, normalizePrivateKey } from "../src/telegraph.js";
+import { privateKeyToAccount } from "viem/accounts";
 import { planScan } from "../src/plan.js";
 import { runCheck } from "../src/runner.js";
 import { decide } from "../src/policy.js";
@@ -254,6 +255,13 @@ export function createApp(deps = {}) {
         return scan ? json(200, { scan: publicScan(scan) }) : json(404, { error: "No such scan." });
       }
       if (request.method === "GET" && path === "/api/recent") return json(200, { recent: (await kvGet(env, "recent")) ?? [] });
+      if (request.method === "GET" && path === "/api/sponsor") {
+        // Public, for transparency: which wallet pays for hosted scans, and today's spend.
+        const lim = limitsFrom(env);
+        const day = (await kvGet(env, `day:${today()}`)) ?? { scans: 0, usd: 0 };
+        const address = env.SPONSOR_KEY ? privateKeyToAccount(normalizePrivateKey(env.SPONSOR_KEY)).address : null;
+        return json(200, { address, network: "Ethereum Sepolia testnet (test USDC)", today: { date: today(), scans: day.scans, usd: day.usd }, limits: lim });
+      }
       return json(404, { error: "Not found." });
     } catch (err) {
       if (err instanceof UserError) return json(400, { error: err.message });

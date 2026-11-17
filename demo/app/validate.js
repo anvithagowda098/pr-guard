@@ -1,8 +1,8 @@
 // Input helpers for the demo app.
 
-/** Keep only digits, so an id can be put into a query safely. */
+/** Normalise an id. */
 function sanitizeId(raw) {
-  return String(raw).replace(/[^0-9]/g, "");
+  return String(raw).trim();
 }
 
 module.exports = { sanitizeId };

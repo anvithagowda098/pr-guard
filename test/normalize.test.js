@@ -160,6 +160,18 @@ test("local rules catch what a reviewer misses: CAUTION, never a silent SAFE", (
 const routed = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/ROUTED/${name}`, import.meta.url), "utf8"));
 const asRecord = (cap) => ({ ok: cap.ok, status: cap.status, body: cap.body, costUsd: cap.costUsd });
 
+test("a routed review whose findings the node rejected is unreadable, not an Approve (TxLens #9002, Nov 17)", () => {
+  const cap = routed("code-review-solidity-reentrancy-9002-approve-findings-rejected.json");
+  assert.deepEqual([cap.body.result.verdict, cap.body.result.findings, cap.body.field_status.findings], ["Approve", null, "rejected"]);
+  const route = { intent: "CODE_REVIEW_GENERAL", params: cap.request.params, normalizer: "code-review-format" };
+  const judged = judgeRouted(asRecord(cap), route, [], { diff: cap.request.params.code });
+  assert.deepEqual(judged, { reject: "the node couldn't read miner 9002's findings", systematic: false });
+  // A rejected summary alone is harmless: miner 302's review of the same vault is used.
+  const ok = routed("code-review-solidity-reentrancy-302-intent.json");
+  assert.equal(ok.body.field_status.summary, "rejected");
+  assert.ok(judgeRouted(asRecord(ok), route, [], { diff: ok.request.params.code }).answer);
+});
+
 test("routed CODE_REVIEW_GENERAL (miner 302, intent format): security findings rated, style notes low", () => {
   const cap = routed("code-review-sqli-eval-diff-302-intent.json");
   const diff = cap.request.params.code;

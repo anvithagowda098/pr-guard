@@ -1,0 +1,138 @@
+{
+  "captured_at": "2026-11-17T06:02:06.596Z",
+  "url": "https://devnode.telegraphprotocol.com/engine/v1/ask",
+  "request": {
+    "intent": "CODE_REVIEW_GENERAL",
+    "params": {
+      "code": "diff --git a/demo/contracts/Vault.sol b/demo/contracts/Vault.sol\n@@ -0,0 +1,28 @@\n+// SPDX-License-Identifier: MIT\n+pragma solidity ^0.8.20;\n+\n+/// Demo only: a vault with two planted bugs, a reentrant withdraw and an\n+/// owner anyone can replace. Never deploy this.\n+contract Vault {\n+    mapping(address => uint256) public balances;\n+    address public owner;\n+\n+    constructor() {\n+        owner = msg.sender;\n+    }\n+\n+    function deposit() external payable {\n+        balances[msg.sender] += msg.value;\n+    }\n+\n+    function withdraw() external {\n+        uint256 amount = balances[msg.sender];\n+        (bool ok, ) = msg.sender.call{value: amount}(\"\");\n+        require(ok, \"send failed\");\n+        balances[msg.sender] = 0;\n+    }\n+\n+    function setOwner(address newOwner) external {\n+        owner = newOwner;\n+    }\n+}\n\n# Read-only context, not part of this change: where code changed above is used elsewhere in the repository.\n# evaluation/smart-contract-audit/build_rows.py:37 uses withdraw (changed in demo/contracts/Vault.sol)\n#   \"An external call transfers control to another contract before this contract finishes updating its own state, so the callee can call back in and repeat the oper\n# miner/rules.js:168 uses deposit (changed in demo/contracts/Vault.sol)\n#   const STATE_WRITE = /\\b\\w+\\s*\\[[^\\]]+\\]\\s*(=|-=|\\+=)(?!=)|\\b\\w*(balance|deposit|share|credit)\\w*\\s*(=|-=)(?!=)/i;\n# src/normalize.js:27 uses withdraw (changed in demo/contracts/Vault.sol)\n#   { id: \"access-control\", severity: \"high\", re: /access[\\s-]*control|\\bunrestricted\\b|anyone can (call|change|set|withdraw|mint|update|transfer|take)|missing (an?\n# src/normalize.js:134 uses withdraw (changed in demo/contracts/Vault.sol)\n#   //           `withdraw()`, severity critical.\" (or \"Finding 1, ...\")\n"
+    }
+  },
+  "paid": true,
+  "ok": true,
+  "costUsd": 0.01,
+  "costAtomic": "10000",
+  "quote": {
+    "accepts": [
+      {
+        "amount": "10000",
+        "asset": "0xcc194e1a843B658526D0D5C431f670028582Ae17",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:11155111",
+        "payTo": "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "extra": {
+          "name": "USDC",
+          "version": "2"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "eip155:84532",
+        "payTo": "0xC0A3FB6d3F1f4B54617d29ffbdA4663Af5F96e2e",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "asset": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "extra": {
+          "feePayer": "C7ckEzH4varMpBQsaD9bJZSCnWVyk4zAKYA85spuuNbR"
+        },
+        "maxTimeoutSeconds": 60,
+        "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+        "payTo": "G53EbeTZSNsAn7bj6iMFUQnq3zpDdEbHhKkPRywo8bix",
+        "scheme": "exact"
+      },
+      {
+        "amount": "10000",
+        "extra": {
+          "description": "Deduct from the caller's Telegraph escrow balance at the next epoch close. Fund it once with EscrowFacet.depositUSDC(amount); no per-request settlement.",
+          "message": "Telegraph Escrow Payment\n\nWallet: {from}\nPay To: 0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b\nNetwork: eip155:11155111\nAmount: 10000 uUSDC\nResource: /v1/ask\nNonce: {nonce}\nValid After: {validAfter}\nValid Before: {validBefore}",
+          "resource": "/v1/ask",
+          "signWith": "personal_sign (EIP-191)"
+        },
+        "network": "eip155:11155111",
+        "payTo": "0x3624eb012b5e998bb57b6be6c9cfc9c4bc5eb99b",
+        "scheme": "escrow"
+      }
+    ],
+    "error": "Payment required",
+    "resource": {
+      "description": "Payment required for LLM-routed inference.",
+      "mimeType": "application/json",
+      "url": "https://devnode.telegraphprotocol.com/engine/v1/ask"
+    },
+    "x402Version": 2
+  },
+  "status": 200,
+  "durationMs": 12134,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a5bc86056d67ca32-IAD",
+    "connection": "keep-alive",
+    "content-encoding": "br",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 17 Nov 2026 06:02:05 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "payment-response": "eyJzdWNjZXNzIjp0cnVlLCJwYXllciI6IjB4ZDBDZDQ4N2NDYzJkODcwNzA5QmMwNURmRDZkN0UyN2YwZDVjZkI0NCIsInRyYW5zYWN0aW9uIjoiMHg2OTU2ZTUzOGJlOWEyMjg2MTdlNzQ1NjFmNmI2OTZiNWUwYzZjYWI5NmNkOWU2ZTk5NmZmZTRlZWVkZWVlNmJhIiwibmV0d29yayI6ImVpcDE1NToxMTE1NTExMSJ9",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=cHeQ094juB0tV%2FRvdsR1YiBJd4QLyn5bPXZK3GuSHZF%2FRDFLWLdeWCIdmAwI6jA6VAGhxk5bwx95rtYrUuyMrze8qHW3cFc02kwtDrylEy7eqJFS2V6Ar2Wnh0kzlMTwUueVZvRYDX9Ec43K6%2BS44g%3D%3D\"}]}",
+    "server": "cloudflare",
+    "transfer-encoding": "chunked",
+    "vary": "Origin, Origin",
+    "x-telegraph-receipt": "eyJyZWNlaXB0X2hhc2giOiIweDZlMGRhMzJjNWRjNTM3Y2NhYjY3ZjJiMTFkNWJhNDVhOTI0OGU1YTNjYmY3NTliMTZlZWIxZDU4NGE5ZTI5YzQiLCJyYWlsIjoieDQwMiIsInBheWVyIjoiMHhkMENkNDg3Y0NjMmQ4NzA3MDlCYzA1RGZENmQ3RTI3ZjBkNWNmQjQ0IiwibWluZXIiOiI1MjAyIiwiaW50ZW50IjoiQ09ERV9SRVZJRVdfR0VORVJBTCIsImFtb3VudF91dXNkYyI6IjEwMDAwIiwiZXBvY2hfaWQiOjIxMTEsInNldHRsZW1lbnQiOiJvbmNoYWluIiwiY2hhaW4iOiJlaXAxNTU6MTExNTUxMTEiLCJ0eF9oYXNoIjoiMHg2OTU2ZTUzOGJlOWEyMjg2MTdlNzQ1NjFmNmI2OTZiNWUwYzZjYWI5NmNkOWU2ZTk5NmZmZTRlZWVkZWVlNmJhIiwidGltZXN0YW1wIjoxNzk0ODk1MzI1fQ=="
+  },
+  "bodyText": "{\"miner_id\":\"9002\",\"miner_name\":\"TxLens\",\"endpoint\":\"/code-review\",\"result\":{\"verdict\":\"Approve\",\"findings\":null,\"summary\":null},\"result_shape\":\"intent\",\"format_version\":3,\"field_status\":{\"verdict\":\"ok\",\"findings\":\"rejected\",\"summary\":\"rejected\"},\"input\":{\"code\":\"diff --git a/demo/contracts/Vault.sol b/demo/contracts/Vault.sol\\n@@ -0,0 +1,28 @@\\n+// SPDX-License-Identifier: MIT\\n+pragma solidity ^0.8.20;\\n+\\n+/// Demo only: a vault with two planted bugs, a reentrant withdraw and an\\n+/// owner anyone can replace. Never deploy this.\\n+contract Vault {\\n+    mapping(address =\\u003e uint256) public balances;\\n+    address public owner;\\n+\\n+    constructor() {\\n+        owner = msg.sender;\\n+    }\\n+\\n+    function deposit() external payable {\\n+        balances[msg.sender] += msg.value;\\n+    }\\n+\\n+    function withdraw() external {\\n+        uint256 amount = balances[msg.sender];\\n+        (bool ok, ) = msg.sender.call{value: amount}(\\\"\\\");\\n+        require(ok, \\\"send failed\\\");\\n+        balances[msg.sender] = 0;\\n+    }\\n+\\n+    function setOwner(address newOwner) external {\\n+        owner = newOwner;\\n+    }\\n+}\\n\\n# Read-only context, not part of this change: where code changed above is used elsewhere in the repository.\\n# evaluation/smart-contract-audit/build_rows.py:37 uses withdraw (changed in demo/contracts/Vault.sol)\\n#   \\\"An external call transfers control to another contract before this contract finishes updating its own state, so the callee can call back in and repeat the oper\\n# miner/rules.js:168 uses deposit (changed in demo/contracts/Vault.sol)\\n#   const STATE_WRITE = /\\\\b\\\\w+\\\\s*\\\\[[^\\\\]]+\\\\]\\\\s*(=|-=|\\\\+=)(?!=)|\\\\b\\\\w*(balance|deposit|share|credit)\\\\w*\\\\s*(=|-=)(?!=)/i;\\n# src/normalize.js:27 uses withdraw (changed in demo/contracts/Vault.sol)\\n#   { id: \\\"access-control\\\", severity: \\\"high\\\", re: /access[\\\\s-]*control|\\\\bunrestricted\\\\b|anyone can (call|change|set|withdraw|mint|update|transfer|take)|missing (an?\\n# src/normalize.js:134 uses withdraw (changed in demo/contracts/Vault.sol)\\n#   //           `withdraw()`, severity critical.\\\" (or \\\"Finding 1, ...\\\")\\n\"},\"input_schema_version\":3,\"cost_usd\":0.01,\"duration_ms\":196,\"timestamp\":\"2026-11-17T06:02:01.224756723Z\",\"reasoning\":\"Intent: intent given by the caller\\nMiner: The intent is CODE_REVIEW_GENERAL, and the TxLens miner has a /code-review endpoint that explicitly serves this intent. The question is passed verbatim as the 'query' parameter to this endpoint.\",\"intent\":\"CODE_REVIEW_GENERAL\",\"signal_hash\":\"0x48d36e4a88d540dca0ff95527f683d7ae8ee82d75572c0ac49130d2e5441acd5\"}",
+  "body": {
+    "miner_id": "9002",
+    "miner_name": "TxLens",
+    "endpoint": "/code-review",
+    "result": {
+      "verdict": "Approve",
+      "findings": null,
+      "summary": null
+    },
+    "result_shape": "intent",
+    "format_version": 3,
+    "field_status": {
+      "verdict": "ok",
+      "findings": "rejected",
+      "summary": "rejected"
+    },
+    "input": {
+      "code": "diff --git a/demo/contracts/Vault.sol b/demo/contracts/Vault.sol\n@@ -0,0 +1,28 @@\n+// SPDX-License-Identifier: MIT\n+pragma solidity ^0.8.20;\n+\n+/// Demo only: a vault with two planted bugs, a reentrant withdraw and an\n+/// owner anyone can replace. Never deploy this.\n+contract Vault {\n+    mapping(address => uint256) public balances;\n+    address public owner;\n+\n+    constructor() {\n+        owner = msg.sender;\n+    }\n+\n+    function deposit() external payable {\n+        balances[msg.sender] += msg.value;\n+    }\n+\n+    function withdraw() external {\n+        uint256 amount = balances[msg.sender];\n+        (bool ok, ) = msg.sender.call{value: amount}(\"\");\n+        require(ok, \"send failed\");\n+        balances[msg.sender] = 0;\n+    }\n+\n+    function setOwner(address newOwner) external {\n+        owner = newOwner;\n+    }\n+}\n\n# Read-only context, not part of this change: where code changed above is used elsewhere in the repository.\n# evaluation/smart-contract-audit/build_rows.py:37 uses withdraw (changed in demo/contracts/Vault.sol)\n#   \"An external call transfers control to another contract before this contract finishes updating its own state, so the callee can call back in and repeat the oper\n# miner/rules.js:168 uses deposit (changed in demo/contracts/Vault.sol)\n#   const STATE_WRITE = /\\b\\w+\\s*\\[[^\\]]+\\]\\s*(=|-=|\\+=)(?!=)|\\b\\w*(balance|deposit|share|credit)\\w*\\s*(=|-=)(?!=)/i;\n# src/normalize.js:27 uses withdraw (changed in demo/contracts/Vault.sol)\n#   { id: \"access-control\", severity: \"high\", re: /access[\\s-]*control|\\bunrestricted\\b|anyone can (call|change|set|withdraw|mint|update|transfer|take)|missing (an?\n# src/normalize.js:134 uses withdraw (changed in demo/contracts/Vault.sol)\n#   //           `withdraw()`, severity critical.\" (or \"Finding 1, ...\")\n"
+    },
+    "input_schema_version": 3,
+    "cost_usd": 0.01,
+    "duration_ms": 196,
+    "timestamp": "2026-11-17T06:02:01.224756723Z",
+    "reasoning": "Intent: intent given by the caller\nMiner: The intent is CODE_REVIEW_GENERAL, and the TxLens miner has a /code-review endpoint that explicitly serves this intent. The question is passed verbatim as the 'query' parameter to this endpoint.",
+    "intent": "CODE_REVIEW_GENERAL",
+    "signal_hash": "0x48d36e4a88d540dca0ff95527f683d7ae8ee82d75572c0ac49130d2e5441acd5"
+  },
+  "payment": {
+    "success": true,
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "transaction": "0x6956e538be9a228617e74561f6b696b5e0c6cab96cd9e6e996ffe4eeedeee6ba",
+    "network": "eip155:11155111"
+  },
+  "receipt": {
+    "receipt_hash": "0x6e0da32c5dc537ccab67f2b11d5ba45a9248e5a3cbf759b16eeb1d584a9e29c4",
+    "rail": "x402",
+    "payer": "0xd0Cd487cCc2d870709Bc05DfD6d7E27f0d5cfB44",
+    "miner": "5202",
+    "intent": "CODE_REVIEW_GENERAL",
+    "amount_uusdc": "10000",
+    "epoch_id": 2111,
+    "settlement": "onchain",
+    "chain": "eip155:11155111",
+    "tx_hash": "0x6956e538be9a228617e74561f6b696b5e0c6cab96cd9e6e996ffe4eeedeee6ba",
+    "timestamp": 1794895325
+  },
+  "charged": true
+}

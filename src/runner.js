@@ -56,11 +56,19 @@ const isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(
  * sending it there); a one-off unreadable answer or an outage is not.
  * @returns {{ answer: object } | { reject: string, systematic: boolean }}
  */
+// Fields a verdict can't do without. The node marks each field of its format
+// ok, missing or rejected; a review whose findings it rejected is a bare
+// "Approve" (TxLens on Nov 17: verdict Approve, findings rejected, while its
+// own text named two critical bugs). Other fields are often rejected harmlessly.
+const ESSENTIAL_FIELDS = { "code-review-format": ["findings"], "security-review-format": ["issues"] };
+
 export function judgeRouted(r, route, entries, vars) {
   if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})`, systematic: false };
   const id = r.body?.miner_id ?? "?";
   const vetted = entries.find((e) => String(e.minerId) === String(id));
   if (r.body?.result_shape === "intent") {
+    const lost = (ESSENTIAL_FIELDS[route.normalizer] ?? []).filter((k) => r.body.field_status?.[k] === "rejected");
+    if (lost.length) return { reject: `the node couldn't read miner ${id}'s ${lost.join(" and ")}`, systematic: false };
     const n = normalize(route.normalizer, r.body.result, vars);
     return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false } : { answer: n };
   }

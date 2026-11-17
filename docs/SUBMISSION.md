@@ -157,7 +157,7 @@ Maintained by Anvitha (`anvithagowda098`).
 |---|---|
 | Track | Evaluators |
 | Contributor wallet | `0x83b5A31d89a976Ec607C3064078fd0f7EB34abcc` |
-| Missions | 14 Web3 Native & DeFi (smart-contract audits); security tooling across missions (CVE lookups) |
+| Missions | 14 Web3 Native & DeFi (smart-contract audits, vulnerability triage); security tooling across missions (CVE lookups) |
 
 ### Contributions
 
@@ -175,10 +175,20 @@ Maintained by Anvitha (`anvithagowda098`).
    - **Accepted:** both admitted. The intent's contributors went from 7 to 8.
    - **Checks:** schema-checked, and the NVD path verified on four CVEs.
    - **Files:** [evaluation/cve-lookup-truth-sources/](../evaluation/cve-lookup-truth-sources/)
+3. **`VULNERABILITY_TRIAGE_GENERAL`: 80 preference pairs**, built from public data: CISA's Known Exploited Vulnerabilities catalogue (exploited in the wild), FIRST EPSS (likelihood of exploitation) and CVE records (CVSS).
+   - **Accepted:** all 80 admitted (Nov 17).
+   - **The test in each question:** four or five findings on an internet-facing service, including at least one CVE that CISA lists as exploited but that scores lower than a CVE with no known exploitation. Ranking by CVSS alone gets the order wrong, the most common triage mistake and the one CISA's BOD 22-01 exists to correct.
+   - **Method and checks:**
+     - the chosen answer puts exploited CVEs first, each line with its evidence (KEV date, ransomware use, CVSS, EPSS);
+     - the rejected answer rotates four plausible wrong strategies (CVSS only, dismissing the KEV listing, scanner order, newest first);
+     - length and keywords balanced so neither gives the answer away (chosen is longer in 40 rows, rejected in 40; every rejected answer mentions EPSS, and 60 of 80 mention CISA or KEV);
+     - CISA's naming style normalised so it doesn't mark the exploited CVEs;
+     - no near-duplicate prompts (the closest pair is 61% alike; the node rejects 85% and above).
+   - **Code and data:** [evaluation/vulnerability-triage/](../evaluation/vulnerability-triage/), rebuilt offline from a dated snapshot, with the file hash in its README.
 
-**Why these:** the smart-contract audit intent couldn't be ranked with a single contributor, so routed audits went to a miner that timed out. CVE lookups are scored only against truth sources.
+**Why these:** the smart-contract audit intent couldn't be ranked with a single contributor, so routed audits went to a miner that timed out. CVE lookups are scored only against truth sources. Vulnerability triage is one of Mission 14's three named routes, and a ranking that follows CVSS alone is the error that matters most in practice.
 
-**Conflict of interest:** PR Guard's own miner serves neither intent.
+**Conflict of interest:** PR Guard's own miner serves none of these intents.
 
 **Invitation:** we asked other builders in #hackathon (Nov 14) to add audit material so the intent reaches five contributors.
 

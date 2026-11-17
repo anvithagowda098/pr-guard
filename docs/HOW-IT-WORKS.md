@@ -55,7 +55,7 @@ Otherwise PR Guard asks one vetted miner directly (`POST /engine/v1/ask/{minerId
 
 **6. Confirm before blocking.** A miner's opinion alone never blocks a pull request. A high finding is confirmed by deterministic evidence:
 - registry data about the exact package version;
-- an exact sanctions-list match;
+- the exact address on the US OFAC sanctions list (PR Guard ships a snapshot of the official list, so a screening miner that misses a listed address is overruled);
 - PR Guard's own rules finding the same issue in the same diff, as they did here (string-built SQL, `eval` on input).
 
 **7. Report.** One comment (or report page) with the verdict, each check, the miner that answered (routed or fallback), what it cost and a link to its receipt.
@@ -67,6 +67,7 @@ Using the network for real turned up gaps worth knowing about:
 - **A dropped answer field.** Routed sanctions screens at first lost the matched list in the node's standard format. The miner's builder (Counterproof) fixed it the same day.
 - **Inconsistent answers.** The same miner sometimes answers in prose the node can't read. That costs one fallback call for that check only.
 - **A size limit.** Canonical asks cap a string at 2,000 characters, so larger diffs go to a vetted reviewer directly.
+- **Routing moves, and answers change shape.** On Nov 17, sanctions screens were routed to a different miner, whose answers carry no match score, so a listed address came back only as a "possible match". The same day, the Solidity auditor's reports came back in three different wordings, and a newly routed code reviewer answered "Approve" while its own text named two critical bugs (the node had rejected its findings). PR Guard now confirms sanctions hits against its own snapshot of the OFAC list, reads all three wordings (an audit it can't read counts as unknown, never clean), treats a review whose findings the node rejected as unreadable, and recognises "inject SQL" and "no longer strips non-digits" as the security findings they are. Both changes were caught by re-running the demo pull requests.
 
 ## Try it
 

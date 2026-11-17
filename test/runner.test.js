@@ -252,3 +252,48 @@ test("buildJobs gives each check its canonical ask", () => {
   assert.equal(diff.route.intent, "CODE_REVIEW_GENERAL");
   assert.match(diff.route.params.code, /^diff --git a\/a\.js/);
 });
+
+test("a one-off unreadable routed answer falls back for that check only; routing stays on", async () => {
+  const routing = { mode: "auto", health: {} };
+  const prose = { ok: true, status: 200, costUsd: 0.01, body: { miner_id: "302", result_shape: "raw", result: { answer: "Verdict: The downgrade is safe but should be verified." } } };
+  const tg = fakeTg([prose, okResponse("77010"), intentAnswer("302", { verdict: "Secure", vulnerability_count: 0, issues: [] })]);
+  const first = await runCheck({ tg, miners: fallback, job: routedJob, deadline: FAR, routing });
+  assert.deepEqual(first.calls.map((c) => c.via), ["routed", "direct"]);
+  assert.match(first.notes[0], /no readable verdict/);
+  assert.equal(routing.health.SECURITY_REVIEW_GENERAL, undefined, "not marked unusable");
+  const second = await runCheck({ tg, miners: fallback, job: routedJob, deadline: FAR, routing });
+  assert.deepEqual(second.calls.map((c) => c.via), ["routed"]);
+});
+
+test("new addresses: a plain-language routed ask, then GoPlus when the routed answer is off-target; swaps caution locally", async () => {
+  const files = [{ filename: "src/pay.ts", status: "modified", patch: '@@ -1,1 +1,1 @@\n-export const PAYOUT = "0x1111111111111111111111111111111111111111";\n+export const PAYOUT = "0x2222222222222222222222222222222222222222";' }];
+  const job = buildJobs({ deps: [], files }, new Set(["addresses"])).find((j) => j.check === "addresses");
+  assert.equal(job.target, "0x2222222222222222222222222222222222222222 on Ethereum (assumed)");
+  assert.match(job.route.body.query, /^Token and contract security risk .* 0x2222222222222222222222222222222222222222 on Ethereum \(chain id 1\)$/);
+  const tg = fakeTg([rawJunk, okResponse("200001")]);
+  const goplus = { addresses: [{ minerId: "200001", endpoint: "/token-security", method: "GET", payload: { chain_id: "{{chain_id}}", contract_addresses: "{{address}}" }, normalizer: "goplus-token-security" }] };
+  const out = await runCheck({ tg, miners: goplus, job, deadline: FAR });
+  assert.deepEqual(tg.sent[0], { auto: true, body: job.route.body });
+  assert.deepEqual(tg.sent[1].payload, { chain_id: "1", contract_addresses: "0x2222222222222222222222222222222222222222" });
+  assert.deepEqual(out.calls.map((c) => c.via), ["routed", "direct"]);
+  const local = localOutcomes(files, []);
+  const swap = local.find((o) => o.check === "address-changes");
+  assert.match(swap.findings[0].title, /address changed: 0x1111.* → 0x2222/);
+  assert.equal(decide(local).verdict, "CAUTION");
+});
+
+test("a fallback limited to .sol files is used only for diffs that touch Solidity", async () => {
+  const miners = { diff: [{ minerId: "1900999007", files: "\\.sol$", endpoint: "/contract-audit", payload: {} }, { minerId: "5530", endpoint: "/v1/intent", payload: {} }] };
+  const job = (files) => ({ check: "diff", intent: "SECURITY_REVIEW_GENERAL", target: files.join(", "), vars: { diff: "x", files }, route: null });
+  const sol = await runCheck({ tg: fakeTg([okResponse("1900999007")]), miners, job: job(["contracts/V.sol", "README.md"]), deadline: FAR });
+  assert.deepEqual(sol.calls.map((c) => c.minerId), ["1900999007"]);
+  const js = await runCheck({ tg: fakeTg([okResponse("5530")]), miners, job: job(["src/a.js"]), deadline: FAR });
+  assert.deepEqual(js.calls.map((c) => c.minerId), ["5530"]);
+});
+
+test("each new address is screened for sanctions (canonical, routed) before its token risk check", () => {
+  const files = [{ filename: "src/pay.ts", patch: '@@ -1,1 +1,2 @@\n x\n+export const PAYOUT = "0x098B716B8Aaf21512996dC57EB0615e2383E2f96";' }];
+  const jobs = buildJobs({ deps: [], files }, new Set(["addresses"]));
+  assert.deepEqual(jobs.map((j) => j.check), ["sanctions", "addresses"]);
+  assert.deepEqual(jobs[0].route, { intent: "SANCTIONS_SCREENING_MATCH_GENERAL", params: { name: "0x098B716B8Aaf21512996dC57EB0615e2383E2f96" }, normalizer: "sanctions-format" });
+});

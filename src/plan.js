@@ -4,6 +4,7 @@
 import { manifestEcosystem, diffManifest, mergeDependencyChanges, diffInstallScripts } from "./extract.js";
 import { redact } from "./redact.js";
 import { buildJobs, localOutcomes, unresolvableDepOutcomes } from "./checks.js";
+import { changedSymbols, findUsages } from "./context.js";
 
 /**
  * @param {(where: { path: string, ref: string }) => Promise<string | null>} getText
@@ -38,14 +39,16 @@ export async function collectDependencies(getText, files, baseSha, headSha) {
  * @param {string} p.headSha
  * @param {Function} p.getText see collectDependencies
  * @param {Set<string>} p.checks paid checks to plan
- * @param {object} [p.limits] passed to buildJobs
+ * @param {object} [p.limits] passed to buildJobs (plus maxContextFiles)
+ * @param {() => Promise<string[]>} [p.listPaths] every file path at the head commit; enables impact context
  * @returns {{ jobs: object[], local: object[], errors: object[], notes: string[] }}
  */
-export async function planScan({ pr, rawFiles, baseSha, headSha, getText, checks, limits }) {
+export async function planScan({ pr, rawFiles, baseSha, headSha, getText, checks, limits = {}, listPaths }) {
   const { deps, installScripts, errors } = await collectDependencies(getText, rawFiles, baseSha, headSha);
   // Only redacted text ever leaves the runner.
   const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
-  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, checks, limits);
+  const usages = checks.has("diff") && listPaths ? await impactContext({ rawFiles, headSha, getText, listPaths, maxFiles: limits.maxContextFiles }) : [];
+  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body, usages }, checks, limits);
   const local = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps)];
   const notes = [];
   const changed = deps.filter((d) => d.to).length;
@@ -54,4 +57,16 @@ export async function planScan({ pr, rawFiles, baseSha, headSha, getText, checks
     notes.push(`${changed - checked} of ${changed} changed packages were not checked (limit ${checked}): direct dependencies and packages named in the title go first.`);
   }
   return { jobs, local, errors, notes };
+}
+
+/** Call sites of the changed code in untouched files; best effort, never fails the scan. */
+async function impactContext({ rawFiles, headSha, getText, listPaths, maxFiles = 30 }) {
+  try {
+    const symbols = changedSymbols(rawFiles);
+    if (!symbols.length) return [];
+    const paths = await listPaths();
+    return await findUsages({ symbols, paths, read: (path) => getText({ path, ref: headSha }), changed: rawFiles.map((f) => f.filename), maxFiles });
+  } catch {
+    return [];
+  }
 }

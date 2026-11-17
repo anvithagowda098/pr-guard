@@ -2,6 +2,15 @@
 
 Telegraph Hackathon Season II: Apps & Agents track (Mission 10, Model Economy) plus the Miners track. The event runs Nov 1 to Dec 1, 2026 (23:59 UTC). Submit by Nov 29.
 
+## Mission 14 added, Nov 13
+
+PR Guard now also serves Mission 14 (Web3 Native & DeFi; "buy bytecode and drainer analysis before committing capital"):
+- **Solidity review:** routed code review, CodeWire Smart Contract Audit as the `.sol` fallback, and Solidity rules for confirmation.
+- **New on-chain addresses:** a paid GoPlus risk check for each address a PR adds, plus a local flag when a PR swaps one address for another.
+- **Demos:** PR #4 address swap (CAUTION), PR #5 reentrant vault (BLOCK).
+
+In the submission, list both missions (10 and 14).
+
 ## Design change, Nov 13: routing first
 
 The Discord digest says the team advised builders not to call several miners directly just to cross-check them: that "defeats Telegraph's purpose" and won't meet mainnet readiness. PR Guard now:
@@ -75,6 +84,15 @@ Telegraph moved its testnet from Base Sepolia to **Ethereum Sepolia** (chain 111
 | Nov 2 | Hosted page, first live paid scan: expressjs/express#6100 → 🟢 SAFE, Verity #5530, $0.01 | signal `0x765e1625…` (our own test, not adoption) |
 
 | Nov 13, 05:21–05:26 | Routing tests (burner `0xd0Cd…cfB44`): canonical SECURITY_REVIEW_GENERAL ×2 → miner 77003, off-target; CODE_REVIEW_GENERAL → miner 302, usable; direct Verity #5530 → both bugs | signals `0x87fa3b8d…`, `0x9207fce2…`, `0xb0d09814…` (tx `0x44bcae92…51da`, block 12123863); fixtures in `test/fixtures/miner-responses/ROUTED/` |
+| Nov 13 | Update 1 posted on X (intro thread) | https://x.com/gowda_anvi/status/2121162244851736805 |
+| Nov 14 | Update 2 posted on X (milestone) and in the Discord showcase thread | https://x.com/gowda_anvi/status/2121601194942713887 |
+| Nov 14 | Counterproof's builder (Sadiq, miner 731002) suggested his sanctions miner in the showcase thread; wired in the same day, and his routed-format fix confirmed live | showcase thread; commits `94f865b`, `2e34ed8` |
+| Nov 14 | Demo PR #6 (sanctioned payout) → BLOCK via routed sanctions screen | report `5017f9be53ea` (our own test, not adoption) |
+| Nov 14 | **Evaluators track:** 105 preference pairs for SMART_CONTRACT_AUDIT_GENERAL (from SmartBugs Curated, `evaluation/smart-contract-audit/`) uploaded on Anjoman from wallet `0x83b5…abcc`: 103 admitted, 2 rejected as near-duplicates. The intent's contributors went from 1 to 2 (5 needed before its questions are used); rows become eligible at the next epoch rollover | `GET /api/evalpool/status?intent_id=SMART_CONTRACT_AUDIT_GENERAL`; commit `36c2ddf` |
+| Nov 14 | **Evaluators track:** NVD and CIRCL truth sources for CVE_LOOKUP_CVSS (`evaluation/cve-lookup-truth-sources/`) uploaded from `0x83b5…abcc`: 2 stored, 2 admitted, 0 duplicates; frozen at the next epoch rollover | commit `537f6c2` |
+| Nov 14 | Impact context built after a question on X (a change in file1 affecting file47). Demo PR #7: SAFE without context (`1895dcdb8382`) → CAUTION with it (`be9e180c79d7`); routed reviewer #302 cited the call sites in server.js | commits `69a7cd6` onward |
+| Nov 13 | Routing gap reported to Telegraph (SECURITY_REVIEW_GENERAL → miner 77003 ignores the target) | https://github.com/telegraphprotocol/bounties/issues/187 |
+| Nov 13 | Live demo scans on the public page: #1 SAFE, #2 BLOCK, #3 BLOCK, #4 CAUTION (address swap), #5 BLOCK (reentrant vault); routed CODE_REVIEW purchase tx `0xa631c7a9…3d02` (block 12124165) | report links in `demo/README.md` (our own tests, not adoption) |
 
 - The demo PRs are paid by the bot wallet `0x83b5…abcc`, whose key is in the repo secret `TELEGRAPH_PRIVATE_KEY`. They stay open as fixtures.
 - The first runs failed safely, with nothing spent: MetaMask exports keys without the 0x prefix. Fixed in `ff78842`.

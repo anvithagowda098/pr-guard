@@ -6,6 +6,7 @@
 // exact package match from registry-backed data, or PR Guard's local rules
 // finding the same issue in the same diff.
 import { normalize } from "./normalize.js";
+import { maxSeverity, SEVERITIES } from "./policy.js";
 import { ledgerEntry } from "./ledger.js";
 import { scan } from "../miner/rules.js";
 
@@ -39,6 +40,7 @@ const callSummary = (r, { via, entry, note } = {}) => ({
 });
 
 const isHigh = (s) => s === "high" || s === "critical";
+const rankOf = (s) => SEVERITIES.indexOf(s);
 const isEmpty = (n) => n.severity === "unknown" && !n.findings.length;
 
 // Seen from both deps.dev proxies for an unknown package: HTTP 500 with
@@ -49,39 +51,55 @@ const isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(
  * Whether a routed answer can be used, and read. An answer in the intent's
  * format is read by the intent's normalizer; a raw answer only if it came from
  * a vetted miner whose normalizer confirms it is about this target.
- * @returns {{ answer: object } | { reject: string }}
+ * `systematic` marks a miner that ignores the request (the router will keep
+ * sending it there); a one-off unreadable answer or an outage is not.
+ * @returns {{ answer: object } | { reject: string, systematic: boolean }}
  */
 export function judgeRouted(r, route, entries, vars) {
-  if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})` };
+  if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})`, systematic: false };
   const id = r.body?.miner_id ?? "?";
+  const vetted = entries.find((e) => String(e.minerId) === String(id));
   if (r.body?.result_shape === "intent") {
     const n = normalize(route.normalizer, r.body.result, vars);
-    return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict` } : { answer: n };
+    return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false } : { answer: n };
   }
-  const vetted = entries.find((e) => String(e.minerId) === String(id));
   if (vetted) {
     const n = normalize(vetted.normalizer, r.body?.result, vars);
     if (!isEmpty(n)) return { answer: n };
   }
-  return { reject: `miner ${id} answered in its own format, and not about this target` };
+  // Free text the node couldn't read into the format: unusable this time only.
+  const text = typeof r.body?.result?.answer === "string" || typeof r.body?.result === "string";
+  return text
+    ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false }
+    : { reject: `miner ${id} answered in its own format, and not about this target`, systematic: true };
 }
 
 /** Confirm high findings by deterministic evidence; flag local-rule hits the reviewer missed. */
 export function confirmFindings(check, answer, vars) {
-  if (check === "deps") return { ...answer, confirmed: isHigh(answer.severity) && answer.verified === true, disagreement: false };
+  if (check === "deps" || check === "addresses" || check === "sanctions") return { ...answer, confirmed: isHigh(answer.severity) && answer.verified === true, disagreement: false };
   if (check !== "diff" || !vars.diff) return { ...answer, confirmed: false, disagreement: false };
   const local = scan(vars.diff).findings.filter((f) => f.rule !== "hardcoded-secret"); // secrets: the local secret scan reports those
   const matches = (f, l) => (f.category && f.category === l.rule) || (f.file && f.line && f.file === l.file && f.line === l.line);
-  const findings = answer.findings.map((f) => (isHigh(f.severity) && local.some((l) => matches(f, l)) ? { ...f, corroborated: true } : f));
+  // The reviewer and the local rules naming the same issue confirms it, at the
+  // higher of the two severities: a reviewer that names a reentrancy but rates
+  // it low doesn't make it low.
+  const findings = answer.findings.map((f) => {
+    const hit = local.find((l) => isHigh(l.severity) && matches(f, l));
+    if (!hit) return f;
+    const severity = isHigh(f.severity) && rankOf(f.severity) >= rankOf(hit.severity) ? f.severity : hit.severity;
+    return { ...f, severity, corroborated: true };
+  });
   const missed = local.filter((l) => isHigh(l.severity) && !answer.findings.some((f) => matches(f, l)));
+  const corroborated = findings.some((f) => f.corroborated);
   return {
     ...answer,
+    ...(corroborated && { severity: maxSeverity(findings) }),
     findings: [
       ...findings,
       ...missed.map((l) => ({ title: `${l.title} (PR Guard local rule)`, severity: "medium", ...(l.file && { file: l.file }), line: l.line, detail: `${l.evidence} → ${l.fix}` })),
     ],
-    severity: missed.length && answer.severity === "none" ? "medium" : answer.severity,
-    confirmed: findings.some((f) => f.corroborated),
+    ...(!corroborated && { severity: missed.length && !isHigh(answer.severity) && answer.severity !== "medium" ? "medium" : answer.severity }),
+    confirmed: corroborated,
     disagreement: missed.length > 0,
   };
 }
@@ -99,9 +117,13 @@ export function confirmFindings(check, answer, vars) {
 export async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "auto", health: {} }, priorCalls = [], priorNotes = [] }) {
   const { check, intent, target, vars, route } = job;
   // Fallback miners are configured per check; an entry may limit itself to some ecosystems.
-  const entries = (miners[check] ?? []).filter((e) => e.enabled !== false && (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)));
+  // `files` limits an entry to diffs touching matching files (a Solidity auditor for .sol).
+  const entries = (miners[check] ?? []).filter((e) =>
+    e.enabled !== false &&
+    (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)) &&
+    (!e.files || (vars.files ?? []).some((f) => new RegExp(e.files, "i").test(f))));
   const calls = [...priorCalls];
-  const notes = [...priorNotes];
+  const notes = priorNotes.length ? [...priorNotes] : [...(job.notes ?? [])];
   const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls, notes };
   const ledger = (r, minerId, askedIntent) => onCall?.(ledgerEntry({ check, target, intent: askedIntent, minerId }, r));
   const health = routing.health ?? {};
@@ -111,16 +133,19 @@ export async function runCheck({ tg, miners, job, deadline, onCall, routing = { 
   const tryRoute = route && routing.mode !== "off" && health[route.intent] !== false && !priorCalls.length;
   if (tryRoute) {
     if (Date.now() > deadline) return { ...base, status: "skipped", severity: "none", reason: "time limit" };
-    const r = await tg.ask({ intent: route.intent, params: route.params });
+    // A canonical ask (intent + params), or a plain-language query for an intent with no input schema.
+    const r = await tg.ask(route.body ?? { intent: route.intent, params: route.params });
     const judged = judgeRouted(r, route, entries, vars);
     calls.push(callSummary(r, { via: "routed", note: judged.reject && `not used: ${judged.reject}` }));
     await ledger(r, r.body?.miner_id ?? "routed", route.intent);
     if (judged.answer) answer = judged.answer;
     else {
       if (r.reason === "over_budget") return { ...base, status: "skipped", severity: "none", reason: "budget exhausted" };
-      health[route.intent] = false; // don't pay for the same unusable routing again this run
       notes.push(`Routed ${route.intent} answer not used: ${judged.reject}.`);
-      await routing.onUnusable?.(route.intent, judged.reject);
+      if (judged.systematic) {
+        health[route.intent] = false; // don't pay for the same off-target routing again this run
+        await routing.onUnusable?.(route.intent, judged.reject);
+      }
       if (routing.deferFallback) return { deferred: true, calls, notes };
     }
   } else if (!route && job.routeSkipped) {
@@ -136,7 +161,8 @@ export async function runCheck({ tg, miners, job, deadline, onCall, routing = { 
     for (let i = 0; i < Math.min(MAX_ATTEMPTS, entries.length); i++) {
       if (Date.now() > deadline) { lastReason = "time limit"; break; }
       const entry = entries[i];
-      const r = await tg.askMiner(entry.minerId, { method: entry.method ?? "POST", endpoint: entry.endpoint, payload: fillTemplate(entry.payload, vars) });
+      // Scans planned before impact context existed carry no `review`: the diff alone.
+      const r = await tg.askMiner(entry.minerId, { method: entry.method ?? "POST", endpoint: entry.endpoint, payload: fillTemplate(entry.payload, { review: vars.diff, ...vars }) });
       calls.push(callSummary(r, { via: "direct", entry }));
       await ledger(r, entry.minerId, entry.intent);
       if (r.ok) { answer = normalize(entry.normalizer, r.body?.result, vars); break; }

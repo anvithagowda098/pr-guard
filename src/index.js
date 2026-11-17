@@ -10,7 +10,7 @@ import { runCheck, runAll } from "./runner.js";
 import { decide, shouldFail } from "./policy.js";
 import { renderComment } from "./report.js";
 import { appendLedger } from "./ledger.js";
-import { listPrFiles, mergeBase, getText, upsertComment } from "./github.js";
+import { listPrFiles, mergeBase, getText, listPaths, upsertComment } from "./github.js";
 import { scanHosted, HostedRefusal, DEFAULT_SERVICE_URL } from "./hosted.js";
 import bundledMiners from "../config/miners.json" with { type: "json" };
 
@@ -109,7 +109,10 @@ async function run() {
   const rawFiles = await listPrFiles(octokit, { ...repoRef, pull_number: pr.number });
   const base = await mergeBase(octokit, { ...repoRef, base: pr.base.sha, head: pr.head.sha });
   const getFileText = ({ path, ref }) => getText(octokit, { ...repoRef, path, ref });
-  const { jobs, local, errors, notes } = await planScan({ pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks });
+  const { jobs, local, errors, notes } = await planScan({
+    pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks,
+    listPaths: () => listPaths(octokit, { ...repoRef, sha: pr.head.sha }),
+  });
   for (const e of errors) core.warning(`could not read ${e.file}: ${e.error}`);
 
   const budget = new Budget(cfg.maxUsdPerPr);

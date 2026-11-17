@@ -5,7 +5,7 @@
 // answer that doesn't match its known shape, comes back "unknown", which the
 // policy turns into CAUTION: an unreadable answer must never pass as SAFE.
 import { maxSeverity } from "./policy.js";
-import { diffLineLocation } from "./extract.js";
+import { diffLineLocation, contextLineLocation } from "./extract.js";
 
 const GITHUB_SEVERITY = { CRITICAL: "critical", HIGH: "high", MODERATE: "medium", LOW: "low" };
 const SEVERITY_WORD = /\b(critical|high|medium|moderate|low)\b/gi;
@@ -37,7 +37,8 @@ export const SECURITY_CATEGORIES = [
   { id: "path-traversal", severity: "high", re: /(path|directory)[\s-]*traversal/i },
   { id: "ssrf", severity: "high", re: /\bssrf\b|server[\s-]*side request forgery/i },
   { id: "xss", severity: "high", re: /\bxss\b|cross[\s-]*site scripting/i },
-  { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b/i },
+  // "Hard-coded token address" is a contract address, not a secret.
+  { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)/i },
   { id: "tls-verification-disabled", severity: "medium", re: /(tls|ssl|certificate) (verification|validation)|rejectunauthorized/i },
   { id: "weak-hash", severity: "medium", re: /\bmd5\b|\bsha-?1\b|weak hash/i },
 ];
@@ -89,6 +90,25 @@ const NORMALIZERS = {
     return { severity, findings };
   },
 
+  // SANCTIONS_SCREENING_MATCH_GENERAL, format v3: name, matched (bool), matches,
+  // lists, match_score. Routed to Counterproof (#731002), captured Nov 14: in
+  // the morning matches and lists came back empty; by the afternoon matches
+  // named the listed party and lists gave every list checked, with its date.
+  // A wallet address matches exactly or not at all.
+  "sanctions-format": (result) => {
+    expect(typeof result?.matched === "boolean", "no matched flag");
+    if (!result.matched) return { severity: "none", findings: [], verified: true };
+    const exact = Number(result.match_score) >= 0.99;
+    const severity = exact ? "critical" : "medium";
+    const party = (result.matches ?? []).map((m) => (typeof m === "string" ? m : m?.name)).find(Boolean);
+    const checked = Array.isArray(result.lists) && result.lists.length ? `lists checked: ${result.lists.join("; ")}` : undefined;
+    return {
+      severity,
+      findings: [{ title: `${party ? `${party}: ` : ""}on a sanctions list, ${exact ? "exact match" : "possible match"}`, severity, ...(checked && { detail: checked }) }],
+      verified: true,
+    };
+  },
+
   // CODE_REVIEW_GENERAL, format v3: verdict Approve | Request changes | Comment,
   // findings (free text, severity order), summary. Captured from miner 302 on
   // Nov 13. Only findings that name a security category count above "low".
@@ -107,6 +127,37 @@ const NORMALIZERS = {
   },
 
   // ---- Vetted miners, called directly as the fallback ----------------------
+
+  // CodeWire Smart Contract Audit (#1900999007) GET /contract-audit {contract}:
+  // a language-model audit as prose: "Overall risk verdict: ...", then
+  // "Finding 1: Reentrancy, affects `withdraw()`, severity critical. ..."
+  // (or "Finding 1, ..."). Captured Nov 13 for a vulnerable and a fixed vault.
+  "codewire-audit": (result) => {
+    const text = String(result?.summary ?? "");
+    expect(/overall risk verdict/i.test(text), "no overall verdict");
+    const SEV = { critical: "critical", high: "high", medium: "medium", moderate: "medium", low: "low", informational: "low", info: "low", none: "none" };
+    const findings = [...text.matchAll(/Finding\s+\d+\s*[:,]\s*(.+?),\s*affects\s+(.+?),\s*severity\s+(critical|high|medium|moderate|low|informational|info|none)\b/gi)].map((m) => {
+      const cat = securityCategory(m[1]);
+      return { title: `${m[1].trim()} (affects ${m[2].trim()})`.slice(0, 200), severity: SEV[m[3].toLowerCase()], ...(cat && { category: cat.id }) };
+    });
+    return { severity: maxSeverity(findings), findings };
+  },
+
+  // Counterproof Sanctions Screener (#731002) GET /screen {name}: an address
+  // screened against the US OFAC, UN, EU and UK lists; label CLEAR | REVIEW |
+  // BLOCK, matches per list, and a link to the official notice. Captured Nov 14.
+  "counterproof-screen": (result, vars) => {
+    expect(["CLEAR", "REVIEW", "BLOCK"].includes(result?.label), "no label");
+    expect(!vars.address || same(result.name, vars.address), "answer is for a different name");
+    if (result.label === "CLEAR") return { severity: "none", findings: [], verified: true };
+    const severity = result.label === "BLOCK" ? "critical" : "medium";
+    const findings = (result.matches ?? []).map((m) => ({
+      title: `${m.name} on the ${m.list} sanctions list${m.score >= 0.99 ? ", exact match" : ""}`,
+      severity: m.verdict === "BLOCK" ? "critical" : "medium",
+      ...(result.notice && { ref: result.notice }),
+    }));
+    return { severity, findings: findings.length ? findings : [{ title: result.summary ?? "sanctions-list match", severity }], verified: true };
+  },
 
   // GoPlus Security (#200001) GET /token-security {chain_id, contract_addresses}:
   // GoPlus's token risk flags ("1" / "0" strings), keyed by the lower-cased
@@ -194,9 +245,10 @@ const NORMALIZERS = {
     const findings = result?.answer?.findings;
     expect(Array.isArray(findings) && result.verdict !== "rejected", "rejected or no findings list");
     const mapped = findings.map((f) => {
-      const at = vars.diff ? diffLineLocation(vars.diff, f.line) : null;
+      // Line numbers count the text sent: the diff, then any impact context.
+      const at = (vars.diff ? diffLineLocation(vars.diff, f.line) : null) ?? (vars.review ? contextLineLocation(vars.review, f.line) : null);
       return {
-        title: f.message || f.rule_id,
+        title: `${f.message || f.rule_id}${at?.context ? " (in a call site this PR doesn't change)" : ""}`,
         severity: String(f.severity ?? "").toLowerCase(),
         ...(at?.file && { file: at.file }),
         line: at?.line ?? f.line,

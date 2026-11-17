@@ -277,6 +277,19 @@ export function diffLineLocation(text, n) {
   return null;
 }
 
+/**
+ * Where line `n` of a review text (a diff plus impact context) points when it
+ * falls in the context: the call site's { file, line, context: true }, else null.
+ */
+export function contextLineLocation(text, n) {
+  const lines = String(text ?? "").split("\n");
+  for (const i of [n - 1, n - 2]) {
+    const m = lines[i]?.match(/^# (\S+):(\d+) uses /);
+    if (m) return { file: m[1], line: Number(m[2]), context: true };
+  }
+  return null;
+}
+
 const URL_RE = /https?:\/\/[^\s"'`<>()[\]{}\\]+/g;
 const IGNORED_HOSTS = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|(.+\.)?example\.(com|org|net)|.+\.(test|local|invalid|example)|www\.w3\.org|schemas\.[^/]+)$/i;
 

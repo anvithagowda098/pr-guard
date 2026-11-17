@@ -1,0 +1,545 @@
+[
+ {
+  "id": "b850439eb6b9",
+  "pr": "octocat/Hello-World#1",
+  "verdict": "CAUTION",
+  "status": "done",
+  "spent": 0,
+  "created": "2026-11-02T18:23:22.816Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "5530",
+    "via": null,
+    "cost": 0,
+    "signal": null,
+    "tx": null
+   },
+   {
+    "check": "diff",
+    "miner": "731001",
+    "via": null,
+    "cost": 0,
+    "signal": null,
+    "tx": null
+   }
+  ]
+ },
+ {
+  "id": "1b4ea71cf558",
+  "pr": "expressjs/express#6000",
+  "verdict": "SAFE",
+  "status": "done",
+  "spent": 0,
+  "created": "2026-11-02T18:23:25.314Z",
+  "calls": []
+ },
+ {
+  "id": "d62c02bd8f9c",
+  "pr": "octocat/Hello-World#2",
+  "verdict": "CAUTION",
+  "status": "done",
+  "spent": 0,
+  "created": "2026-11-02T18:23:52.610Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "5530",
+    "via": null,
+    "cost": 0,
+    "signal": null,
+    "tx": null
+   },
+   {
+    "check": "diff",
+    "miner": "731001",
+    "via": null,
+    "cost": 0,
+    "signal": null,
+    "tx": null
+   }
+  ]
+ },
+ {
+  "id": "0f6f7ee5ae10",
+  "pr": "expressjs/express#6100",
+  "verdict": "SAFE",
+  "status": "done",
+  "spent": 0.01,
+  "created": "2026-11-02T18:25:56.100Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "5530",
+    "via": null,
+    "cost": 0.01,
+    "signal": "0x765e1625ea22952a01de27329522da1b5d2954e1191023bf02816aea5c2f5d24",
+    "tx": "0x7dde4c196b0e6d4fcfb4a5df44f2df2f1983058c5d566b0d69921ed2cc1919f9"
+   }
+  ]
+ },
+ {
+  "id": "ed9cb36b681b",
+  "pr": "Morin3/vows#14",
+  "verdict": null,
+  "status": "running",
+  "spent": 0.02,
+  "created": "2026-11-02T18:34:58.436Z",
+  "calls": [
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": null,
+    "cost": 0.01,
+    "signal": "0x56152390f5b43305bf1939274b03395ae404d4909b4e05616473dc66f5cee7cc",
+    "tx": "0x00d5b3185a2e7740eaed745436b844d499309b415b7f91bfe3712975350dd3dc"
+   },
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": null,
+    "cost": 0.01,
+    "signal": "0xcc62c10b34b87638ef8e3d1ad8fdf10c71761fada81d619a28b55ec8221f3283",
+    "tx": "0x0d7457e88b2448658ee1245267e3b2a44eb91827f90505099e67466fa1bffd0e"
+   }
+  ]
+ },
+ {
+  "id": "f47d896c97f1",
+  "pr": "expressjs/express#7575",
+  "verdict": "SAFE",
+  "status": "done",
+  "spent": 0.01,
+  "created": "2026-11-02T18:37:28.555Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "5530",
+    "via": null,
+    "cost": 0.01,
+    "signal": "0xce5d5dda8c961e2e6f7a455607256e89ee55427de342c2eb6303612e4a00794b",
+    "tx": "0x466d4544ab6bb5e6625b9ef4ed7dbf13ce0930aae19e2be02797d695e8c01a9e"
+   }
+  ]
+ },
+ {
+  "id": "21af0c815ed6",
+  "pr": "TIGER21-LLC/n8n-nodes-waitforexecutions#8",
+  "verdict": "SAFE",
+  "status": "done",
+  "spent": 0.09,
+  "created": "2026-11-13T05:36:09.794Z",
+  "calls": [
+   {
+    "check": "deps",
+    "miner": "77003",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0xe814fd6aeb7cb3a93b0a2c630709eb2741ccf7a88203fce54e1f71b86ad03f1a",
+    "tx": "0xb2e1241a754900932ebc0de1e2f5e9d3b39354fec2ce4dd84f572f8d00fe506d"
+   },
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0xaf515b286c5828f76e5a7c134bb1c9c8b53d69d0b5d2e76072d25a9c560b46b0",
+    "tx": "0x87605f4c51ebc2ace747ca600ce8ea8411521e086a848049456c267e8ac23792"
+   },
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0x702b934a7b291d73fa906eca0d8f0d3c5a920306882c1add37bf57af2b7763e3",
+    "tx": "0x301764896aed733ab1b6a88c1b95b95edc2b040ad37673ad59174586d6f415ff"
+   },
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0xa9ab064e47311602d53528831ba3138bf9481a7fa9b9278d132f67da592b9c7f",
+    "tx": "0x829db76ea566a686cf25ae0d87831652451af9760d3279618587a44822f8198d"
+   },
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0xe7df3e84dac92c30c69ca800b38bac44b1aec06b960343f890a4de72a2f99237",
+    "tx": "0x63550a9a59ccb8f9d60251ba60cdaa92278ee3ae7a3b915898b3fc3c01fa9cc2"
+   },
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0x56c3c1699883434b41d4916effaa6ac0d5c8d5a8483be96f47f6b8127fba9ce5",
+    "tx": "0x9251743492aaf19d83ad0e8f24024313ba302147b1999064559d0eb7a63c3b4a"
+   },
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0xe74ef0861b64fae0911ecd4e02ed40f73b2d0861635dec55ab4e67493da9e245",
+    "tx": "0xfcb071242bf2f1ccddf1521a416aeb784582061971012527e0332da31ea76218"
+   },
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0xbc9eea8adcf66e9e0698b6bf206a4a4a79353a1999d5328055e5ea2be45dc03a",
+    "tx": "0x05b5e75e33a1cc39feb7779c9d021bce445ac146feea79d28d7734eda1a242a4"
+   },
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0xe117635ad81f418d4cf77da1b95d368e0ec53bb51bfc1b09234761793f0a0de9",
+    "tx": "0xb80eba81c5d3cbd60a669d3ea1a06367f29de57e8d83e8b1e0ea113ccfc7240a"
+   }
+  ]
+ },
+ {
+  "id": "5fc19f060031",
+  "pr": "anvithagowda098/pr-guard#3",
+  "verdict": "BLOCK",
+  "status": "done",
+  "spent": 0.01,
+  "created": "2026-11-13T05:38:33.139Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0xa36c6ada5ce0f779bccec04c5c31ac2843856afc91ef621de12ce1c51179593b",
+    "tx": "0x3d5be570c3beb58c0ba51abd2996678e4c4b1998c2bb844bae66423f7eddad2c"
+   }
+  ]
+ },
+ {
+  "id": "91f1fd167b70",
+  "pr": "anvithagowda098/pr-guard#1",
+  "verdict": "SAFE",
+  "status": "done",
+  "spent": 0.01,
+  "created": "2026-11-13T06:03:50.771Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0x55b6060e7c0239a7cb116b86286a95f26127fa63f08d34abadc807f9a4226b6d",
+    "tx": "0xe67503ab6f968b34da5b0f54de2a6f3b23191c774561a1f8091ae4f14237cacc"
+   }
+  ]
+ },
+ {
+  "id": "d6c6983b423b",
+  "pr": "anvithagowda098/pr-guard#2",
+  "verdict": "BLOCK",
+  "status": "done",
+  "spent": 0.03,
+  "created": "2026-11-13T06:04:14.779Z",
+  "calls": [
+   {
+    "check": "deps",
+    "miner": "77010",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0x8438482e95d9aab94dc21049076118e415f6fb88338a7bf2127ba0dc9035df30",
+    "tx": "0x92452a2a5affed8c81504cf2f5bd3554512829d1de2c9194304fb94d67a6da03"
+   },
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0x9eb69c34fd4fd17f328e39347ccc41a976af83130e006335b2d671827ea01fa8",
+    "tx": "0x2ffa764c49c3e3d1056dc7ff476371f299043c01b38bb5705f926a9168079f63"
+   },
+   {
+    "check": "diff",
+    "miner": "5530",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0xa3dbf0dd9c43985ec1f1479ee83ac2243159b27e40f3d301be74e61847dd879e",
+    "tx": "0x81b552afdabfce0470f8e91d8c6fdec2526e231a7d08a277108531b25670d375"
+   }
+  ]
+ },
+ {
+  "id": "bc66dc5c844e",
+  "pr": "anvithagowda098/pr-guard#3",
+  "verdict": "BLOCK",
+  "status": "done",
+  "spent": 0.01,
+  "created": "2026-11-13T06:05:06.241Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "5530",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0x81e2167d5c4cdeb0426ccfb2e092d6a2fdf3b37363eb3b6a84c9dab94a78f4d7",
+    "tx": "0x585214cbe4e9419ce22422fca3c9922e3dd1014dec970fb53179a92b8b04414e"
+   }
+  ]
+ },
+ {
+  "id": "9858a4829010",
+  "pr": "anvithagowda098/pr-guard#4",
+  "verdict": "CAUTION",
+  "status": "done",
+  "spent": 0.04,
+  "created": "2026-11-13T06:17:35.366Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0xb0c6a526cbe1a90c330c2a9991ed34dba6282d79f6bda37a71cc65ca87825d9c",
+    "tx": "0x8a99356cefe2c7a7955bcdb7fd6b78745cbdae8024403080f307aae2c9511603"
+   },
+   {
+    "check": "addresses",
+    "miner": "20260828",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0xb07fc8140acb30c5b6041aafeeeb656df93c8d9519510607bd49563226d05aa1",
+    "tx": "0xbd5b43e5e36b03fcfb8827751acbec1ca634e273789f5182031d6791e0a18f30"
+   },
+   {
+    "check": "addresses",
+    "miner": "200001",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0x8c2a1a7a30add936b6e4d7f1c316e763b6bc1feb7086c3cb592818dfd6293d89",
+    "tx": "0x25e7011f9912abc559b571a5e587965227b2ede3b5ceceec3d892b0687ae1bfd"
+   },
+   {
+    "check": "addresses",
+    "miner": "200001",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0x87973da124d368b5744c366f17b76ee1b11d72e01a4cce8631976f6cdb683b5d",
+    "tx": "0x2b768b9d377a937e8b8651813eed5a25b7869240d5d22afa7b03ca5c7438e853"
+   }
+  ]
+ },
+ {
+  "id": "5b5055bb800a",
+  "pr": "anvithagowda098/pr-guard#5",
+  "verdict": "SAFE",
+  "status": "done",
+  "spent": 0.01,
+  "created": "2026-11-13T06:19:03.564Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0xa4e9750138cee8d9647362252595e2fdd979169d7c013c877644d893b95ed511",
+    "tx": "0xdfae1c398ce7772d9389faf8ee2f7cf637b9af4a3cd0b475550b3aad1ee54f58"
+   }
+  ]
+ },
+ {
+  "id": "b22eec6747c4",
+  "pr": "anvithagowda098/pr-guard#4",
+  "verdict": "CAUTION",
+  "status": "done",
+  "spent": 0.03,
+  "created": "2026-11-13T06:20:32.686Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0xa7b70d228bdacb50c6f77fd55fe4a5c56fd038dd7b449456c9e48fd0f8256dfa",
+    "tx": "0x09f20a0edff0a2dcdb9226a35cd2005def6479ecfdac0d7ab53037e9ebf7c9b6"
+   },
+   {
+    "check": "addresses",
+    "miner": "200001",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0x004d5cc6be288f313b98a02b91ff5fb124a6b3190a0bdf5bd45e0fd3ac93e78e",
+    "tx": "0x3a4c59e68884ea1d1a5d7eeb50fb8e8d8d568ed5234cdd94ab02e0f5ed88989c"
+   },
+   {
+    "check": "addresses",
+    "miner": "200001",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0x723374aff4b995e181be00edf05d1e8d3495badcd2489c50bca6ee1560ad64b3",
+    "tx": "0xd207b632233886095a8a3ba35713e05b84e3aefccb741509bd6bd01893eb651d"
+   }
+  ]
+ },
+ {
+  "id": "f2cd562cd145",
+  "pr": "anvithagowda098/pr-guard#5",
+  "verdict": "CAUTION",
+  "status": "done",
+  "spent": 0.02,
+  "created": "2026-11-13T06:21:29.646Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0x558aea1f2ced50525a34d567d8a14b59763e8a2585703e1caf2c3595eb970a31",
+    "tx": "0xfe1b7b73f6b799153bb0dc4cd3f44b44bbb32df10336b375fda37ebd2bd4f84d"
+   },
+   {
+    "check": "diff",
+    "miner": "5530",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0x07aa810ce6b5783f5ad605e9048255ce813e0ea0b821797c0a3f0248d61c57ca",
+    "tx": "0x5a0b8a565e2c81462988596e0a1c5cd875cc1090b721372c61249f829875ee77"
+   }
+  ]
+ },
+ {
+  "id": "695b58066331",
+  "pr": "anvithagowda098/pr-guard#5",
+  "verdict": "BLOCK",
+  "status": "done",
+  "spent": 0.01,
+  "created": "2026-11-13T06:25:10.474Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0x28b97ad3df2b517c571848fa7db1eb274754b665245447f22b3855c53ef8f692",
+    "tx": "0xa631c7a9176c0e77a96e2f85212bd8562704fb1b155a60236dbd5a104da33d02"
+   }
+  ]
+ },
+ {
+  "id": "5017f9be53ea",
+  "pr": "anvithagowda098/pr-guard#6",
+  "verdict": "BLOCK",
+  "status": "done",
+  "spent": 0.05,
+  "created": "2026-11-14T13:52:03.976Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0x34e4e350147ba663dc4748ee12775da59c5dc758a9abe505475eeff4133a68b6",
+    "tx": "0x8d2ab7157c1a23e8b168b35b30d5d3244dece8d635b905b9dfe725f2d870276c"
+   },
+   {
+    "check": "diff",
+    "miner": "5530",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0xa679b3236fa0ac9e7f4045ad20f11da90b041b96f9044fa1b9adc555b8b72362",
+    "tx": "0xfd92eeec0b4aeb038b55c2a6ff2b5007f36689e7cefa2ecb52ed6d553b0beeac"
+   },
+   {
+    "check": "sanctions",
+    "miner": "731002",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0xda0aa1b92421267e385db039ece143b33c6d54f165aa929b6ca875c29ddc720c",
+    "tx": "0xad0c1162113cea488a26bdd15d504335b4c87668db6fe33f26c8c70dc9f92a32"
+   },
+   {
+    "check": "addresses",
+    "miner": "501",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0x050eaf366009ce438ccd4e27ce7c87b9c8366b206ad9c8ae5e277bc0439289a3",
+    "tx": "0x36edc4a33ff83c5d08f47720735ba81fbd69d582b3e0c25db6b6869411bf234a"
+   },
+   {
+    "check": "addresses",
+    "miner": "200001",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0xf2d371ea8d002821540ddb6c743fa052d0862a20ff94bc6251b221ccfff0b10f",
+    "tx": "0xc9103f878d1043220497c6d7db4274397d89a971c486a380d2ea7108bfd6fbe8"
+   }
+  ]
+ },
+ {
+  "id": "1895dcdb8382",
+  "pr": "anvithagowda098/pr-guard#7",
+  "verdict": "SAFE",
+  "status": "done",
+  "spent": 0.01,
+  "created": "2026-11-14T14:03:44.062Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0xac861c4036317595b3b9ad8c781918659274750a3a931a8f9d763b3e8ec7004e",
+    "tx": "0x540d4a96c58a8b1287e41699550567ec0e8951aa54d9c0a2275ef99be88f9b40"
+   }
+  ]
+ },
+ {
+  "id": "538d12e5103b",
+  "pr": "anvithagowda098/pr-guard#7",
+  "verdict": "CAUTION",
+  "status": "done",
+  "spent": 0.02,
+  "created": "2026-11-14T14:05:09.186Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0x9971067a2e1481d3fa2f5473762afaf920e06c2e00060b92c0013254bdfa62e6",
+    "tx": "0xc84fb7df960b17a4ab09f57d06a92e645b6c800f2a12e3a7c1fd8702aa86d4f1"
+   },
+   {
+    "check": "diff",
+    "miner": "5530",
+    "via": "direct",
+    "cost": 0.01,
+    "signal": "0xa7667f7ca7cfa04dc259532997e60c11c4f1b3a2b079400131947b9aad6168d7",
+    "tx": "0x2e9caabbbf4b6e386d6ee8c228def895f7eced5dd7aad360f4c5ee86bd675361"
+   }
+  ]
+ },
+ {
+  "id": "be9e180c79d7",
+  "pr": "anvithagowda098/pr-guard#7",
+  "verdict": "CAUTION",
+  "status": "done",
+  "spent": 0.01,
+  "created": "2026-11-14T14:06:37.277Z",
+  "calls": [
+   {
+    "check": "diff",
+    "miner": "302",
+    "via": "routed",
+    "cost": 0.01,
+    "signal": "0x67158bd176a776e296b00f3e2df3b3fe1618f36a67a308f3db6d9cf56f26c990",
+    "tx": "0xf5eda69d808eb852a54d3195769a81360097294c258e102934c19290b77a5ade"
+   }
+  ]
+ }
+]

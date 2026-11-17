@@ -2,6 +2,7 @@
 // miner (secrets on added lines, new install scripts).
 import { chunkDiff, extractUrls, extractAddresses, addressChanges } from "./extract.js";
 import { scanSecrets } from "./redact.js";
+import { contextBlock } from "./context.js";
 import { maxSeverity } from "./policy.js";
 
 export const ALL_CHECKS = ["deps", "diff", "addresses", "patch", "urls"];
@@ -39,7 +40,7 @@ export function rankDeps(deps, title = "") {
  * @param {string} pr.body
  * @param {Set<string>} enabled check names
  */
-export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxAddresses = 5, maxChars = 12_000, maxChunks = Infinity } = {}) {
+export function buildJobs({ deps, files, title, body, usages = [] }, enabled, { maxDeps = 25, maxUrls = 10, maxAddresses = 5, maxChars = 12_000, maxChunks = Infinity } = {}) {
   // Package-version vulnerability lookups live under SECURITY_REVIEW_GENERAL on
   // Telegraph; CVE_LOOKUP_CVSS miners only take a CVE id (see data/miners-summary.json).
   // Each job carries the canonical ask Telegraph routes by ranking (`route`);
@@ -57,21 +58,40 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
 
   const chunks = chunkDiff(files, { maxChars }).slice(0, maxChunks);
   const diff = chunks.map((c, i) => {
+    // Where the code this chunk changes is used elsewhere: sent with the diff, read-only.
+    const sites = usages.filter((u) => c.files.includes(u.from));
+    const review = c.text + contextBlock(sites);
     const routable = c.text.length <= ROUTE_MAX_CHARS;
+    const withContext = review.length <= ROUTE_MAX_CHARS;
+    const notes = [];
+    if (sites.length) {
+      notes.push(`Context: ${sites.length} call site${sites.length === 1 ? "" : "s"} of changed code in ${new Set(sites.map((s) => s.path)).size} other file${new Set(sites.map((s) => s.path)).size === 1 ? "" : "s"} sent with the diff${routable && !withContext ? ", except in the routed ask (2,000-character limit)" : ""}.`);
+    }
     return {
       check: "diff",
       intent: routable ? "CODE_REVIEW_GENERAL" : "SECURITY_REVIEW_GENERAL",
       target: chunks.length > 1 ? `chunk ${i + 1}/${chunks.length}: ${c.files.join(", ")}` : c.files.join(", "),
-      vars: { diff: c.text, files: c.files, chunk_index: i + 1, chunk_count: chunks.length },
-      route: routable ? { intent: "CODE_REVIEW_GENERAL", params: { code: c.text }, normalizer: "code-review-format" } : null,
+      vars: { diff: c.text, review, files: c.files, chunk_index: i + 1, chunk_count: chunks.length },
+      route: routable ? { intent: "CODE_REVIEW_GENERAL", params: { code: withContext ? review : c.text }, normalizer: "code-review-format" } : null,
       ...(!routable && { routeSkipped: `over the ${ROUTE_MAX_CHARS.toLocaleString("en-US")}-character limit for canonical asks` }),
+      ...(notes.length && { notes }),
     };
   });
 
   // On-chain addresses the PR adds: buy the contract's risk profile before the
   // code starts sending funds there. SMART_CONTRACT_AUDIT_GENERAL has no input
   // schema, so the routed ask is a plain-language query.
-  const addresses = extractAddresses(files, { max: maxAddresses }).map((a) => ({
+  const found = extractAddresses(files, { max: maxAddresses });
+  // Each new address is also screened against the US, UN, EU and UK sanctions
+  // lists: a canonical ask Telegraph routes by ranking.
+  const sanctions = found.map((a) => ({
+    check: "sanctions",
+    intent: "SANCTIONS_SCREENING_MATCH_GENERAL",
+    target: a.address,
+    vars: { address: a.address, file: a.file, line: a.line },
+    route: { intent: "SANCTIONS_SCREENING_MATCH_GENERAL", params: { name: a.address }, normalizer: "sanctions-format" },
+  }));
+  const addresses = found.map((a) => ({
     check: "addresses",
     intent: "SMART_CONTRACT_AUDIT_GENERAL",
     target: `${a.address} on ${a.chain}${a.assumed ? " (assumed)" : ""}`,
@@ -102,7 +122,7 @@ export function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25,
   const jobs = [];
   if (enabled.has("deps")) jobs.push(...direct);
   if (enabled.has("diff")) jobs.push(...diff);
-  if (enabled.has("addresses")) jobs.push(...addresses);
+  if (enabled.has("addresses")) jobs.push(...sanctions, ...addresses);
   if (enabled.has("deps")) jobs.push(...transitive);
   if (enabled.has("patch")) jobs.push(...patch);
   if (enabled.has("urls")) jobs.push(...urls);

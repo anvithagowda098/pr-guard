@@ -11,6 +11,12 @@ export async function mergeBase(octokit, { owner, repo, base, head }) {
   return data.merge_base_commit.sha;
 }
 
+/** Every file path at a commit (for impact context). */
+export async function listPaths(octokit, { owner, repo, sha }) {
+  const { data } = await octokit.rest.git.getTree({ owner, repo, tree_sha: sha, recursive: "true" });
+  return data.tree.filter((t) => t.type === "blob").map((t) => t.path);
+}
+
 /** File text at a ref, or null if it doesn't exist there. */
 export async function getText(octokit, { owner, repo, path, ref }) {
   try {

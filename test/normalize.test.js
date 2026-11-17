@@ -144,7 +144,7 @@ test("Verity's high findings are confirmed by PR Guard's local rules at the same
   const v = newNet("5530-review-two-file-diff-200-paid.json");
   const diff = v.request.payload.input.code;
   const c = confirmFindings("diff", normalize("verity-security", v.body.result, { diff }), { diff });
-  assert.deepEqual([c.confirmed, c.disagreement, c.severity], [true, false, "high"]);
+  assert.deepEqual([c.confirmed, c.disagreement, c.severity], [true, false, "critical"], "the higher of the two: PR Guard's rule rates SQL on user input critical");
   assert.ok(c.findings.every((f) => f.corroborated));
   assert.equal(decide([{ check: "diff", target: "src/routes", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
 });
@@ -208,4 +208,109 @@ test("code review wording: a negated or approved mention is not a finding", () =
 test("Unicode hyphens in a finding still name its category (seen live from miner 302)", () => {
   const n = normalize("code-review-format", { verdict: "Request changes", findings: ["Hard‑coded AWS credentials expose secrets; they will be leaked."] });
   assert.deepEqual([n.findings[0].category, n.findings[0].severity], ["hardcoded-secret", "high"]);
+});
+
+test("Solidity through routed code review (miner 302, captured): reentrancy and open setOwner, confirmed by PR Guard's rules -> BLOCK", () => {
+  const cap = routed("code-review-solidity-reentrancy-302-intent.json");
+  const diff = cap.request.params.code;
+  const n = normalize("code-review-format", cap.body.result);
+  assert.deepEqual(n.findings.filter((f) => f.category).map((f) => f.category), ["reentrancy", "access-control"]);
+  const c = confirmFindings("diff", n, { diff });
+  assert.deepEqual([c.confirmed, c.disagreement], [true, false]);
+  assert.equal(decide([{ check: "diff", target: "contracts/Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+// ---- GoPlus (#200001), captured Nov 13 -----------------------------------
+const goplus = () => JSON.parse(readFileSync(new URL("./fixtures/miner-responses/SMART_CONTRACT_AUDIT_GENERAL/200001-token-security-usdt-200-paid.json", import.meta.url), "utf8"));
+const usdt = { address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", chain_id: "1" };
+
+test("GoPlus on USDT: an established token's admin powers are known, so nothing above low", () => {
+  const n = normalize("goplus-token-security", goplus().body.result, usdt);
+  assert.deepEqual([n.severity, n.verified], ["low", true]);
+  assert.equal(n.findings[0].title, "Tether USD (USDT), on GoPlus's trusted list");
+  assert.ok(n.findings.some((f) => f.title === "the owner can change balances" && f.severity === "low"));
+  assert.equal(decide([{ check: "addresses", target: "USDT", status: "ok", calls: [], ...confirmFindings("addresses", n, usdt) }]).verdict, "SAFE");
+});
+
+test("GoPlus: a honeypot outside the trusted list is high and confirmed -> BLOCK; no token data is low", () => {
+  const cap = goplus().body.result;
+  const t = cap.result[usdt.address.toLowerCase()];
+  const honeypot = { ...cap, result: { [usdt.address.toLowerCase()]: { ...t, trust_list: "0", is_honeypot: "1", is_open_source: "0" } } };
+  const c = confirmFindings("addresses", normalize("goplus-token-security", honeypot, usdt), usdt);
+  assert.deepEqual([c.severity, c.confirmed], ["high", true]);
+  assert.ok(c.findings.some((f) => f.title === "source code not verified" && f.severity === "medium"));
+  assert.equal(decide([{ check: "addresses", target: "x", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+  assert.equal(normalize("goplus-token-security", { code: 1, message: "OK", result: {} }, usdt).severity, "low");
+  assert.equal(normalize("goplus-token-security", { code: 2, message: "error" }, usdt).severity, "unknown");
+  assert.equal(normalize("goplus-token-security", cap, { address: "0x2222222222222222222222222222222222222222" }).severity, "low", "an answer without this address has no data about it");
+});
+
+test("live, Nov 13: a reviewer that names a reentrancy but rates it low is overruled by PR Guard's rules -> BLOCK", () => {
+  const diff = routed("code-review-solidity-reentrancy-302-intent.json").request.params.code;
+  // The shape miner 302 returned for demo PR #5: the issues named, the verdict "Approve".
+  const n = normalize("code-review-format", { verdict: "Approve", findings: ["Reentrancy: withdraw sends ETH before zeroing the balance.", "Unrestricted ownership change: setOwner has no modifier."] });
+  assert.equal(n.severity, "low");
+  const c = confirmFindings("diff", n, { diff });
+  assert.deepEqual([c.severity, c.confirmed], ["high", true]);
+  assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("a hard-coded token address is not a hard-coded secret", () => {
+  const n = normalize("code-review-format", { verdict: "Request changes", findings: ["Hard‑coded token address (USDT) assumes the token exists on the target chain.", "Hard-coded API key in config."] });
+  assert.deepEqual(n.findings.map((f) => f.category ?? null), [null, "hardcoded-secret"]);
+});
+
+// ---- CodeWire Smart Contract Audit (#1900999007), captured Nov 13 -----------
+const codewire = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/SMART_CONTRACT_AUDIT_GENERAL/${name}`, import.meta.url), "utf8"));
+
+test("CodeWire on the demo vault: reentrancy critical, missing access control high, confirmed by PR Guard's rules -> BLOCK", () => {
+  const cap = codewire("1900999007-audit-reentrant-vault-200-paid.json");
+  const n = normalize("codewire-audit", cap.body.result);
+  assert.deepEqual(n.findings.slice(0, 2).map((f) => [f.category, f.severity]), [["reentrancy", "critical"], ["access-control", "high"]]);
+  const diff = cap.request.payload.contract;
+  const c = confirmFindings("diff", n, { diff });
+  assert.equal(c.confirmed, true);
+  assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("CodeWire on the fixed vault: only low findings -> SAFE; no verdict -> unknown", () => {
+  const cap = codewire("1900999007-audit-fixed-vault-200-paid.json");
+  const n = normalize("codewire-audit", cap.body.result);
+  assert.equal(n.severity, "low");
+  assert.ok(n.findings.length >= 2 && n.findings.every((f) => f.severity === "low"));
+  const c = confirmFindings("diff", n, { diff: cap.request.payload.contract });
+  assert.equal(decide([{ check: "diff", target: "Vault.sol", status: "ok", calls: [], ...c }]).verdict, "SAFE");
+  assert.equal(normalize("codewire-audit", { summary: "no structure" }).severity, "unknown");
+});
+
+// ---- Sanctions screening, captured Nov 14 ----------------------------------
+const screen = (name) => JSON.parse(readFileSync(new URL(`./fixtures/miner-responses/SANCTIONS_SCREENING_MATCH_GENERAL/${name}`, import.meta.url), "utf8"));
+const lazarus = { address: "0x098B716B8Aaf21512996dC57EB0615e2383E2f96" };
+
+test("an OFAC-listed address routed to Counterproof: exact match, critical, confirmed -> BLOCK (the node drops the list name)", () => {
+  const cap = screen("routed-lazarus-address-731002-intent.json");
+  assert.deepEqual([cap.body.result_shape, cap.body.result.lists], ["intent", null]);
+  const { answer } = judgeRouted({ ok: true, status: 200, body: cap.body }, { normalizer: "sanctions-format" }, [], lazarus);
+  const c = confirmFindings("sanctions", answer, lazarus);
+  assert.deepEqual([c.severity, c.confirmed, c.findings[0].title], ["critical", true, "on a sanctions list, exact match"]);
+  assert.equal(decide([{ check: "sanctions", target: "x", status: "ok", calls: [], ...c }]).verdict, "BLOCK");
+});
+
+test("Counterproof directly: the list, the entry and the official notice; a clean address is CLEAR", () => {
+  const hit = normalize("counterproof-screen", screen("731002-screen-lazarus-address-200-paid.json").body.result, lazarus);
+  assert.deepEqual([hit.severity, hit.verified], ["critical", true]);
+  assert.equal(hit.findings[0].title, "LAZARUS GROUP on the US sanctions list, exact match");
+  assert.match(hit.findings[0].ref, /^https:\/\/sanctionssearch\.ofac\.treas\.gov\//);
+  const clean = normalize("counterproof-screen", screen("731002-screen-usdt-address-200-paid.json").body.result, { address: "0xdAC17F958D2ee523a2206206994597C13D831ec7" });
+  assert.deepEqual(clean, { severity: "none", findings: [], verified: true });
+  assert.equal(normalize("counterproof-screen", screen("731002-screen-usdt-address-200-paid.json").body.result, lazarus).severity, "unknown", "an answer about another address is not trusted");
+});
+
+test("routed sanctions answers now name the listed party and the lists checked (Counterproof update, Nov 14)", () => {
+  const cap = screen("routed-lazarus-address-731002-intent-with-lists.json");
+  const n = normalize("sanctions-format", cap.body.result);
+  assert.equal(n.severity, "critical");
+  assert.equal(n.findings[0].title, "LAZARUS GROUP: on a sanctions list, exact match");
+  assert.match(n.findings[0].detail, /^lists checked: US OFAC SDN and non-SDN Consolidated lists \(published 2026-11-13\); UN Security Council/);
+  assert.deepEqual(normalize("sanctions-format", { matched: false, match_score: 0 }), { severity: "none", findings: [], verified: true });
 });

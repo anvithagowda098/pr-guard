@@ -1,5 +1,5 @@
 {
-  "_comment": "Vetted fallback miners per PR Guard check, best first. Every check is first asked through Telegraph's routing (a canonical intent + params ask; see src/checks.js); a miner here is called directly only when the routed answer is unusable, and the next one only if that call fails. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional enabled:false. A routed answer from a miner listed here is read with its normalizer.",
+  "_comment": "Vetted fallback miners per PR Guard check, best first. Every check is first asked through Telegraph's routing (a canonical intent + params ask; see src/checks.js); a miner here is called directly only when the routed answer is unusable, and the next one only if that call fails. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional files filter (a regex any changed file must match), optional enabled:false. A routed answer from a miner listed here is read with its normalizer.",
   "deps": [
     {
       "minerId": "77010",
@@ -52,6 +52,19 @@
   ],
   "diff": [
     {
+      "minerId": "1900999007",
+      "name": "CodeWire Smart Contract Audit",
+      "intent": "SMART_CONTRACT_AUDIT_GENERAL",
+      "method": "GET",
+      "endpoint": "/contract-audit",
+      "payload": {
+        "contract": "{{review}}"
+      },
+      "normalizer": "codewire-audit",
+      "files": "\\.sol$",
+      "_note": "Independent operator; a language-model audit of Solidity. Only for diffs that touch .sol files. Vetted Nov 13: found the reentrancy (critical) and open setOwner (high) in the demo vault, and only low issues in the fixed one."
+    },
+    {
       "minerId": "5530",
       "name": "Telegraph Verity",
       "intent": "SECURITY_REVIEW_GENERAL",
@@ -60,7 +73,7 @@
       "payload": {
         "intent": "SECURITY_REVIEW",
         "input": {
-          "code": "{{diff}}"
+          "code": "{{review}}"
         }
       },
       "normalizer": "verity-security",
@@ -73,10 +86,39 @@
       "method": "POST",
       "endpoint": "/review",
       "payload": {
-        "diff": "{{diff}}"
+        "diff": "{{review}}"
       },
       "normalizer": "sentinel-review",
       "_note": "Our own rule-based miner (disclosed), used only if Verity fails."
+    }
+  ],
+  "addresses": [
+    {
+      "minerId": "200001",
+      "name": "GoPlus Security",
+      "intent": "SMART_CONTRACT_AUDIT_GENERAL",
+      "method": "GET",
+      "endpoint": "/token-security",
+      "payload": {
+        "chain_id": "{{chain_id}}",
+        "contract_addresses": "{{address}}"
+      },
+      "normalizer": "goplus-token-security",
+      "_note": "Independent operator, proxying GoPlus. Token risk flags for an address (honeypot, owner powers, proxy, verified source). Vetted Nov 13 with USDT. Sourcify Verified Contracts (#200002) was tried for source verification, but its /contract endpoint passes every parameter through as a query string and Sourcify rejects them."
+    }
+  ],
+  "sanctions": [
+    {
+      "minerId": "731002",
+      "name": "Counterproof Sanctions Screener",
+      "intent": "SANCTIONS_SCREENING_MATCH_GENERAL",
+      "method": "GET",
+      "endpoint": "/screen",
+      "payload": {
+        "name": "{{address}}"
+      },
+      "normalizer": "counterproof-screen",
+      "_note": "Independent operator (suggested by its builder on Nov 13). Screens an address against US OFAC, UN, EU and UK lists; exact match for wallet addresses. Vetted Nov 14: the Lazarus Group's Ronin wallet is BLOCK on the US list, USDT's contract is CLEAR. Routed canonical asks also reach it, but the node returns the match without the list name."
     }
   ],
   "patch": [],

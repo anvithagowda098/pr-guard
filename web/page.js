@@ -57,6 +57,14 @@ footer p{margin:6px 0}
 
 <section id="scan" class="card" hidden aria-live="polite"></section>
 
+<section class="card"><h2>Check every pull request automatically</h2>
+<p class="hint">Add PR Guard to a public repository in one click: no key, no wallet. GitHub opens with the workflow file filled in; just commit it.</p>
+<form id="add"><label for="repo" class="hint" style="width:100%;margin:10px 0 4px">Your repository (owner/name) and its default branch</label>
+<input id="repo" name="repo" type="text" autocomplete="off" placeholder="owner/repo" pattern="[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+" required>
+<input id="branch" name="branch" type="text" autocomplete="off" value="main" style="max-width:110px" required>
+<button type="submit">Add to GitHub</button></form>
+</section>
+
 <section class="card"><h2>Recent scans</h2><div id="recent" class="recent"><p class="hint">Loading…</p></div></section>
 
 <footer>
@@ -74,10 +82,21 @@ footer p{margin:6px 0}
   var $ = function (s) { return document.querySelector(s); };
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; }
   function safeUrl(u) { try { var x = new URL(u); return x.protocol === "https:" ? x.href : null; } catch (e) { return null; } }
+  // One-click install: GitHub's new-file page, prefilled with the no-key workflow.
+  var WORKFLOW = "# PR Guard: a security check on every pull request, paid per check on Telegraph.\n# No secrets needed for a public repository. Docs: https://github.com/anvithagowda098/pr-guard\nname: PR Guard\non:\n  pull_request:\n\npermissions:\n  contents: read\n  pull-requests: write\n\njobs:\n  guard:\n    runs-on: ubuntu-latest\n    timeout-minutes: 6\n    steps:\n      - uses: anvithagowda098/pr-guard@main\n        with:\n          fail-on: block # or caution, or never to only comment\n";
+  document.getElementById("add").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var repo = document.getElementById("repo").value.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "");
+    var branch = document.getElementById("branch").value.trim() || "main";
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo) || !/^[A-Za-z0-9_.\/-]+$/.test(branch)) return;
+    var url = "https://github.com/" + repo + "/new/" + encodeURIComponent(branch).replace(/%2F/g, "/") +
+      "?filename=" + encodeURIComponent(".github/workflows/pr-guard.yml") + "&value=" + encodeURIComponent(WORKFLOW);
+    window.open(url, "_blank", "noopener");
+  });
   function link(href, text) { var u = safeUrl(href); if (!u) return el("span", null, text); var a = el("a", null, text); a.href = u; a.target = "_blank"; a.rel = "noopener"; return a; }
   function usd(n) { return "$" + Number(n || 0).toFixed(3); }
   var BADGE = { SAFE: "🟢 SAFE", CAUTION: "🟡 CAUTION", BLOCK: "🔴 BLOCK" };
-  var NAMES = { deps: "Dependency", diff: "Code", secrets: "Secrets", "install-scripts": "Install scripts" };
+  var NAMES = { deps: "Dependency", diff: "Code", addresses: "Address", sanctions: "Sanctions", "address-changes": "Address change", secrets: "Secrets", "install-scripts": "Install scripts" };
 
   function showError(msg) { var e = $("#err"); e.textContent = msg; e.hidden = !msg; }
 

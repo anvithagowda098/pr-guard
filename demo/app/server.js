@@ -1,6 +1,7 @@
 const express = require("express");
 const { Pool } = require("pg");
 const _ = require("lodash");
+const { sanitizeId } = require("./validate");
 
 const app = express();
 app.use(express.json());
@@ -18,6 +19,12 @@ app.get("/users/:id", async (req, res) => {
 app.get("/users", async (req, res) => {
   const { rows } = await db.query("SELECT id, name FROM users ORDER BY name LIMIT 100");
   res.json(_.uniqBy(rows, "id"));
+});
+
+// Relies on sanitizeId keeping the id numeric.
+app.get("/orders/:id", async (req, res) => {
+  const { rows } = await db.query("SELECT id, total FROM orders WHERE id = " + sanitizeId(req.params.id));
+  res.json(rows[0] ?? null);
 });
 
 app.get("/orders", async (req, res) => {

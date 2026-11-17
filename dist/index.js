@@ -50336,6 +50336,14 @@ function diffLineLocation(text, n) {
   }
   return null;
 }
+function contextLineLocation(text, n) {
+  const lines = String(text ?? "").split("\n");
+  for (const i of [n - 1, n - 2]) {
+    const m = lines[i]?.match(/^# (\S+):(\d+) uses /);
+    if (m) return { file: m[1], line: Number(m[2]), context: true };
+  }
+  return null;
+}
 var URL_RE = /https?:\/\/[^\s"'`<>()[\]{}\\]+/g;
 var IGNORED_HOSTS = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|(.+\.)?example\.(com|org|net)|.+\.(test|local|invalid|example)|www\.w3\.org|schemas\.[^/]+)$/i;
 function extractUrls(files, { max = 10 } = {}) {
@@ -50357,6 +50365,52 @@ function extractUrls(files, { max = 10 } = {}) {
     }
   }
   return [...found.values()].slice(0, max);
+}
+var EVM_ADDRESS = /(?<![0-9a-fA-Fx])0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g;
+var PLACEHOLDER_ADDRESS = /^0x(0{40}|0{36}dead|0{4}dead0{32}|e{40}|f{40})$/i;
+var named = (words) => new RegExp(`(?<![a-z0-9])(${words})(?![a-z0-9])`, "i");
+var CHAINS = [
+  [/\bbase\b/i, "8453", "Base"],
+  [named("polygon|matic"), "137", "Polygon"],
+  [named("bsc|bnb"), "56", "BNB Chain"],
+  [named("arbitrum"), "42161", "Arbitrum"],
+  [named("optimism"), "10", "Optimism"],
+  [named("avalanche|avax"), "43114", "Avalanche"]
+];
+function chainOf(path, text) {
+  for (const [re, chainId, chain] of CHAINS) if (re.test(text) || re.test(path)) return { chainId, chain, assumed: false };
+  return { chainId: "1", chain: "Ethereum", assumed: !named("mainnet|ethereum").test(`${path} ${text}`) };
+}
+function removedLines(patch) {
+  return (patch ?? "").split("\n").filter((l) => l.startsWith("-") && !l.startsWith("---")).map((l) => l.slice(1));
+}
+var addressesIn = (text) => [...text.matchAll(EVM_ADDRESS)].map((m) => m[0]).filter((a) => !PLACEHOLDER_ADDRESS.test(a));
+function extractAddresses(files, { max = 5 } = {}) {
+  const found = /* @__PURE__ */ new Map();
+  for (const f of files) {
+    if (shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
+    const before = new Set(removedLines(f.patch).flatMap(addressesIn).map((a) => a.toLowerCase()));
+    for (const { line, text } of addedLines(f.patch)) {
+      for (const address of addressesIn(text)) {
+        const key = address.toLowerCase();
+        if (before.has(key) || found.has(key)) continue;
+        found.set(key, { address, file: f.filename, line, ...chainOf(f.filename, text) });
+      }
+    }
+  }
+  return [...found.values()].slice(0, max);
+}
+function addressChanges(files) {
+  const out = [];
+  for (const f of files) {
+    if (shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
+    const removed = [...new Set(removedLines(f.patch).flatMap(addressesIn))];
+    const added = addedLines(f.patch).flatMap(({ line, text }) => addressesIn(text).map((address) => ({ address, line })));
+    const gone = removed.filter((a) => !added.some((x) => x.address.toLowerCase() === a.toLowerCase()));
+    const fresh = added.filter((x) => !removed.some((a) => a.toLowerCase() === x.address.toLowerCase()));
+    for (let i = 0; i < Math.min(gone.length, fresh.length); i++) out.push({ file: f.filename, line: fresh[i].line, from: gone[i], to: fresh[i].address });
+  }
+  return out;
 }
 var LOCKFILES = /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|poetry\.lock|Pipfile\.lock|uv\.lock|Cargo\.lock|go\.sum|composer\.lock|Gemfile\.lock)$/;
 var GENERATED = /(^|\/)(vendor|node_modules|third_party|dist|build)\/|\.min\.(js|css)$|\.map$/;
@@ -50478,6 +50532,114 @@ function scanSecrets(files) {
   return findings;
 }
 
+// src/context.js
+var CODE_FILE = /\.(js|mjs|cjs|jsx|ts|tsx|py|go|rs|rb|php|java|kt|cs|sol|vy)$/i;
+var TEST_FILE = /(^|\/)(test|tests|__tests__|spec|specs|fixtures?|mocks?)\/|\.(test|spec)\.\w+$|_test\.(go|py)$/i;
+var DEFINITION = [
+  /\b(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(/,
+  // JS/TS, Solidity
+  /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/,
+  // JS arrow or function expression
+  /\bclass\s+([A-Za-z_$][\w$]*)/,
+  // JS/TS, Python, PHP, Java
+  /^\s*(?:async\s+)?def\s+([A-Za-z_]\w*)\s*\(/,
+  // Python
+  /^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)\s*\(/,
+  // Go
+  /^\s*(?:pub(?:\([^)]*\))?\s+)?fn\s+([A-Za-z_]\w*)/,
+  // Rust
+  /\bmodifier\s+([A-Za-z_]\w*)/,
+  // Solidity
+  /^\s*(?:abstract\s+)?(?:contract|interface|library)\s+([A-Za-z_]\w*)/,
+  // Solidity
+  /^\s*(?:export\s+)?(?:const|let|var)\s+([A-Z][A-Z0-9_]{2,})\s*=/
+  // exported constants (CONFIG_VALUE = ...)
+];
+var STOP = /* @__PURE__ */ new Set(["main", "init", "run", "get", "set", "app", "handler", "index", "default", "constructor", "render", "test", "setup", "data", "value", "config", "module", "exports", "require", "self", "this", "new", "fn", "cb", "next", "err", "res", "req"]);
+function definedIn(text) {
+  for (const re of DEFINITION) {
+    const m = text.match(re);
+    if (m && m[1].length >= 3 && !STOP.has(m[1].toLowerCase())) return m[1];
+  }
+  return null;
+}
+function changedSymbols(files, { max = 8 } = {}) {
+  const out = /* @__PURE__ */ new Map();
+  for (const f of files) {
+    if (!f.patch || !CODE_FILE.test(f.filename) || shouldSkipFile(f.filename) || isDocFile(f.filename)) continue;
+    let enclosing = null;
+    const add = (name) => {
+      if (name && !out.has(name)) out.set(name, { name, file: f.filename });
+    };
+    for (const raw of f.patch.split("\n")) {
+      const hunk = raw.match(/^@@ [^@]+ @@\s?(.*)$/);
+      if (hunk) {
+        enclosing = definedIn(hunk[1]);
+        continue;
+      }
+      if (/^(\+\+\+|---)/.test(raw)) continue;
+      const changed = /^[+-]/.test(raw);
+      const name = definedIn(changed || raw.startsWith(" ") ? raw.slice(1) : raw);
+      if (name) enclosing = name;
+      if (changed) add(name ?? enclosing);
+    }
+  }
+  return [...out.values()].slice(0, max);
+}
+var dirOf = (p) => p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "";
+function closeness(path, changed) {
+  let best = 0;
+  for (const c of changed) {
+    const a = dirOf(path).split("/");
+    const b = dirOf(c).split("/");
+    let n = 0;
+    while (n < a.length && n < b.length && a[n] === b[n]) n++;
+    best = Math.max(best, n);
+  }
+  return best;
+}
+async function findUsages({ symbols, paths, read, changed, maxFiles = 30, perSymbol = 3, maxSites = 8 }) {
+  if (!symbols.length) return [];
+  const skip = new Set(changed);
+  const candidates = paths.filter((p) => CODE_FILE.test(p) && !skip.has(p) && !shouldSkipFile(p) && !isDocFile(p) && !TEST_FILE.test(p)).map((p, i) => [p, closeness(p, changed), i]).sort((a, b) => b[1] - a[1] || a[2] - b[2]).slice(0, maxFiles).map(([p]) => p);
+  const patterns = symbols.map((s) => ({ ...s, re: new RegExp(`(?<![\\w$])${s.name.replace(/\$/g, "\\$")}(?![\\w$])`) }));
+  const count = /* @__PURE__ */ new Map();
+  const sites = [];
+  const texts = [];
+  for (let i = 0; i < candidates.length && texts.length < candidates.length; i += 5) {
+    const batch = candidates.slice(i, i + 5);
+    texts.push(...await Promise.all(batch.map(async (path) => {
+      try {
+        return [path, await read(path)];
+      } catch {
+        return [path, null];
+      }
+    })));
+  }
+  for (const [path, text] of texts) {
+    if (sites.length >= maxSites) break;
+    if (!text) continue;
+    const lines = text.split("\n");
+    for (let i = 0; i < lines.length && sites.length < maxSites; i++) {
+      const line = lines[i];
+      if (line.length > 400) continue;
+      for (const s of patterns) {
+        if ((count.get(s.name) ?? 0) >= perSymbol || !s.re.test(line) || definedIn(line) === s.name) continue;
+        count.set(s.name, (count.get(s.name) ?? 0) + 1);
+        sites.push({ symbol: s.name, from: s.file, path, line: i + 1, text: redact(line.trim()).text.slice(0, 160) });
+        break;
+      }
+    }
+  }
+  return sites;
+}
+function contextBlock(sites) {
+  if (!sites.length) return "";
+  const lines = ["", "# Read-only context, not part of this change: where code changed above is used elsewhere in the repository."];
+  for (const s of sites) lines.push(`# ${s.path}:${s.line} uses ${s.symbol} (changed in ${s.from})`, `#   ${s.text}`);
+  return lines.join("\n") + "\n";
+}
+
 // src/policy.js
 var SEVERITIES = ["none", "low", "medium", "high", "critical"];
 var rank = (s) => SEVERITIES.indexOf(s);
@@ -50512,15 +50674,15 @@ function maxSeverity(findings) {
 }
 
 // src/checks.js
-var DEFAULT_CHECKS = ["deps", "diff"];
+var DEFAULT_CHECKS = ["deps", "diff", "addresses"];
 var ROUTE_MAX_CHARS = 2e3;
 var DEPSDEV_SYSTEM = { npm: "npm", PyPI: "pypi", Go: "go", "crates.io": "cargo" };
 function rankDeps(deps, title = "") {
-  const named = new Set(String(title).toLowerCase().match(/[@\w./-]+/g) ?? []);
-  const rank2 = (d) => d.direct ? 0 : named.has(d.name.toLowerCase()) ? 1 : d.from ? 2 : 3;
+  const named2 = new Set(String(title).toLowerCase().match(/[@\w./-]+/g) ?? []);
+  const rank2 = (d) => d.direct ? 0 : named2.has(d.name.toLowerCase()) ? 1 : d.from ? 2 : 3;
   return deps.map((d, i) => [d, i]).sort((a, b) => rank2(a[0]) - rank2(b[0]) || a[1] - b[1]).map(([d]) => d);
 }
-function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrls = 10, maxChars = 12e3, maxChunks = Infinity } = {}) {
+function buildJobs({ deps, files, title, body, usages = [] }, enabled, { maxDeps = 25, maxUrls = 10, maxAddresses = 5, maxChars = 12e3, maxChunks = Infinity } = {}) {
   const depJob = (d) => ({
     check: "deps",
     intent: "SECURITY_REVIEW_GENERAL",
@@ -50533,16 +50695,43 @@ function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrl
   const transitive = resolvable.filter((d) => !d.direct).map(depJob);
   const chunks = chunkDiff(files, { maxChars }).slice(0, maxChunks);
   const diff = chunks.map((c, i) => {
+    const sites = usages.filter((u) => c.files.includes(u.from));
+    const review = c.text + contextBlock(sites);
     const routable = c.text.length <= ROUTE_MAX_CHARS;
+    const withContext = review.length <= ROUTE_MAX_CHARS;
+    const notes = [];
+    if (sites.length) {
+      notes.push(`Context: ${sites.length} call site${sites.length === 1 ? "" : "s"} of changed code in ${new Set(sites.map((s) => s.path)).size} other file${new Set(sites.map((s) => s.path)).size === 1 ? "" : "s"} sent with the diff${routable && !withContext ? ", except in the routed ask (2,000-character limit)" : ""}.`);
+    }
     return {
       check: "diff",
       intent: routable ? "CODE_REVIEW_GENERAL" : "SECURITY_REVIEW_GENERAL",
       target: chunks.length > 1 ? `chunk ${i + 1}/${chunks.length}: ${c.files.join(", ")}` : c.files.join(", "),
-      vars: { diff: c.text, files: c.files, chunk_index: i + 1, chunk_count: chunks.length },
-      route: routable ? { intent: "CODE_REVIEW_GENERAL", params: { code: c.text }, normalizer: "code-review-format" } : null,
-      ...!routable && { routeSkipped: `over the ${ROUTE_MAX_CHARS.toLocaleString("en-US")}-character limit for canonical asks` }
+      vars: { diff: c.text, review, files: c.files, chunk_index: i + 1, chunk_count: chunks.length },
+      route: routable ? { intent: "CODE_REVIEW_GENERAL", params: { code: withContext ? review : c.text }, normalizer: "code-review-format" } : null,
+      ...!routable && { routeSkipped: `over the ${ROUTE_MAX_CHARS.toLocaleString("en-US")}-character limit for canonical asks` },
+      ...notes.length && { notes }
     };
   });
+  const found = extractAddresses(files, { max: maxAddresses });
+  const sanctions = found.map((a) => ({
+    check: "sanctions",
+    intent: "SANCTIONS_SCREENING_MATCH_GENERAL",
+    target: a.address,
+    vars: { address: a.address, file: a.file, line: a.line },
+    route: { intent: "SANCTIONS_SCREENING_MATCH_GENERAL", params: { name: a.address }, normalizer: "sanctions-format" }
+  }));
+  const addresses = found.map((a) => ({
+    check: "addresses",
+    intent: "SMART_CONTRACT_AUDIT_GENERAL",
+    target: `${a.address} on ${a.chain}${a.assumed ? " (assumed)" : ""}`,
+    vars: { address: a.address, chain_id: a.chainId, chain: a.chain, file: a.file, line: a.line },
+    route: {
+      intent: "SMART_CONTRACT_AUDIT_GENERAL",
+      body: { query: `Token and contract security risk (honeypot, owner and proxy flags, verified source) of the contract at ${a.address} on ${a.chain} (chain id ${a.chainId})` },
+      normalizer: null
+    }
+  }));
   const patch = chunks.length ? [{
     check: "patch",
     intent: "CODE_PATCH_VERIFY_GENERAL",
@@ -50558,6 +50747,7 @@ function buildJobs({ deps, files, title, body }, enabled, { maxDeps = 25, maxUrl
   const jobs = [];
   if (enabled.has("deps")) jobs.push(...direct);
   if (enabled.has("diff")) jobs.push(...diff);
+  if (enabled.has("addresses")) jobs.push(...sanctions, ...addresses);
   if (enabled.has("deps")) jobs.push(...transitive);
   if (enabled.has("patch")) jobs.push(...patch);
   if (enabled.has("urls")) jobs.push(...urls);
@@ -50590,6 +50780,16 @@ var local = (check, target, findings) => ({
 function localOutcomes(rawFiles, installScripts) {
   const secrets = scanSecrets(rawFiles);
   const out = [local("secrets", secrets.length ? `${secrets.length} on added lines` : "added lines", secrets)];
+  const swapped = addressChanges(rawFiles);
+  if (swapped.length) {
+    out.push({ ...local("address-changes", swapped.map((c) => `${c.file}:${c.line}`).join(", "), swapped.map((c) => ({
+      title: `address changed: ${c.from} \u2192 ${c.to}`,
+      severity: "medium",
+      file: c.file,
+      line: c.line,
+      detail: "confirm the new address is intended; swapping a payment or contract address is a known supply-chain attack"
+    }))), confirmed: false });
+  }
   if (installScripts.length) {
     out.push(local("install-scripts", installScripts.map((s) => `${s.file}#${s.script}`).join(", "), installScripts.map((s) => ({
       title: `${s.change} ${s.script} script: ${s.command}`,
@@ -50621,10 +50821,11 @@ async function collectDependencies(getText2, files, baseSha, headSha) {
   }
   return { deps: mergeDependencyChanges(deps), installScripts, errors };
 }
-async function planScan({ pr, rawFiles, baseSha, headSha, getText: getText2, checks, limits }) {
+async function planScan({ pr, rawFiles, baseSha, headSha, getText: getText2, checks, limits = {}, listPaths: listPaths2 }) {
   const { deps, installScripts, errors } = await collectDependencies(getText2, rawFiles, baseSha, headSha);
   const files = rawFiles.map((f) => ({ filename: f.filename, status: f.status, patch: f.patch && redact(f.patch).text }));
-  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body }, checks, limits);
+  const usages = checks.has("diff") && listPaths2 ? await impactContext({ rawFiles, headSha, getText: getText2, listPaths: listPaths2, maxFiles: limits.maxContextFiles }) : [];
+  const jobs = buildJobs({ deps, files, title: pr.title, body: pr.body, usages }, checks, limits);
   const local2 = [...localOutcomes(rawFiles, installScripts), ...unresolvableDepOutcomes(deps)];
   const notes = [];
   const changed = deps.filter((d) => d.to).length;
@@ -50633,6 +50834,16 @@ async function planScan({ pr, rawFiles, baseSha, headSha, getText: getText2, che
     notes.push(`${changed - checked} of ${changed} changed packages were not checked (limit ${checked}): direct dependencies and packages named in the title go first.`);
   }
   return { jobs, local: local2, errors, notes };
+}
+async function impactContext({ rawFiles, headSha, getText: getText2, listPaths: listPaths2, maxFiles = 30 }) {
+  try {
+    const symbols = changedSymbols(rawFiles);
+    if (!symbols.length) return [];
+    const paths = await listPaths2();
+    return await findUsages({ symbols, paths, read: (path) => getText2({ path, ref: headSha }), changed: rawFiles.map((f) => f.filename), maxFiles });
+  } catch {
+    return [];
+  }
 }
 
 // src/normalize.js
@@ -50646,6 +50857,14 @@ function cvssSeverity(score) {
   return "low";
 }
 var SECURITY_CATEGORIES = [
+  // Smart contracts (Solidity)
+  { id: "reentrancy", severity: "high", re: /re-?entran(cy|t)/i },
+  { id: "access-control", severity: "high", re: /access[\s-]*control|\bunrestricted\b|anyone can (call|change|set|withdraw|mint|update|transfer|take)|missing (an? )?(onlyowner|access|authori[sz]ation|modifier)|\bunprotected\b|lacks? (an? )?(access|authori[sz]ation|onlyowner)/i },
+  { id: "tx-origin", severity: "high", re: /tx\.origin/i },
+  { id: "delegatecall", severity: "medium", re: /delegatecall/i },
+  { id: "selfdestruct", severity: "medium", re: /self-?destruct/i },
+  { id: "unchecked-call", severity: "medium", re: /unchecked (low-level )?(call|send)|return value[^.]{0,40}(not checked|ignored|unchecked)/i },
+  // General
   { id: "sql-injection", severity: "high", re: /sql[\s-]*injection|\bsqli\b/i },
   { id: "command-injection", severity: "high", re: /(command|shell)[\s-]*injection|os command/i },
   { id: "code-injection", severity: "high", re: /code[\s-]*(injection|execution)|remote code execution|\brce\b|\beval\b/i },
@@ -50653,7 +50872,8 @@ var SECURITY_CATEGORIES = [
   { id: "path-traversal", severity: "high", re: /(path|directory)[\s-]*traversal/i },
   { id: "ssrf", severity: "high", re: /\bssrf\b|server[\s-]*side request forgery/i },
   { id: "xss", severity: "high", re: /\bxss\b|cross[\s-]*site scripting/i },
-  { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b/i },
+  // "Hard-coded token address" is a contract address, not a secret.
+  { id: "hardcoded-secret", severity: "high", re: /hard[\s-]*coded\b[^.;]{0,30}\b(secret|credential|password|api key|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)|\b(leaked|exposed)\b[^.;]{0,20}\b(secret|credential|key|token)s?\b(?!\s*(address|contract|symbol|list|amount|id)\b)/i },
   { id: "tls-verification-disabled", severity: "medium", re: /(tls|ssl|certificate) (verification|validation)|rejectunauthorized/i },
   { id: "weak-hash", severity: "medium", re: /\bmd5\b|\bsha-?1\b|weak hash/i }
 ];
@@ -50692,6 +50912,24 @@ var NORMALIZERS = {
     const findings = issues.length ? issues.map((id) => ({ id, title: id, severity, ...advisoryRef(id) && { ref: advisoryRef(id) } })) : [{ title: String(result.summary || verdict).slice(0, 200), severity }];
     return { severity, findings };
   },
+  // SANCTIONS_SCREENING_MATCH_GENERAL, format v3: name, matched (bool), matches,
+  // lists, match_score. Routed to Counterproof (#731002), captured Nov 14: in
+  // the morning matches and lists came back empty; by the afternoon matches
+  // named the listed party and lists gave every list checked, with its date.
+  // A wallet address matches exactly or not at all.
+  "sanctions-format": (result) => {
+    expect(typeof result?.matched === "boolean", "no matched flag");
+    if (!result.matched) return { severity: "none", findings: [], verified: true };
+    const exact = Number(result.match_score) >= 0.99;
+    const severity = exact ? "critical" : "medium";
+    const party = (result.matches ?? []).map((m) => typeof m === "string" ? m : m?.name).find(Boolean);
+    const checked = Array.isArray(result.lists) && result.lists.length ? `lists checked: ${result.lists.join("; ")}` : void 0;
+    return {
+      severity,
+      findings: [{ title: `${party ? `${party}: ` : ""}on a sanctions list, ${exact ? "exact match" : "possible match"}`, severity, ...checked && { detail: checked } }],
+      verified: true
+    };
+  },
   // CODE_REVIEW_GENERAL, format v3: verdict Approve | Request changes | Comment,
   // findings (free text, severity order), summary. Captured from miner 302 on
   // Nov 13. Only findings that name a security category count above "low".
@@ -50708,6 +50946,69 @@ var NORMALIZERS = {
     return { severity: maxSeverity(findings), findings };
   },
   // ---- Vetted miners, called directly as the fallback ----------------------
+  // CodeWire Smart Contract Audit (#1900999007) GET /contract-audit {contract}:
+  // a language-model audit as prose: "Overall risk verdict: ...", then
+  // "Finding 1: Reentrancy, affects `withdraw()`, severity critical. ..."
+  // (or "Finding 1, ..."). Captured Nov 13 for a vulnerable and a fixed vault.
+  "codewire-audit": (result) => {
+    const text = String(result?.summary ?? "");
+    expect(/overall risk verdict/i.test(text), "no overall verdict");
+    const SEV = { critical: "critical", high: "high", medium: "medium", moderate: "medium", low: "low", informational: "low", info: "low", none: "none" };
+    const findings = [...text.matchAll(/Finding\s+\d+\s*[:,]\s*(.+?),\s*affects\s+(.+?),\s*severity\s+(critical|high|medium|moderate|low|informational|info|none)\b/gi)].map((m) => {
+      const cat = securityCategory(m[1]);
+      return { title: `${m[1].trim()} (affects ${m[2].trim()})`.slice(0, 200), severity: SEV[m[3].toLowerCase()], ...cat && { category: cat.id } };
+    });
+    return { severity: maxSeverity(findings), findings };
+  },
+  // Counterproof Sanctions Screener (#731002) GET /screen {name}: an address
+  // screened against the US OFAC, UN, EU and UK lists; label CLEAR | REVIEW |
+  // BLOCK, matches per list, and a link to the official notice. Captured Nov 14.
+  "counterproof-screen": (result, vars) => {
+    expect(["CLEAR", "REVIEW", "BLOCK"].includes(result?.label), "no label");
+    expect(!vars.address || same(result.name, vars.address), "answer is for a different name");
+    if (result.label === "CLEAR") return { severity: "none", findings: [], verified: true };
+    const severity = result.label === "BLOCK" ? "critical" : "medium";
+    const findings = (result.matches ?? []).map((m) => ({
+      title: `${m.name} on the ${m.list} sanctions list${m.score >= 0.99 ? ", exact match" : ""}`,
+      severity: m.verdict === "BLOCK" ? "critical" : "medium",
+      ...result.notice && { ref: result.notice }
+    }));
+    return { severity, findings: findings.length ? findings : [{ title: result.summary ?? "sanctions-list match", severity }], verified: true };
+  },
+  // GoPlus Security (#200001) GET /token-security {chain_id, contract_addresses}:
+  // GoPlus's token risk flags ("1" / "0" strings), keyed by the lower-cased
+  // address. Captured Nov 13 for USDT. An address GoPlus has no token data on
+  // (a wallet, or a non-token contract) comes back without a key.
+  "goplus-token-security": (result, vars) => {
+    expect(result?.code === 1 && result.result && typeof result.result === "object", "no result");
+    const t = result.result[String(vars.address ?? "").toLowerCase()];
+    if (!t || !Object.keys(t).length) {
+      return { severity: "low", findings: [{ title: "no token data: a wallet, or a contract GoPlus doesn't track as a token", severity: "low" }], verified: true };
+    }
+    const on = (k) => t[k] === "1";
+    const pct = (k) => Number(t[k] || 0);
+    const trusted = on("trust_list");
+    const findings = [];
+    const add = (cond, severity, title) => {
+      if (cond) findings.push({ title, severity: trusted && severity !== "high" ? "low" : severity, ref: `https://gopluslabs.io/token-security/${vars.chain_id}/${vars.address}` });
+    };
+    add(on("is_honeypot"), "high", "honeypot: holders can't sell");
+    add(on("honeypot_with_same_creator"), "high", "its creator has deployed honeypots before");
+    add(on("hidden_owner"), "high", "hidden owner");
+    add(on("can_take_back_ownership"), "high", "ownership can be taken back after it's renounced");
+    add(on("selfdestruct"), "high", "the contract can self-destruct");
+    add(on("cannot_sell_all") || pct("sell_tax") >= 0.5, "high", `selling is blocked or taxed heavily (sell tax ${t.sell_tax || "?"})`);
+    add(t.is_open_source === "0", "medium", "source code not verified");
+    add(on("owner_change_balance"), "medium", "the owner can change balances");
+    add(on("is_proxy"), "medium", "upgradeable proxy: its code can change");
+    add(pct("sell_tax") < 0.5 && (pct("buy_tax") >= 0.1 || pct("sell_tax") >= 0.1), "medium", `buy/sell tax ${t.buy_tax}/${t.sell_tax}`);
+    add(on("transfer_pausable"), "low", "transfers can be paused");
+    add(on("is_blacklisted"), "low", "has a blacklist");
+    add(on("is_mintable"), "low", "mintable");
+    const name = t.token_name ? `${t.token_name}${t.token_symbol ? ` (${t.token_symbol})` : ""}` : "token";
+    findings.unshift({ title: `${name}${trusted ? ", on GoPlus's trusted list" : ""}`, severity: "none" });
+    return { severity: maxSeverity(findings), findings, verified: true };
+  },
   // deps.dev Package Review (#77010): GET /query {pkg, ver}, npm only.
   // result.version.advisories[] carries GitHub's severity and a CVSS score.
   "depsdev-version": (result, vars) => {
@@ -50755,9 +51056,9 @@ var NORMALIZERS = {
     const findings = result?.answer?.findings;
     expect(Array.isArray(findings) && result.verdict !== "rejected", "rejected or no findings list");
     const mapped = findings.map((f) => {
-      const at = vars.diff ? diffLineLocation(vars.diff, f.line) : null;
+      const at = (vars.diff ? diffLineLocation(vars.diff, f.line) : null) ?? (vars.review ? contextLineLocation(vars.review, f.line) : null);
       return {
-        title: f.message || f.rule_id,
+        title: `${f.message || f.rule_id}${at?.context ? " (in a call site this PR doesn't change)" : ""}`,
         severity: String(f.severity ?? "").toLowerCase(),
         ...at?.file && { file: at.file },
         line: at?.line ?? f.line,
@@ -50933,8 +51234,77 @@ var RULES2 = [
     fix: "drive debug mode from the environment and keep it off in production"
   }
 ];
+var SOLIDITY_RULES = [
+  {
+    id: "tx-origin",
+    title: "tx.origin used for authorization",
+    cwe: "CWE-863",
+    test: (l) => /\btx\.origin\b\s*(==|!=)|(==|!=)\s*tx\.origin\b/.test(l),
+    severity: () => "high",
+    confidence: 0.85,
+    fix: "check msg.sender instead; tx.origin can be any contract's caller"
+  },
+  {
+    id: "delegatecall",
+    title: "delegatecall",
+    cwe: "CWE-829",
+    test: (l) => /\.delegatecall\s*\(/.test(l),
+    severity: () => "medium",
+    confidence: 0.6,
+    fix: "only delegatecall a fixed, trusted implementation; never a caller-supplied address"
+  },
+  {
+    id: "selfdestruct",
+    title: "selfdestruct",
+    cwe: "CWE-284",
+    test: (l) => /\b(selfdestruct|suicide)\s*\(/.test(l),
+    severity: () => "medium",
+    confidence: 0.7,
+    fix: "remove selfdestruct, or restrict it to a governed, time-locked path"
+  },
+  {
+    id: "unchecked-call",
+    title: "low-level call result not checked",
+    cwe: "CWE-252",
+    // A bare statement: nothing captures or tests the returned success flag.
+    test: (l) => /^\s*[\w.()[\]]+\.(call|send)\s*(\{[^}]*\})?\s*\([^;]*\)\s*;/.test(l),
+    severity: () => "medium",
+    confidence: 0.7,
+    fix: "capture the success flag and require it, or use a safe transfer helper"
+  }
+];
+var VALUE_CALL = /\.call\s*\{\s*value\s*:|\.call\.value\s*\(/;
+var STATE_WRITE = /\b\w+\s*\[[^\]]+\]\s*(=|-=|\+=)(?!=)|\b\w*(balance|deposit|share|credit)\w*\s*(=|-=)(?!=)/i;
+var PUBLIC_FN = /\bfunction\s+\w+\s*\([^)]*\)([^{;]*)\b(external|public)\b([^{;]*)/;
+var GUARDED = /\bonly[A-Z]\w*|\bauth\b|\binitializer\b|\brequiresAuth\b/;
+var PRIVILEGED_WRITE = /\b_?(owner|admin|governance|implementation|operator|minter|treasury)\s*=(?!=)/i;
+var SENDER_CHECK = /require\s*\(\s*msg\.sender\s*==|msg\.sender\s*!=|_checkOwner\s*\(|_checkRole\s*\(|hasRole\s*\(/;
+function solidityFlows(lines) {
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const { text: l, line, file } = lines[i];
+    if (COMMENT.test(l)) continue;
+    const next = lines.slice(i + 1, i + 9).filter((x) => x.file === file);
+    if (VALUE_CALL.test(l) && next.some((x) => !COMMENT.test(x.text) && STATE_WRITE.test(x.text))) {
+      out.push({ rule: "reentrancy", title: "state updated after an external call (reentrancy)", severity: "high", cwe: "CWE-841", ...file && { file }, line, evidence: evidence(l), fix: "update balances before the call (checks-effects-interactions), or add a reentrancy guard", confidence: 0.75 });
+    }
+    const fn = l.match(PUBLIC_FN);
+    if (fn && !GUARDED.test(fn[1] + fn[3])) {
+      const body = [l.slice(l.indexOf("{") + 1)];
+      for (const x of next) {
+        if (/^\s*}\s*$/.test(x.text) || PUBLIC_FN.test(x.text)) break;
+        body.push(x.text);
+      }
+      const text = body.join("\n");
+      if (PRIVILEGED_WRITE.test(text) && !SENDER_CHECK.test(text)) {
+        out.push({ rule: "access-control", title: "privileged state set without access control", severity: "high", cwe: "CWE-284", ...file && { file }, line, evidence: evidence(l), fix: "restrict it (onlyOwner, a role, or require(msg.sender == owner))", confidence: 0.75 });
+      }
+    }
+  }
+  return out;
+}
 var SECRET_RULE = { id: "hardcoded-secret", cwe: "CWE-798", confidence: 0.9, fix: "move it to a secret store or environment variable, and rotate the exposed value" };
-var RULE_COUNT = RULES2.length + 1;
+var RULE_COUNT = RULES2.length + SOLIDITY_RULES.length + 2 + 1;
 var looksLikeDiff = (text) => /^(diff --git |@@ -\d)/m.test(text);
 function linesOf(text) {
   if (!looksLikeDiff(text)) return text.split(/\r?\n/).map((t, i) => ({ line: i + 1, text: t }));
@@ -50947,7 +51317,9 @@ function linesOf(text) {
 }
 var evidence = (line) => redact(line.trim()).text.slice(0, 160);
 function scan(text) {
-  const lines = linesOf(String(text ?? ""));
+  const src = String(text ?? "");
+  const lines = linesOf(src);
+  const isSolidity = (file) => file ? /\.sol$/i.test(file) : /\bpragma\s+solidity\b/.test(src);
   const findings = [];
   for (const { line, text: l, file } of lines) {
     for (const s of new Set(secretSpans(l).map((x) => `${x.type}\0${x.severity}`))) {
@@ -50955,10 +51327,11 @@ function scan(text) {
       findings.push({ rule: SECRET_RULE.id, title: `hardcoded secret (${type.replace(/_/g, " ")})`, severity, cwe: SECRET_RULE.cwe, ...file && { file }, line, evidence: evidence(l), fix: SECRET_RULE.fix, confidence: SECRET_RULE.confidence });
     }
     if (COMMENT.test(l)) continue;
-    for (const r of RULES2) {
+    for (const r of isSolidity(file) ? [...RULES2, ...SOLIDITY_RULES] : RULES2) {
       if (r.test(l)) findings.push({ rule: r.id, title: r.title, severity: r.severity(l), cwe: r.cwe, ...file && { file }, line, evidence: evidence(l), fix: r.fix, confidence: r.confidence });
     }
   }
+  findings.push(...solidityFlows(lines.filter((x) => isSolidity(x.file))));
   return { findings, linesScanned: lines.length };
 }
 
@@ -50990,45 +51363,54 @@ var callSummary = (r, { via, entry, note } = {}) => ({
   ...note && { note }
 });
 var isHigh2 = (s) => s === "high" || s === "critical";
+var rankOf = (s) => SEVERITIES.indexOf(s);
 var isEmpty = (n) => n.severity === "unknown" && !n.findings.length;
 var isUpstreamNotFound = (r) => r.status >= 400 && /upstream error 404/i.test(r.bodyText ?? "");
 function judgeRouted(r, route, entries, vars) {
-  if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})` };
+  if (!r.ok) return { reject: r.status === 503 ? "Telegraph could not route it right now" : `the routed call failed (${r.reason})`, systematic: false };
   const id = r.body?.miner_id ?? "?";
+  const vetted = entries.find((e) => String(e.minerId) === String(id));
   if (r.body?.result_shape === "intent") {
     const n = normalize(route.normalizer, r.body.result, vars);
-    return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict` } : { answer: n };
+    return isEmpty(n) ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false } : { answer: n };
   }
-  const vetted = entries.find((e) => String(e.minerId) === String(id));
   if (vetted) {
     const n = normalize(vetted.normalizer, r.body?.result, vars);
     if (!isEmpty(n)) return { answer: n };
   }
-  return { reject: `miner ${id} answered in its own format, and not about this target` };
+  const text = typeof r.body?.result?.answer === "string" || typeof r.body?.result === "string";
+  return text ? { reject: `miner ${id}'s answer had no readable verdict`, systematic: false } : { reject: `miner ${id} answered in its own format, and not about this target`, systematic: true };
 }
 function confirmFindings(check, answer, vars) {
-  if (check === "deps") return { ...answer, confirmed: isHigh2(answer.severity) && answer.verified === true, disagreement: false };
+  if (check === "deps" || check === "addresses" || check === "sanctions") return { ...answer, confirmed: isHigh2(answer.severity) && answer.verified === true, disagreement: false };
   if (check !== "diff" || !vars.diff) return { ...answer, confirmed: false, disagreement: false };
   const local2 = scan(vars.diff).findings.filter((f) => f.rule !== "hardcoded-secret");
   const matches2 = (f, l) => f.category && f.category === l.rule || f.file && f.line && f.file === l.file && f.line === l.line;
-  const findings = answer.findings.map((f) => isHigh2(f.severity) && local2.some((l) => matches2(f, l)) ? { ...f, corroborated: true } : f);
+  const findings = answer.findings.map((f) => {
+    const hit = local2.find((l) => isHigh2(l.severity) && matches2(f, l));
+    if (!hit) return f;
+    const severity = isHigh2(f.severity) && rankOf(f.severity) >= rankOf(hit.severity) ? f.severity : hit.severity;
+    return { ...f, severity, corroborated: true };
+  });
   const missed = local2.filter((l) => isHigh2(l.severity) && !answer.findings.some((f) => matches2(f, l)));
+  const corroborated = findings.some((f) => f.corroborated);
   return {
     ...answer,
+    ...corroborated && { severity: maxSeverity(findings) },
     findings: [
       ...findings,
       ...missed.map((l) => ({ title: `${l.title} (PR Guard local rule)`, severity: "medium", ...l.file && { file: l.file }, line: l.line, detail: `${l.evidence} \u2192 ${l.fix}` }))
     ],
-    severity: missed.length && answer.severity === "none" ? "medium" : answer.severity,
-    confirmed: findings.some((f) => f.corroborated),
+    ...!corroborated && { severity: missed.length && !isHigh2(answer.severity) && answer.severity !== "medium" ? "medium" : answer.severity },
+    confirmed: corroborated,
     disagreement: missed.length > 0
   };
 }
 async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "auto", health: {} }, priorCalls = [], priorNotes = [] }) {
   const { check, intent, target, vars, route } = job;
-  const entries = (miners[check] ?? []).filter((e) => e.enabled !== false && (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)));
+  const entries = (miners[check] ?? []).filter((e) => e.enabled !== false && (!e.ecosystems || e.ecosystems.includes(vars.ecosystem)) && (!e.files || (vars.files ?? []).some((f) => new RegExp(e.files, "i").test(f))));
   const calls = [...priorCalls];
-  const notes = [...priorNotes];
+  const notes = priorNotes.length ? [...priorNotes] : [...job.notes ?? []];
   const base = { check, intent, target, findings: [], confirmed: false, disagreement: false, calls, notes };
   const ledger = (r, minerId, askedIntent) => onCall?.(ledgerEntry({ check, target, intent: askedIntent, minerId }, r));
   const health = routing.health ?? {};
@@ -51037,16 +51419,18 @@ async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "
   const tryRoute = route && routing.mode !== "off" && health[route.intent] !== false && !priorCalls.length;
   if (tryRoute) {
     if (Date.now() > deadline) return { ...base, status: "skipped", severity: "none", reason: "time limit" };
-    const r = await tg.ask({ intent: route.intent, params: route.params });
+    const r = await tg.ask(route.body ?? { intent: route.intent, params: route.params });
     const judged2 = judgeRouted(r, route, entries, vars);
     calls.push(callSummary(r, { via: "routed", note: judged2.reject && `not used: ${judged2.reject}` }));
     await ledger(r, r.body?.miner_id ?? "routed", route.intent);
     if (judged2.answer) answer = judged2.answer;
     else {
       if (r.reason === "over_budget") return { ...base, status: "skipped", severity: "none", reason: "budget exhausted" };
-      health[route.intent] = false;
       notes.push(`Routed ${route.intent} answer not used: ${judged2.reject}.`);
-      await routing.onUnusable?.(route.intent, judged2.reject);
+      if (judged2.systematic) {
+        health[route.intent] = false;
+        await routing.onUnusable?.(route.intent, judged2.reject);
+      }
       if (routing.deferFallback) return { deferred: true, calls, notes };
     }
   } else if (!route && job.routeSkipped) {
@@ -51062,7 +51446,7 @@ async function runCheck({ tg, miners, job, deadline, onCall, routing = { mode: "
         break;
       }
       const entry = entries[i];
-      const r = await tg.askMiner(entry.minerId, { method: entry.method ?? "POST", endpoint: entry.endpoint, payload: fillTemplate(entry.payload, vars) });
+      const r = await tg.askMiner(entry.minerId, { method: entry.method ?? "POST", endpoint: entry.endpoint, payload: fillTemplate(entry.payload, { review: vars.diff, ...vars }) });
       calls.push(callSummary(r, { via: "direct", entry }));
       await ledger(r, entry.minerId, entry.intent);
       if (r.ok) {
@@ -51186,6 +51570,10 @@ async function mergeBase(octokit, { owner, repo, base, head }) {
   const { data } = await octokit.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: `${base}...${head}`, per_page: 1 });
   return data.merge_base_commit.sha;
 }
+async function listPaths(octokit, { owner, repo, sha }) {
+  const { data } = await octokit.rest.git.getTree({ owner, repo, tree_sha: sha, recursive: "true" });
+  return data.tree.filter((t) => t.type === "blob").map((t) => t.path);
+}
 async function getText(octokit, { owner, repo, path, ref }) {
   try {
     const { data } = await octokit.rest.repos.getContent({ owner, repo, path, ref, mediaType: { format: "raw" } });
@@ -51271,7 +51659,7 @@ function timedOut(scan2) {
 
 // config/miners.json
 var miners_default = {
-  _comment: "Vetted fallback miners per PR Guard check, best first. Every check is first asked through Telegraph's routing (a canonical intent + params ask; see src/checks.js); a miner here is called directly only when the routed answer is unusable, and the next one only if that call fails. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional enabled:false. A routed answer from a miner listed here is read with its normalizer.",
+  _comment: "Vetted fallback miners per PR Guard check, best first. Every check is first asked through Telegraph's routing (a canonical intent + params ask; see src/checks.js); a miner here is called directly only when the routed answer is unusable, and the next one only if that call fails. Entries: minerId, name, intent, method, endpoint, payload ({{var}} placeholders), normalizer (src/normalize.js), optional ecosystems filter, optional files filter (a regex any changed file must match), optional enabled:false. A routed answer from a miner listed here is read with its normalizer.",
   deps: [
     {
       minerId: "77010",
@@ -51324,6 +51712,19 @@ var miners_default = {
   ],
   diff: [
     {
+      minerId: "1900999007",
+      name: "CodeWire Smart Contract Audit",
+      intent: "SMART_CONTRACT_AUDIT_GENERAL",
+      method: "GET",
+      endpoint: "/contract-audit",
+      payload: {
+        contract: "{{review}}"
+      },
+      normalizer: "codewire-audit",
+      files: "\\.sol$",
+      _note: "Independent operator; a language-model audit of Solidity. Only for diffs that touch .sol files. Vetted Nov 13: found the reentrancy (critical) and open setOwner (high) in the demo vault, and only low issues in the fixed one."
+    },
+    {
       minerId: "5530",
       name: "Telegraph Verity",
       intent: "SECURITY_REVIEW_GENERAL",
@@ -51332,7 +51733,7 @@ var miners_default = {
       payload: {
         intent: "SECURITY_REVIEW",
         input: {
-          code: "{{diff}}"
+          code: "{{review}}"
         }
       },
       normalizer: "verity-security",
@@ -51345,10 +51746,39 @@ var miners_default = {
       method: "POST",
       endpoint: "/review",
       payload: {
-        diff: "{{diff}}"
+        diff: "{{review}}"
       },
       normalizer: "sentinel-review",
       _note: "Our own rule-based miner (disclosed), used only if Verity fails."
+    }
+  ],
+  addresses: [
+    {
+      minerId: "200001",
+      name: "GoPlus Security",
+      intent: "SMART_CONTRACT_AUDIT_GENERAL",
+      method: "GET",
+      endpoint: "/token-security",
+      payload: {
+        chain_id: "{{chain_id}}",
+        contract_addresses: "{{address}}"
+      },
+      normalizer: "goplus-token-security",
+      _note: "Independent operator, proxying GoPlus. Token risk flags for an address (honeypot, owner powers, proxy, verified source). Vetted Nov 13 with USDT. Sourcify Verified Contracts (#200002) was tried for source verification, but its /contract endpoint passes every parameter through as a query string and Sourcify rejects them."
+    }
+  ],
+  sanctions: [
+    {
+      minerId: "731002",
+      name: "Counterproof Sanctions Screener",
+      intent: "SANCTIONS_SCREENING_MATCH_GENERAL",
+      method: "GET",
+      endpoint: "/screen",
+      payload: {
+        name: "{{address}}"
+      },
+      normalizer: "counterproof-screen",
+      _note: "Independent operator (suggested by its builder on Nov 13). Screens an address against US OFAC, UN, EU and UK lists; exact match for wallet addresses. Vetted Nov 14: the Lazarus Group's Ronin wallet is BLOCK on the US list, USDT's contract is CLEAR. Routed canonical asks also reach it, but the node returns the match without the list name."
     }
   ],
   patch: [],
@@ -51441,7 +51871,15 @@ async function run() {
   const rawFiles = await listPrFiles(octokit, { ...repoRef, pull_number: pr.number });
   const base = await mergeBase(octokit, { ...repoRef, base: pr.base.sha, head: pr.head.sha });
   const getFileText = ({ path, ref }) => getText(octokit, { ...repoRef, path, ref });
-  const { jobs, local: local2, errors, notes } = await planScan({ pr, rawFiles, baseSha: base, headSha: pr.head.sha, getText: getFileText, checks: cfg.checks });
+  const { jobs, local: local2, errors, notes } = await planScan({
+    pr,
+    rawFiles,
+    baseSha: base,
+    headSha: pr.head.sha,
+    getText: getFileText,
+    checks: cfg.checks,
+    listPaths: () => listPaths(octokit, { ...repoRef, sha: pr.head.sha })
+  });
   for (const e of errors) warning(`could not read ${e.file}: ${e.error}`);
   const budget = new Budget(cfg.maxUsdPerPr);
   const tg = new Telegraph({ nodeUrl: cfg.nodeUrl, privateKey: cfg.privateKey, maxUsdPerCall: cfg.maxUsdPerCall, budget, timeoutMs: 45e3 });
